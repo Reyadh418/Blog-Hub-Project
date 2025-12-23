@@ -39,4 +39,9 @@ db.run(`ALTER TABLE posts ADD COLUMN author_id INTEGER DEFAULT 1`, (err) => {
   }
 });
 
+// Add is_flagged column for admin flagging
+db.run(`ALTER TABLE posts ADD COLUMN is_flagged INTEGER DEFAULT 0`, (err) => {
+  // Safe — if column exists, error is silently ignored
+});
+
 module.exports = db;

@@ -307,8 +307,9 @@
 
             <div class="post-container">
                 <div class="post-header">
-                    <h1 id="postTitle"></h1>
-                    <div class="post-meta">
+                    <h1 id="postTitle"></h1>                    <div id="flagNotice" style="display:none; background:#fee; color:#c33; padding:16px; border-radius:6px; margin-bottom:20px; font-weight:600; text-align:center;">
+                        🚩 This post has been flagged by an administrator
+                    </div>                    <div class="post-meta">
                         <div class="meta-item">
                             📅 <span id="postDate"></span>
                         </div>
@@ -341,6 +342,9 @@
                     </div>
                     <div class="post-actions">
                         <button class="btn-copy" onclick="copyPostLink()" id="copyBtn">📋 Copy Link</button>
+                        <button id="flagBtn" class="btn-home" style="display:none;">🚩 Flag</button>
+                        <button id="editPostBtn" class="btn-home" style="display:none;">✎ Edit</button>
+                        <button id="deletePostBtn" class="btn-home" style="display:none;">🗑 Delete</button>
                         <button class="btn-home" onclick="location.href='/'">🏠 Back Home</button>
                     </div>
                 </div>
@@ -430,6 +434,11 @@
                 document.title = `${post.title} | Blog`;
                 document.getElementById('postTitle').textContent = escapeHtml(post.title);
 
+                // Show flag notice if post is flagged
+                if (post.is_flagged) {
+                    document.getElementById('flagNotice').style.display = 'block';
+                }
+
                 // Update meta information
                 document.getElementById('postDate').textContent = formattedDate;
                 document.getElementById('wordCount').textContent = wordCount;
@@ -446,7 +455,7 @@
                 LOADING.style.display = 'none';
                 POST_WRAPPER.style.display = 'block';
                 // show admin controls if applicable
-                maybeShowAdminActions(post.id);
+                maybeShowAdminActions(post.id, post.author_id);
             }
 
             // Fetch current user (to show admin controls)
@@ -463,56 +472,89 @@
                 return { isAdmin: false, userId: null };
             }
 
-            // Show admin actions (edit/delete)
-            async function maybeShowAdminActions(postId) {
+            // Show admin actions (edit/delete/flag)
+            async function maybeShowAdminActions(postId, authorId) {
                 const user = await fetchCurrentUser();
-                if (!user.isAdmin) return;
 
-                const actions = document.querySelector('.post-actions');
-                // create edit button
-                const editBtn = document.createElement('button');
-                editBtn.className = 'admin-edit';
-                editBtn.textContent = '✎ Edit';
-                editBtn.style.background = 'transparent';
-                editBtn.style.border = '1px solid #d4a574';
-                editBtn.style.color = '#1e3a5f';
-                editBtn.style.padding = '10px 14px';
-                editBtn.style.borderRadius = '6px';
-                editBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.location.href = `/create-post.html?id=${postId}&edit=1`;
-                });
+                // Check permissions
+                let canEdit = false;
+                let canDelete = false;
+                let canFlag = false;
 
-                // create delete button
-                const delBtn = document.createElement('button');
-                delBtn.className = 'admin-delete';
-                delBtn.textContent = '🗑 Delete';
-                delBtn.style.background = '#e74c3c';
-                delBtn.style.color = '#fff';
-                delBtn.style.border = 'none';
-                delBtn.style.padding = '10px 14px';
-                delBtn.style.borderRadius = '6px';
-                delBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    if (!confirm('Delete this post? This cannot be undone.')) return;
-                    try {
-                        const resp = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
-                        if (resp.ok) {
-                            window.location.href = '/';
-                        } else {
-                            const err = await resp.json();
-                            showError(err.error || 'Delete failed');
+                if (user.isAdmin) {
+                    canEdit = authorId === null; // Admin can only edit own posts
+                    canDelete = true; // Admin can delete any
+                    canFlag = true; // Admin can flag any
+                } else if (user.userId) {
+                    canEdit = authorId === user.userId; // User can only edit own
+                    canDelete = authorId === user.userId; // User can only delete own
+                }
+
+                // Flag button (admin only)
+                if (canFlag) {
+                    const flagBtn = document.getElementById('flagBtn');
+                    flagBtn.style.display = 'inline-block';
+                    flagBtn.textContent = document.getElementById('flagNotice').style.display === 'block' ? '✓ Unflag' : '🚩 Flag';
+                    flagBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        const isFlagged = document.getElementById('flagNotice').style.display === 'block';
+                        try {
+                            const resp = await fetch(`/api/posts/${postId}/flag`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ flag: !isFlagged })
+                            });
+                            if (resp.ok) {
+                                if (!isFlagged) {
+                                    document.getElementById('flagNotice').style.display = 'block';
+                                    flagBtn.textContent = '✓ Unflag';
+                                } else {
+                                    document.getElementById('flagNotice').style.display = 'none';
+                                    flagBtn.textContent = '🚩 Flag';
+                                }
+                            } else {
+                                alert('Failed to flag/unflag post');
+                            }
+                        } catch (error) {
+                            console.error('Flag error:', error);
+                            alert('Error flagging post');
                         }
-                    } catch (err) {
-                        console.error('delete failed', err);
-                        showError('Delete failed');
-                    }
-                });
+                    };
+                }
 
-                // insert admin buttons before other actions
-                actions.insertBefore(editBtn, actions.firstChild);
-                actions.insertBefore(delBtn, actions.firstChild);
+                // Edit button
+                if (canEdit) {
+                    const editBtn = document.getElementById('editPostBtn');
+                    editBtn.style.display = 'inline-block';
+                    editBtn.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.href = `/create-post.html?id=${postId}&edit=1`;
+                    };
+                }
+
+                // Delete button
+                if (canDelete) {
+                    const deleteBtn = document.getElementById('deletePostBtn');
+                    deleteBtn.style.display = 'inline-block';
+                    deleteBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        if (!confirm('Delete this post? This action cannot be undone.')) return;
+                        try {
+                            const resp = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+                            if (resp.ok) {
+                                window.location.href = '/';
+                            } else {
+                                const err = await resp.json();
+                                alert(err.error || 'Failed to delete post');
+                            }
+                        } catch (error) {
+                            console.error('Delete error:', error);
+                            alert('Error deleting post');
+                        }
+                    };
+                }
             }
+
 
             // Show error message
             function showError(message) {

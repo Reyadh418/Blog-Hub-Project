@@ -347,7 +347,7 @@
             <button id="admin-login-btn" onclick="location.href='login.html'" style="display: none;">
                 👤 Login
             </button>
-            <button id="profile-btn" onclick="location.href='profile.html'" style="display: none;">
+            <button id="profile-btn" onclick="goToProfile()" style="display: none;">
                 👤 My Profile
             </button>
             <button id="logout-btn" onclick="handleLogout()" style="display: none;">
@@ -521,12 +521,29 @@
                     const postUrl = `/post.html?id=${post.id}`;
                     const authorDisplay = post.author_name || 'Unknown';
 
+                    // Determine if current user can edit/delete this post
+                    let canEdit = false;
+                    let canDelete = false;
+                    let canFlag = false;
+
+                    if (CURRENT_USER.isAdmin) {
+                      canEdit = post.author_id === null; // Admin can only edit own posts
+                      canDelete = true; // Admin can delete any post
+                      canFlag = true; // Admin can flag any post
+                    } else if (CURRENT_USER.userId) {
+                      canEdit = post.author_id === CURRENT_USER.userId; // User can only edit own
+                      canDelete = post.author_id === CURRENT_USER.userId; // User can only delete own
+                    }
+
                     const postElement = document.createElement('article');
                     postElement.className = 'post';
                     postElement.style.cursor = 'pointer';
+                    if (post.is_flagged) {
+                      postElement.style.borderLeft = '5px solid #e74c3c';
+                    }
                     postElement.innerHTML = `
                         <div class="post-header">
-                            <h2>${escapeHtml(post.title)}</h2>
+                            <h2>${escapeHtml(post.title)}${post.is_flagged ? ' 🚩 FLAGGED' : ''}</h2>
                             ${date ? `<span class="post-date">${date}</span>` : ''}
                         </div>
                         <div class="post-divider"></div>
@@ -537,9 +554,10 @@
                                 <span style="color:#d4a574; font-weight:600;">👤 ${escapeHtml(authorDisplay)}</span>
                                 <span>→ Read More</span>
                             </div>
-                            ${CURRENT_USER.isAdmin || CURRENT_USER.userId ? `<div class="admin-controls">
-                                ${CURRENT_USER.isAdmin ? `<button class="admin-btn edit" data-id="${post.id}">✎ Edit</button>
-                                <button class="admin-btn delete" data-id="${post.id}">🗑 Delete</button>` : ''}
+                            ${canEdit || canDelete || canFlag ? `<div class="admin-controls">
+                                ${canEdit ? `<button class="admin-btn edit" data-id="${post.id}">✎ Edit</button>` : ''}
+                                ${canDelete ? `<button class="admin-btn delete" data-id="${post.id}">🗑 Delete</button>` : ''}
+                                ${canFlag ? `<button class="admin-btn flag" data-id="${post.id}" data-flagged="${post.is_flagged ? 1 : 0}">${post.is_flagged ? '✓ Unflag' : '🚩 Flag'}</button>` : ''}
                             </div>` : ''}
                         </div>
                     `;
@@ -551,23 +569,27 @@
                         window.location.href = postUrl;
                     });
 
-                    // Attach admin actions if visible
-                    if (CURRENT_USER.isAdmin) {
-                        // Edit
-                        postElement.querySelector('.admin-btn.edit').addEventListener('click', (ev) => {
+                    // Attach button actions if visible
+                    // Edit button
+                    const editBtn = postElement.querySelector('.admin-btn.edit');
+                    if (editBtn) {
+                        editBtn.addEventListener('click', (ev) => {
                             ev.stopPropagation();
                             const id = ev.currentTarget.getAttribute('data-id');
                             window.location.href = `/create-post.html?id=${id}&edit=1`;
                         });
-                        // Delete
-                        postElement.querySelector('.admin-btn.delete').addEventListener('click', async (ev) => {
+                    }
+
+                    // Delete button
+                    const deleteBtn = postElement.querySelector('.admin-btn.delete');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
                             const id = ev.currentTarget.getAttribute('data-id');
                             if (!confirm('Delete this post? This action cannot be undone.')) return;
                             try {
                                 const resp = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
                                 if (resp.ok) {
-                                    // remove element smoothly
                                     postElement.style.transition = 'opacity 0.3s, transform 0.3s';
                                     postElement.style.opacity = 0;
                                     postElement.style.transform = 'translateY(10px)';
@@ -582,6 +604,44 @@
                             }
                         });
                     }
+
+                    // Flag button
+                    const flagBtn = postElement.querySelector('.admin-btn.flag');
+                    if (flagBtn) {
+                        flagBtn.addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            const id = ev.currentTarget.getAttribute('data-id');
+                            const currentFlagged = parseInt(ev.currentTarget.getAttribute('data-flagged'));
+                            const newFlagged = currentFlagged === 1 ? false : true;
+                            try {
+                                const resp = await fetch(`/api/posts/${id}/flag`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ flag: newFlagged })
+                                });
+                                if (resp.ok) {
+                                    // Update button and post styling
+                                    ev.currentTarget.textContent = newFlagged ? '✓ Unflag' : '🚩 Flag';
+                                    ev.currentTarget.setAttribute('data-flagged', newFlagged ? 1 : 0);
+                                    const titleElem = postElement.querySelector('h2');
+                                    if (newFlagged) {
+                                        postElement.style.borderLeft = '5px solid #e74c3c';
+                                        titleElem.textContent += ' 🚩 FLAGGED';
+                                    } else {
+                                        postElement.style.borderLeft = '';
+                                        titleElem.textContent = titleElem.textContent.replace(' 🚩 FLAGGED', '');
+                                    }
+                                } else {
+                                    const err = await resp.json();
+                                    showError(err.error || 'Failed to flag post');
+                                }
+                            } catch (error) {
+                                console.error('Flag failed', error);
+                                showError('Flag failed. Try again.');
+                            }
+                        });
+                    }
+
                     POSTS_CONTAINER.appendChild(postElement);
                 });
             }
@@ -633,6 +693,15 @@
                 } catch (error) {
                     console.error('Logout error:', error);
                     showError('Logout failed. Please try again.');
+                }
+            }
+
+            // Go to profile with admin check
+            function goToProfile() {
+                if (CURRENT_USER.isAdmin) {
+                    window.location.href = '/admin-profile.html';
+                } else {
+                    window.location.href = '/profile.html';
                 }
             }
 

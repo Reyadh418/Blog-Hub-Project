@@ -303,6 +303,7 @@ app.get("/api/posts", async (req, res, next) => {
         p.created_at, 
         p.author_id, 
         p.tags,
+        p.is_flagged,
         CASE 
           WHEN p.author_id IS NULL THEN '@admin'
           ELSE u.username
@@ -337,6 +338,7 @@ app.get("/api/posts/:id", async (req, res, next) => {
         p.created_at, 
         p.author_id,
         p.tags,
+        p.is_flagged,
         CASE 
           WHEN p.author_id IS NULL THEN '@admin'
           ELSE u.username
@@ -361,16 +363,39 @@ app.get("/api/posts/:id", async (req, res, next) => {
 });
 
 // Update a post (admin only)
-app.put("/api/posts/:id", requireAdmin, async (req, res, next) => {
+// Edit a post with permission checks
+// Admin can only edit their own posts (author_id IS NULL)
+// Users can only edit their own posts (author_id = userId)
+app.put("/api/posts/:id", async (req, res, next) => {
   try {
+    if (!req.session.isAdmin && !req.session.userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    // Get the post to check ownership
+    const post = await dbGet("SELECT id, author_id FROM posts WHERE id = ?", [id]);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Permission checks
+    if (req.session.isAdmin) {
+      // Admin can only edit posts they created (author_id IS NULL)
+      if (post.author_id !== null) {
+        return res.status(403).json({ error: "Admin can only edit their own posts" });
+      }
+    } else {
+      // User can only edit their own posts
+      if (post.author_id !== req.session.userId) {
+        return res.status(403).json({ error: "You can only edit your own posts" });
+      }
+    }
 
     const title = (req.body.title || "").toString().trim();
     const body = (req.body.body || "").toString().trim();
     let tags = req.body.tags || [];
     if (!Array.isArray(tags)) {
-      // allow comma-separated string
       tags = tags.toString().split(',').map(s => s.trim()).filter(Boolean);
     }
 
@@ -379,23 +404,81 @@ app.put("/api/posts/:id", requireAdmin, async (req, res, next) => {
     const result = await dbRun("UPDATE posts SET title = ?, body = ?, tags = ? WHERE id = ?", [title, body, JSON.stringify(tags), id]);
     if (!result.changes) return res.status(404).json({ error: "Post not found" });
 
-    const rows = await dbAll("SELECT id, title, body, created_at, tags FROM posts WHERE id = ?", [id]);
+    const rows = await dbAll(`
+      SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
+        CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE p.id = ?
+    `, [id]);
     res.json(rows[0]);
   } catch (err) {
     next(err);
   }
 });
 
-// Delete a post (admin only)
-app.delete("/api/posts/:id", requireAdmin, async (req, res, next) => {
+// Delete a post with permission checks
+// Admin can delete any post
+// Users can only delete their own posts
+app.delete("/api/posts/:id", async (req, res, next) => {
   try {
+    if (!req.session.isAdmin && !req.session.userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    // Get the post to check ownership
+    const post = await dbGet("SELECT id, author_id FROM posts WHERE id = ?", [id]);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Permission checks
+    if (!req.session.isAdmin) {
+      // User can only delete their own posts
+      if (post.author_id !== req.session.userId) {
+        return res.status(403).json({ error: "You can only delete your own posts" });
+      }
+    }
+    // Admin can delete any post (no additional check needed)
 
     const result = await dbRun("DELETE FROM posts WHERE id = ?", [id]);
     if (!result.changes) return res.status(404).json({ error: "Post not found" });
 
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Flag/unflag a post (admin only)
+app.patch("/api/posts/:id/flag", async (req, res, next) => {
+  try {
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ error: "Only admins can flag posts" });
+    }
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const flagged = req.body.flag === true ? 1 : 0;
+
+    // Check if post exists
+    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [id]);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    const result = await dbRun("UPDATE posts SET is_flagged = ? WHERE id = ?", [flagged, id]);
+    if (!result.changes) return res.status(404).json({ error: "Post not found" });
+
+    const updated = await dbGet(`
+      SELECT p.id, p.is_flagged,
+        CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE p.id = ?
+    `, [id]);
+
+    res.json({ ok: true, is_flagged: flagged, post: updated });
   } catch (err) {
     next(err);
   }
@@ -424,7 +507,7 @@ app.post("/api/posts", async (req, res, next) => {
 
     // Return created resource including author info
     const created = await dbGet(`
-      SELECT p.id, p.title, p.body, p.created_at, p.tags, 
+      SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
         CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
         CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
       FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?
@@ -443,7 +526,7 @@ app.get('/api/search', async (req, res, next) => {
     if (!q) {
       // if no query, return all posts
       const rows = await dbAll(`
-        SELECT p.id, p.title, p.body, p.created_at, p.tags,
+        SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
         FROM posts p
@@ -456,7 +539,7 @@ app.get('/api/search', async (req, res, next) => {
     const like = `%${q}%`;
     const rows = await dbAll(
       `
-        SELECT p.id, p.title, p.body, p.created_at, p.tags,
+        SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
         FROM posts p
