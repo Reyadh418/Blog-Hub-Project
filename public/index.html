@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Blog Hub</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
+            }
+
+            .header {
+                max-width: 900px;
+                margin: 0 auto 50px;
+                text-align: center;
+            }
+
+            h1 {
+                color: #ffffff;
+                font-size: 3rem;
+                font-weight: 300;
+                letter-spacing: 2px;
+                margin-bottom: 12px;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .header-subtitle {
+                color: #e8d4a5;
+                font-size: 1.1rem;
+                font-weight: 300;
+                letter-spacing: 0.5px;
+            }
+
+            .controls {
+                max-width: 900px;
+                margin: 0 auto 30px;
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            button {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.95rem;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            #create-post-btn {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+            }
+
+            #create-post-btn:hover {
+                background: linear-gradient(135deg, #e8b896 0%, #d4a574 100%);
+            }
+
+            #admin-login-btn {
+                background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+                color: #ffffff;
+            }
+
+            #admin-login-btn:hover {
+                background: linear-gradient(135deg, #5fa3f5 0%, #4a90e2 100%);
+            }
+
+            #logout-btn {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: #ffffff;
+            }
+
+            #logout-btn:hover {
+                background: linear-gradient(135deg, #ec7063 0%, #e74c3c 100%);
+            }
+
+            #login-btn {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+            }
+
+            #login-btn:hover {
+                background: linear-gradient(135deg, #e8b896 0%, #d4a574 100%);
+            }
+
+            #profile-btn {
+                background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+                color: #ffffff;
+            }
+
+            #profile-btn:hover {
+                background: linear-gradient(135deg, #52be80 0%, #27ae60 100%);
+            }
+
+            .posts-container {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .loading {
+                text-align: center;
+                color: #ffffff;
+                padding: 40px 20px;
+                font-size: 1.1rem;
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top-color: #ffffff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 16px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            .no-posts {
+                text-align: center;
+                padding: 60px 20px;
+                color: #ffffff;
+            }
+
+            .no-posts-title {
+                font-size: 1.5rem;
+                margin-bottom: 12px;
+                font-weight: 300;
+                letter-spacing: 1px;
+            }
+
+            .no-posts-text {
+                font-size: 1rem;
+                color: #d4a574;
+            }
+
+            .post {
+                background: #ffffff;
+                border-radius: 8px;
+                padding: 32px;
+                margin-bottom: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                opacity: 0;
+                animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .post:nth-child(1) { animation-delay: 0.1s; }
+            .post:nth-child(2) { animation-delay: 0.2s; }
+            .post:nth-child(3) { animation-delay: 0.3s; }
+            .post:nth-child(n+4) { animation-delay: 0.4s; }
+
+            .post:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            }
+
+            .post-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 16px;
+            }
+
+            .post h2 {
+                color: #1e3a5f;
+                font-size: 1.6rem;
+                font-weight: 600;
+                margin: 0;
+                line-height: 1.3;
+                flex: 1;
+                letter-spacing: 0.3px;
+            }
+
+            .post-date {
+                color: #95a5a6;
+                font-size: 0.85rem;
+                white-space: nowrap;
+                margin-left: 16px;
+                font-weight: 500;
+            }
+
+            .post-divider {
+                height: 2px;
+                background: linear-gradient(to right, #d4a574 0%, transparent 100%);
+                margin: 16px 0;
+            }
+
+            .post p {
+                color: #2c3e50;
+                font-size: 1rem;
+                line-height: 1.7;
+                margin: 0;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            .post-excerpt {
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .post-meta {
+                margin-top: 16px;
+                padding-top: 16px;
+                border-top: 1px solid #ecf0f1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 0.9rem;
+                color: #7f8c8d;
+            }
+
+            .admin-controls {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                margin-left: 12px;
+            }
+
+            .admin-btn {
+                background: transparent;
+                border: 1px solid rgba(0,0,0,0.06);
+                padding: 6px 10px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.9rem;
+            }
+
+            .admin-btn.edit {
+                color: #2c3e50;
+                border-color: #d4a574;
+            }
+
+            .admin-btn.delete {
+                color: #fff;
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                border: none;
+            }
+
+            .post-word-count {
+                color: #d4a574;
+                font-weight: 500;
+            }
+
+            .error-message {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px auto;
+                max-width: 900px;
+                text-align: center;
+                font-weight: 500;
+            }
+
+            @media (max-width: 768px) {
+                h1 {
+                    font-size: 2rem;
+                }
+
+                .controls {
+                    flex-direction: column;
+                    width: 100%;
+                }
+
+                button {
+                    width: 100%;
+                }
+
+                .post {
+                    padding: 20px;
+                }
+
+                .post h2 {
+                    font-size: 1.3rem;
+                }
+
+                .post-header {
+                    flex-direction: column;
+                }
+
+                .post-date {
+                    margin-left: 0;
+                    margin-top: 8px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Blog Hub</h1>
+            <p class="header-subtitle">Discover inspiring stories and insights</p>
+        </div>
+
+        <div class="controls">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input id="search-input" type="search" placeholder="Search title, description, or tags" style="padding:10px 14px; border-radius:8px; border: none; width:320px; max-width:60vw; font-size:0.95rem;" />
+                <button id="search-btn">🔎 Search</button>
+                <button id="clear-search-btn" style="display:none; background:#ecf0f1;">✖</button>
+            </div>
+            <button id="create-post-btn" onclick="location.href='create-post.html'" style="display: none;">
+                ✎ Create New Post
+            </button>
+            <button id="admin-login-btn" onclick="location.href='login.html'" style="display: none;">
+                👤 Login
+            </button>
+            <button id="profile-btn" onclick="location.href='profile.html'" style="display: none;">
+                👤 My Profile
+            </button>
+            <button id="logout-btn" onclick="handleLogout()" style="display: none;">
+                🚪 Log Out
+            </button>
+        </div>
+
+        <div class="posts-container">
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading stories...</p>
+            </div>
+            <div id="search-info" style="max-width:900px;margin:0 auto 18px;color:#ffffff;display:none;text-align:center;font-size:0.95rem;"></div>
+            <div id="posts-container"></div>
+            <div id="error-container"></div>
+        </div>
+
+        <script>
+            // Constants
+            const LOADING_ELEMENT = document.getElementById('loading');
+            const POSTS_CONTAINER = document.getElementById('posts-container');
+            const ERROR_CONTAINER = document.getElementById('error-container');
+            const CREATE_POST_BTN = document.getElementById('create-post-btn');
+            const ADMIN_LOGIN_BTN = document.getElementById('admin-login-btn');
+            const PROFILE_BTN = document.getElementById('profile-btn');
+            const LOGOUT_BTN = document.getElementById('logout-btn');
+            const SEARCH_INPUT = document.getElementById('search-input');
+            const SEARCH_BTN = document.getElementById('search-btn');
+            const CLEAR_SEARCH_BTN = document.getElementById('clear-search-btn');
+            const SEARCH_INFO = document.getElementById('search-info');
+            let CURRENT_USER = { isAdmin: false, userId: null };
+
+            let searchTimeout = null;
+
+            function getQueryParam(name) {
+                return new URLSearchParams(window.location.search).get(name);
+            }
+
+            function updateUrlQuery(q) {
+                const url = new URL(window.location.href);
+                if (q) url.searchParams.set('q', q);
+                else url.searchParams.delete('q');
+                history.replaceState(null, '', url.toString());
+            }
+
+            async function doSearch(q) {
+                q = (q || '').toString().trim();
+                if (!q) {
+                    SEARCH_INFO.style.display = 'none';
+                    CLEAR_SEARCH_BTN.style.display = 'none';
+                    updateUrlQuery('');
+                    const posts = await fetchPosts();
+                    renderPosts(posts);
+                    return;
+                }
+
+                SEARCH_INFO.style.display = 'block';
+                SEARCH_INFO.textContent = `Searching for "${q}"...`;
+                LOADING_ELEMENT.style.display = 'block';
+                try {
+                    const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+                    if (!resp.ok) throw new Error('Search failed');
+                    const rows = await resp.json();
+                    if (rows.length === 0) {
+                        SEARCH_INFO.textContent = `No results for "${q}"`;
+                    } else {
+                        SEARCH_INFO.textContent = `Showing ${rows.length} result${rows.length===1?'':'s'} for "${q}"`;
+                    }
+                    CLEAR_SEARCH_BTN.style.display = 'inline-block';
+                    renderPosts(rows);
+                    updateUrlQuery(q);
+                } catch (err) {
+                    console.error('Search error', err);
+                    showError('Search failed. Try again.');
+                } finally {
+                    LOADING_ELEMENT.style.display = 'none';
+                }
+            }
+
+            // Wire up search interactions
+            if (SEARCH_INPUT) {
+                SEARCH_INPUT.addEventListener('input', (e) => {
+                    const v = e.target.value;
+                    if (searchTimeout) clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => doSearch(v), 350);
+                });
+            }
+
+            if (SEARCH_BTN) SEARCH_BTN.addEventListener('click', () => doSearch(SEARCH_INPUT.value));
+            if (CLEAR_SEARCH_BTN) CLEAR_SEARCH_BTN.addEventListener('click', () => {
+                SEARCH_INPUT.value = '';
+                CLEAR_SEARCH_BTN.style.display = 'none';
+                doSearch('');
+            });
+
+            // Fetch current user
+            async function fetchCurrentUser() {
+                try {
+                    const response = await fetch('/api/auth/me');
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { isAdmin: data.userRole === 'admin', userId: data.id, username: data.username };
+                    }
+                    return { isAdmin: false, userId: null };
+                } catch (error) {
+                    console.error('Error fetching user:', error);
+                    return { isAdmin: false, userId: null };
+                }
+            }
+
+            // Fetch posts from API
+            async function fetchPosts() {
+                try {
+                    LOADING_ELEMENT.style.display = 'block';
+                    const response = await fetch('/api/posts');
+                    
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    throw new Error('Failed to fetch posts');
+                } catch (error) {
+                    console.error('Error fetching posts:', error);
+                    showError('Unable to load posts. Please try again later.');
+                    return [];
+                } finally {
+                    LOADING_ELEMENT.style.display = 'none';
+                }
+            }
+
+            // Format date nicely
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+
+            // Count words in text
+            function countWords(text) {
+                return text.trim().split(/\s+/).length;
+            }
+
+            // Truncate text
+            function truncateText(text, limit = 150) {
+                if (text.length <= limit) return text;
+                return text.substring(0, limit).trim() + '...';
+            }
+
+            // Show error message
+            function showError(message) {
+                ERROR_CONTAINER.innerHTML = `<div class="error-message">${message}</div>`;
+            }
+
+            // Render posts
+            function renderPosts(posts) {
+                POSTS_CONTAINER.innerHTML = '';
+
+                if (posts.length === 0) {
+                    POSTS_CONTAINER.innerHTML = `
+                        <div class="no-posts">
+                            <p class="no-posts-title">No Stories Yet</p>
+                            <p class="no-posts-text">Check back soon for inspiring content!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                posts.forEach(post => {
+                    const wordCount = countWords(post.body);
+                    const excerpt = truncateText(post.body, 200);
+                    const date = post.created_at ? formatDate(post.created_at) : '';
+                    const postUrl = `/post.html?id=${post.id}`;
+
+                    const postElement = document.createElement('article');
+                    postElement.className = 'post';
+                    postElement.style.cursor = 'pointer';
+                    postElement.innerHTML = `
+                        <div class="post-header">
+                            <h2>${escapeHtml(post.title)}</h2>
+                            ${date ? `<span class="post-date">${date}</span>` : ''}
+                        </div>
+                        <div class="post-divider"></div>
+                        <p class="post-excerpt">${escapeHtml(excerpt)}</p>
+                        <div class="post-meta">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <span class="post-word-count">${wordCount} words</span>
+                                <span>→ Read More</span>
+                            </div>
+                            ${CURRENT_USER.isAdmin || CURRENT_USER.userId ? `<div class="admin-controls">
+                                ${CURRENT_USER.isAdmin ? `<button class="admin-btn edit" data-id="${post.id}">✎ Edit</button>
+                                <button class="admin-btn delete" data-id="${post.id}">🗑 Delete</button>` : ''}
+                            </div>` : ''}
+                        </div>
+                    `;
+
+                    // Click anywhere on post to view
+                    postElement.addEventListener('click', (e) => {
+                        // if clicked an admin button, don't navigate
+                        if (e.target.closest('.admin-btn')) return;
+                        window.location.href = postUrl;
+                    });
+
+                    // Attach admin actions if visible
+                    if (CURRENT_USER.isAdmin) {
+                        // Edit
+                        postElement.querySelector('.admin-btn.edit').addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            const id = ev.currentTarget.getAttribute('data-id');
+                            window.location.href = `/create-post.html?id=${id}&edit=1`;
+                        });
+                        // Delete
+                        postElement.querySelector('.admin-btn.delete').addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            const id = ev.currentTarget.getAttribute('data-id');
+                            if (!confirm('Delete this post? This action cannot be undone.')) return;
+                            try {
+                                const resp = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+                                if (resp.ok) {
+                                    // remove element smoothly
+                                    postElement.style.transition = 'opacity 0.3s, transform 0.3s';
+                                    postElement.style.opacity = 0;
+                                    postElement.style.transform = 'translateY(10px)';
+                                    setTimeout(() => postElement.remove(), 300);
+                                } else {
+                                    const err = await resp.json();
+                                    showError(err.error || 'Failed to delete post');
+                                }
+                            } catch (error) {
+                                console.error('Delete failed', error);
+                                showError('Delete failed. Try again.');
+                            }
+                        });
+                    }
+                    POSTS_CONTAINER.appendChild(postElement);
+                });
+            }
+
+            // Escape HTML to prevent XSS
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+
+            // Update auth buttons display
+            function updateAuthButtons(user) {
+                if (user.isAdmin) {
+                    CREATE_POST_BTN.style.display = 'inline-block';
+                    ADMIN_LOGIN_BTN.style.display = 'none';
+                    PROFILE_BTN.style.display = 'inline-block';
+                    LOGOUT_BTN.style.display = 'inline-block';
+                } else if (user.userId) {
+                    // Regular user logged in
+                    CREATE_POST_BTN.style.display = 'inline-block';
+                    ADMIN_LOGIN_BTN.style.display = 'none';
+                    PROFILE_BTN.style.display = 'inline-block';
+                    LOGOUT_BTN.style.display = 'inline-block';
+                } else {
+                    // Not logged in
+                    CREATE_POST_BTN.style.display = 'none';
+                    ADMIN_LOGIN_BTN.style.display = 'inline-block';
+                    PROFILE_BTN.style.display = 'none';
+                    LOGOUT_BTN.style.display = 'none';
+                }
+            }
+
+            // Handle logout
+            async function handleLogout() {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST'
+                    });
+                    if (response.ok) {
+                        updateAuthButtons({ isAdmin: false, userId: null });
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    showError('Logout failed. Please try again.');
+                }
+            }
+
+            // Initialize page
+            async function initializePage() {
+                try {
+                    const user = await fetchCurrentUser();
+                    CURRENT_USER = user || { isAdmin: false, userId: null };
+                    updateAuthButtons(CURRENT_USER);
+
+                    const q = getQueryParam('q');
+                    if (q) {
+                        if (SEARCH_INPUT) SEARCH_INPUT.value = q;
+                        await doSearch(q);
+                    } else {
+                        const posts = await fetchPosts();
+                        renderPosts(posts);
+                    }
+                } catch (error) {
+                    console.error('Error initializing page:', error);
+                    showError('An error occurred. Please refresh the page.');
+                }
+            }
+
+            // Load page when DOM is ready
+            window.addEventListener('load', initializePage);
+        </script>
+    </body>
+</html>

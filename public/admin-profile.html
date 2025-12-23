@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Admin Dashboard - Blog Hub</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
+            }
+
+            .navbar {
+                background: #1e3a5f;
+                padding: 16px 0;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+                margin-bottom: 40px;
+            }
+
+            .navbar-content {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 0 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .navbar a {
+                color: #ffffff;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+                transition: opacity 0.3s ease;
+            }
+
+            .navbar a:hover {
+                opacity: 0.8;
+            }
+
+            .navbar-actions {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+            }
+
+            .navbar-actions a,
+            .navbar-actions button {
+                color: #d4a574;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.95rem;
+                background: none;
+                border: none;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .navbar-actions a:hover,
+            .navbar-actions button:hover {
+                color: #e8b896;
+            }
+
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 60px 20px;
+                color: #666;
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                border: 4px solid #d4a574;
+                border-top-color: transparent;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-bottom: 20px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            .profile-header {
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                border-radius: 12px;
+                padding: 60px 40px;
+                margin-bottom: 40px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                text-align: center;
+                color: #ffffff;
+            }
+
+            .admin-badge {
+                display: inline-block;
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+                padding: 8px 20px;
+                border-radius: 20px;
+                font-weight: 600;
+                font-size: 0.9rem;
+                margin-bottom: 20px;
+                letter-spacing: 0.5px;
+            }
+
+            .profile-avatar {
+                width: 140px;
+                height: 140px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 4rem;
+                margin: 0 auto 24px;
+                color: #ffffff;
+                box-shadow: 0 8px 20px rgba(212, 165, 116, 0.4);
+                border: 4px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .profile-title {
+                color: #ffffff;
+                font-size: 2.5rem;
+                font-weight: 600;
+                margin-bottom: 12px;
+                letter-spacing: 0.5px;
+            }
+
+            .profile-subtitle {
+                color: #e8d4a5;
+                font-size: 1.1rem;
+                font-weight: 300;
+                letter-spacing: 0.3px;
+                margin-bottom: 30px;
+            }
+
+            .perks-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                margin-bottom: 40px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .section-title {
+                color: #1e3a5f;
+                font-size: 1.8rem;
+                font-weight: 600;
+                margin-bottom: 32px;
+                padding-bottom: 16px;
+                border-bottom: 2px solid #e8e8e8;
+            }
+
+            .perks-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 24px;
+                margin-bottom: 30px;
+            }
+
+            .perk-card {
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                border: 2px solid #e8e8e8;
+                border-radius: 8px;
+                padding: 24px;
+                transition: all 0.3s ease;
+            }
+
+            .perk-card:hover {
+                border-color: #d4a574;
+                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.1);
+                transform: translateY(-4px);
+            }
+
+            .perk-icon {
+                font-size: 2.5rem;
+                margin-bottom: 12px;
+            }
+
+            .perk-title {
+                color: #1e3a5f;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+
+            .perk-description {
+                color: #666;
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+
+            .responsibilities-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 24px;
+            }
+
+            .responsibility-card {
+                background: linear-gradient(135deg, #fff8f0 0%, #fffaf5 100%);
+                border: 2px solid #f5e6d3;
+                border-radius: 8px;
+                padding: 24px;
+                transition: all 0.3s ease;
+            }
+
+            .responsibility-card:hover {
+                border-color: #e74c3c;
+                box-shadow: 0 4px 12px rgba(231, 76, 60, 0.1);
+                transform: translateY(-4px);
+            }
+
+            .responsibility-icon {
+                font-size: 2.5rem;
+                margin-bottom: 12px;
+            }
+
+            .responsibility-title {
+                color: #c0392b;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+
+            .responsibility-description {
+                color: #666;
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-top: 40px;
+            }
+
+            button.action-btn {
+                padding: 14px 32px;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .create-btn {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+            }
+
+            .create-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(212, 165, 116, 0.4);
+            }
+
+            .home-btn {
+                background: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+            }
+
+            .home-btn:hover {
+                background: #dfe6e9;
+                transform: translateY(-2px);
+            }
+
+            .stats-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                margin-bottom: 40px;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 24px;
+            }
+
+            .stat-card {
+                text-align: center;
+                padding: 24px;
+                border: 1px solid #e8e8e8;
+                border-radius: 8px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            }
+
+            .stat-number {
+                color: #d4a574;
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .stat-label {
+                color: #666;
+                font-size: 0.95rem;
+                font-weight: 500;
+            }
+
+            @media (max-width: 768px) {
+                .profile-header {
+                    padding: 30px 20px;
+                }
+
+                .profile-title {
+                    font-size: 1.8rem;
+                }
+
+                .section-title {
+                    font-size: 1.3rem;
+                }
+
+                .perks-grid,
+                .responsibilities-grid,
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .action-buttons {
+                    flex-direction: column;
+                }
+
+                button.action-btn {
+                    width: 100%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="navbar">
+            <div class="navbar-content">
+                <a href="/">📝 Blog Hub</a>
+                <div class="navbar-actions">
+                    <a href="/create-post.html">New Post</a>
+                    <button id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="loadingContainer" class="loading">
+                <div class="spinner"></div>
+                <p>Loading admin dashboard...</p>
+            </div>
+
+            <div id="profileContainer" style="display: none;">
+                <div class="profile-header">
+                    <div class="admin-badge">👑 ADMINISTRATOR</div>
+                    <div class="profile-avatar">🔐</div>
+                    <h1 class="profile-title">Admin Dashboard</h1>
+                    <p class="profile-subtitle">The Guardians of Content Quality</p>
+                </div>
+
+                <div class="stats-section">
+                    <h2 class="section-title">Dashboard Stats</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalPosts">0</div>
+                            <div class="stat-label">Total Posts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalUsers">0</div>
+                            <div class="stat-label">Registered Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="adminRole">1</div>
+                            <div class="stat-label">Admin(s)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="perks-section">
+                    <h2 class="section-title">Admin Perks & Privileges</h2>
+                    <div class="perks-grid">
+                        <div class="perk-card">
+                            <div class="perk-icon">✍️</div>
+                            <div class="perk-title">Unlimited Posting</div>
+                            <div class="perk-description">Create, edit, and delete posts without limits. Full control over all blog content.</div>
+                        </div>
+                        <div class="perk-card">
+                            <div class="perk-icon">🗑️</div>
+                            <div class="perk-title">Content Moderation</div>
+                            <div class="perk-description">Review, edit, or delete any user post to maintain quality standards and community guidelines.</div>
+                        </div>
+                        <div class="perk-card">
+                            <div class="perk-icon">👥</div>
+                            <div class="perk-title">User Management</div>
+                            <div class="perk-description">View user profiles, monitor account activity, and manage community members effectively.</div>
+                        </div>
+                        <div class="perk-card">
+                            <div class="perk-icon">🎨</div>
+                            <div class="perk-title">Platform Access</div>
+                            <div class="perk-description">Full access to all admin features and dashboard statistics for better platform insights.</div>
+                        </div>
+                        <div class="perk-card">
+                            <div class="perk-icon">⚡</div>
+                            <div class="perk-title">Priority Publishing</div>
+                            <div class="perk-description">Your posts get featured and prioritized on the platform for maximum visibility.</div>
+                        </div>
+                        <div class="perk-card">
+                            <div class="perk-icon">🔔</div>
+                            <div class="perk-title">Advanced Analytics</div>
+                            <div class="perk-description">Access detailed stats on posts, user engagement, and platform performance metrics.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="perks-section">
+                    <h2 class="section-title">Admin Responsibilities</h2>
+                    <div class="responsibilities-grid">
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">📋</div>
+                            <div class="responsibility-title">Content Review</div>
+                            <div class="responsibility-description">Regularly review user submissions for quality, originality, and compliance with community standards.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">🛡️</div>
+                            <div class="responsibility-title">Community Safety</div>
+                            <div class="responsibility-description">Maintain a safe, respectful environment by moderating inappropriate content and managing disputes.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">⚖️</div>
+                            <div class="responsibility-title">Fair Enforcement</div>
+                            <div class="responsibility-description">Apply community guidelines fairly and consistently to all users without bias or favoritism.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">💬</div>
+                            <div class="responsibility-title">User Support</div>
+                            <div class="responsibility-description">Respond to user inquiries, provide assistance, and help resolve platform-related issues promptly.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">📊</div>
+                            <div class="responsibility-title">Platform Monitoring</div>
+                            <div class="responsibility-description">Monitor platform health, track analytics, and identify areas for improvement and optimization.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">📢</div>
+                            <div class="responsibility-title">Community Building</div>
+                            <div class="responsibility-description">Foster positive community interactions, encourage quality contributions, and celebrate great content.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn create-btn" onclick="location.href='/create-post.html'">✎ Create New Post</button>
+                    <button class="action-btn home-btn" onclick="location.href='/'">🏠 Back to Blog</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const loadingContainer = document.getElementById('loadingContainer');
+            const profileContainer = document.getElementById('profileContainer');
+
+            // Load admin dashboard
+            async function loadAdminDashboard() {
+                try {
+                    // Verify current user is admin
+                    const meResponse = await fetch('/api/auth/me');
+                    if (!meResponse.ok) {
+                        throw new Error('Not logged in');
+                    }
+                    const currentUser = await meResponse.json();
+                    
+                    if (!currentUser.isAdmin) {
+                        window.location.href = '/profile.html';
+                        return;
+                    }
+
+                    // Load stats
+                    const postsResponse = await fetch('/api/posts');
+                    const posts = postsResponse.ok ? await postsResponse.json() : [];
+                    
+                    // Display stats
+                    document.getElementById('totalPosts').textContent = posts.length;
+                    document.getElementById('totalUsers').textContent = '?'; // Would need a users count endpoint
+                    
+                    loadingContainer.style.display = 'none';
+                    profileContainer.style.display = 'block';
+                } catch (error) {
+                    console.error('Load dashboard error:', error);
+                    window.location.href = '/login.html';
+                }
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/';
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            });
+
+            // Load dashboard on page load
+            loadAdminDashboard();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>User Profile - Blog Hub</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
+            }
+
+            .navbar {
+                background: #1e3a5f;
+                padding: 16px 0;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+                margin-bottom: 40px;
+            }
+
+            .navbar-content {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 0 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .navbar a {
+                color: #ffffff;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+                transition: opacity 0.3s ease;
+            }
+
+            .navbar a:hover {
+                opacity: 0.8;
+            }
+
+            .navbar-actions {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+            }
+
+            .navbar-actions a,
+            .navbar-actions button {
+                color: #d4a574;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.95rem;
+                background: none;
+                border: none;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .navbar-actions a:hover,
+            .navbar-actions button:hover {
+                color: #e8b896;
+            }
+
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 60px 20px;
+                color: #666;
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                border: 4px solid #d4a574;
+                border-top-color: transparent;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-bottom: 20px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            .error {
+                background-color: #f8d7da;
+                color: #721c24;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 40px;
+                border: 1px solid #f5c6cb;
+            }
+
+            .profile-header {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                margin-bottom: 40px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                text-align: center;
+            }
+
+            .profile-avatar {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3rem;
+                margin: 0 auto 24px;
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+            }
+
+            .profile-name {
+                color: #1e3a5f;
+                font-size: 2rem;
+                font-weight: 600;
+                margin-bottom: 8px;
+                letter-spacing: 0.5px;
+            }
+
+            .profile-username {
+                color: #d4a574;
+                font-size: 1.1rem;
+                font-weight: 500;
+                margin-bottom: 16px;
+            }
+
+            .profile-info {
+                background: #f8f9fa;
+                padding: 16px 24px;
+                border-radius: 8px;
+                margin-bottom: 24px;
+                font-size: 0.95rem;
+                color: #555;
+            }
+
+            .profile-bio {
+                color: #555;
+                font-size: 1rem;
+                line-height: 1.6;
+                margin-bottom: 24px;
+                font-weight: 300;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .profile-actions {
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-top: 24px;
+            }
+
+            button.action-btn {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .edit-btn {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+            }
+
+            .edit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(212, 165, 116, 0.4);
+            }
+
+            .delete-btn {
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+
+            .delete-btn:hover {
+                background: #f5c6cb;
+                transform: translateY(-2px);
+            }
+
+            .edit-form {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                margin-bottom: 40px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                display: none;
+            }
+
+            .edit-form.active {
+                display: block;
+            }
+
+            .form-group {
+                margin-bottom: 24px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 10px;
+                color: #2c3e50;
+                font-weight: 600;
+                font-size: 0.95rem;
+                letter-spacing: 0.4px;
+            }
+
+            input[type="text"],
+            textarea {
+                width: 100%;
+                padding: 14px 16px;
+                border: 2px solid #e8e8e8;
+                border-radius: 6px;
+                font-size: 1rem;
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                transition: all 0.3s ease;
+                background-color: #f8f9fa;
+                color: #2c3e50;
+            }
+
+            input[type="text"]:focus,
+            textarea:focus {
+                outline: none;
+                border-color: #d4a574;
+                background-color: #ffffff;
+                box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
+            }
+
+            textarea {
+                resize: vertical;
+                min-height: 120px;
+            }
+
+            .form-actions {
+                display: flex;
+                gap: 12px;
+            }
+
+            .form-actions button {
+                flex: 1;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .save-btn {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+            }
+
+            .save-btn:hover {
+                transform: translateY(-2px);
+            }
+
+            .cancel-btn {
+                background: #e8e8e8;
+                color: #555;
+            }
+
+            .cancel-btn:hover {
+                background: #d8d8d8;
+            }
+
+            .posts-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .posts-title {
+                color: #1e3a5f;
+                font-size: 1.8rem;
+                font-weight: 600;
+                margin-bottom: 32px;
+                padding-bottom: 16px;
+                border-bottom: 2px solid #e8e8e8;
+            }
+
+            .post-card {
+                padding: 24px;
+                border: 1px solid #e8e8e8;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+
+            .post-card:hover {
+                border-color: #d4a574;
+                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.1);
+                transform: translateX(4px);
+            }
+
+            .post-title {
+                color: #1e3a5f;
+                font-size: 1.3rem;
+                font-weight: 600;
+                margin-bottom: 12px;
+            }
+
+            .post-excerpt {
+                color: #666;
+                line-height: 1.6;
+                margin-bottom: 16px;
+                font-size: 0.95rem;
+            }
+
+            .post-meta {
+                font-size: 0.85rem;
+                color: #999;
+                display: flex;
+                gap: 16px;
+            }
+
+            .empty-posts {
+                text-align: center;
+                padding: 60px 20px;
+                color: #999;
+            }
+
+            .empty-posts-icon {
+                font-size: 3rem;
+                margin-bottom: 16px;
+            }
+
+            #message {
+                margin-bottom: 20px;
+                padding: 14px 16px;
+                border-radius: 6px;
+                font-weight: 600;
+                text-align: center;
+                font-size: 0.95rem;
+                display: none;
+                animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            #message.error {
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+                display: block;
+            }
+
+            #message.success {
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+                display: block;
+            }
+
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @media (max-width: 768px) {
+                .profile-header,
+                .edit-form,
+                .posts-section {
+                    padding: 24px;
+                }
+
+                .profile-name {
+                    font-size: 1.5rem;
+                }
+
+                .form-actions {
+                    flex-direction: column;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="navbar">
+            <div class="navbar-content">
+                <a href="/">📝 Blog Hub</a>
+                <div class="navbar-actions">
+                    <a href="/create-post.html">New Post</a>
+                    <button id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="message" role="alert"></div>
+
+            <div id="loadingContainer" class="loading">
+                <div class="spinner"></div>
+                <p>Loading profile...</p>
+            </div>
+
+            <div id="profileContainer" style="display: none;">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profileAvatar">👤</div>
+                    <h1 class="profile-name" id="profileName"></h1>
+                    <p class="profile-username" id="profileUsername"></p>
+                    <div class="profile-info" id="profileEmail"></div>
+                    <p class="profile-bio" id="profileBio"></p>
+                    <div class="profile-actions">
+                        <button class="action-btn edit-btn" onclick="toggleEditForm()">Edit Profile</button>
+                    </div>
+                </div>
+
+                <div id="editForm" class="edit-form">
+                    <h2 style="margin-bottom: 24px; color: #1e3a5f;">Edit Profile</h2>
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label for="editName">Full Name</label>
+                            <input type="text" id="editName" placeholder="Enter your full name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="editBio">Bio</label>
+                            <textarea id="editBio" placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="save-btn">Save Changes</button>
+                            <button type="button" class="cancel-btn" onclick="toggleEditForm()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="posts-section">
+                    <h2 class="posts-title" id="postsCount">Your Posts (0)</h2>
+                    <div id="postsContainer"></div>
+                </div>
+            </div>
+
+            <div id="errorContainer" style="display: none;">
+                <div class="error" id="errorMessage"></div>
+                <div style="text-align: center;">
+                    <a href="/login.html" style="color: #d4a574; text-decoration: none; font-weight: 600;">← Back to Login</a>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let currentUser = null;
+            let profileUserId = null;
+
+            const messageDiv = document.getElementById('message');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const profileContainer = document.getElementById('profileContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            const postsContainer = document.getElementById('postsContainer');
+            const profileForm = document.getElementById('profileForm');
+
+            // Get userId from URL params if viewing someone else's profile
+            const params = new URLSearchParams(window.location.search);
+            profileUserId = params.get('id');
+
+            // Load profile
+            async function loadProfile() {
+                try {
+                    // Get current user
+                    const meResponse = await fetch('/api/auth/me');
+                    if (!meResponse.ok) {
+                        throw new Error('Not logged in');
+                    }
+                    currentUser = await meResponse.json();
+
+                    // If admin, redirect to admin profile page
+                    if (currentUser.isAdmin) {
+                        window.location.href = '/admin-profile.html';
+                        return;
+                    }
+
+                    // Get profile user (current user or specified user)
+                    const targetUserId = profileUserId || currentUser.id;
+                    const profileResponse = await fetch(`/api/users/${targetUserId}`);
+                    if (!profileResponse.ok) {
+                        throw new Error('User not found');
+                    }
+                    const profileData = await profileResponse.json();
+
+                    // Flatten the response data since API returns flat object, not nested
+                    displayProfile(profileData);
+                    loadingContainer.style.display = 'none';
+                    profileContainer.style.display = 'block';
+                } catch (error) {
+                    console.error('Load profile error:', error);
+                    loadingContainer.style.display = 'none';
+                    errorContainer.style.display = 'block';
+                    document.getElementById('errorMessage').textContent = 'Could not load profile. Please log in again.';
+                }
+            }
+
+            function displayProfile(user) {
+                document.getElementById('profileName').textContent = user.full_name || user.username;
+                document.getElementById('profileUsername').textContent = '@' + user.username;
+                document.getElementById('profileEmail').textContent = `Email: ${user.email}`;
+                document.getElementById('profileBio').textContent = user.bio || 'No bio added yet.';
+                document.getElementById('editName').value = user.full_name || '';
+                document.getElementById('editBio').value = user.bio || '';
+
+                // Show edit button only if viewing own profile
+                if (!profileUserId || profileUserId == currentUser.id) {
+                    // Edit button already visible
+                } else {
+                    // Hide edit form for other users
+                    document.querySelector('.action-btn.edit-btn').style.display = 'none';
+                }
+
+                // Display posts
+                if (user.posts && user.posts.length > 0) {
+                    document.getElementById('postsCount').textContent = `${user.posts.length} ${user.posts.length === 1 ? 'Post' : 'Posts'}`;
+                    postsContainer.innerHTML = user.posts
+                        .map(post => `
+                            <div class="post-card" onclick="window.location.href='/post.html?id=${post.id}'">
+                                <h3 class="post-title">${escapeHtml(post.title)}</h3>
+                                <p class="post-excerpt">${escapeHtml(post.body.substring(0, 150))}${post.body.length > 150 ? '...' : ''}</p>
+                                <div class="post-meta">
+                                    <span>📅 ${new Date(post.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        `)
+                        .join('');
+                } else {
+                    document.getElementById('postsCount').textContent = 'No posts yet';
+                    postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No posts published yet.</p></div>';
+                }
+            }
+
+            function toggleEditForm() {
+                const editForm = document.getElementById('editForm');
+                editForm.classList.toggle('active');
+            }
+
+            profileForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const fullName = document.getElementById('editName').value.trim();
+                const bio = document.getElementById('editBio').value.trim();
+
+                try {
+                    const response = await fetch('/api/auth/profile', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ full_name: fullName, bio }),
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showMessage('✓ Profile updated successfully!', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showMessage(result.error || 'Update failed. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Update error:', error);
+                    showMessage('Error: ' + error.message, 'error');
+                }
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/';
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            });
+
+            function showMessage(text, type = 'error') {
+                messageDiv.textContent = text;
+                messageDiv.className = type;
+                messageDiv.style.display = 'block';
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Load profile on page load
+            loadProfile();
+        </script>
+    </body>
+</html>

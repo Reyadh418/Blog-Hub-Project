@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Create New Post</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
+            }
+
+            h1 {
+                color: #ffffff;
+                font-size: 2.5rem;
+                font-weight: 300;
+                letter-spacing: 1px;
+                margin-bottom: 40px;
+                text-align: center;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            form {
+                background: #ffffff;
+                max-width: 700px;
+                margin: 0 auto;
+                padding: 50px;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            }
+
+            label {
+                display: block;
+                margin-bottom: 12px;
+                font-weight: 600;
+                color: #2c3e50;
+                font-size: 1rem;
+                letter-spacing: 0.5px;
+            }
+
+            input[type="text"],
+            textarea {
+                width: 100%;
+                padding: 14px 16px;
+                margin-bottom: 24px;
+                border: 2px solid #e8e8e8;
+                border-radius: 6px;
+                font-size: 1rem;
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                transition: all 0.3s ease;
+                background-color: #f8f9fa;
+                color: #2c3e50;
+            }
+
+            input[type="text"]:focus,
+            textarea:focus {
+                outline: none;
+                border-color: #d4a574;
+                background-color: #ffffff;
+                box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
+            }
+
+            textarea {
+                resize: vertical;
+                min-height: 280px;
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+            }
+
+            button {
+                width: 100%;
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+                padding: 14px 24px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 1.1rem;
+                font-weight: 600;
+                letter-spacing: 1px;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+            }
+
+            button:hover {
+                background: linear-gradient(135deg, #e8b896 0%, #d4a574 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            .message {
+                margin-top: 20px;
+                padding: 14px 16px;
+                border-radius: 6px;
+                font-weight: 600;
+                text-align: center;
+                font-size: 0.95rem;
+            }
+
+            .message:empty {
+                display: none;
+            }
+
+            .message {
+                animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .message.success {
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+
+            .message.error {
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+
+            /* Loading spinner */
+            .spinner {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border: 3px solid rgba(255, 255, 255, 0.3);
+                border-top-color: #ffffff;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes fadeOut {
+                to {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+            }
+
+            button:disabled {
+                opacity: 0.8;
+                cursor: not-allowed;
+            }
+
+            button:disabled:hover {
+                transform: none;
+            }
+
+            .form-group {
+                margin-bottom: 24px;
+            }
+
+            .character-count {
+                font-size: 0.85rem;
+                color: #7f8c8d;
+                margin-top: 6px;
+                text-align: right;
+            }
+
+            .form-header {
+                margin-bottom: 32px;
+            }
+
+            .form-subtitle {
+                color: #7f8c8d;
+                font-size: 0.95rem;
+                margin-top: 8px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="form-header">
+            <h1>Create New Post</h1>
+            <p class="form-subtitle">Share your thoughts with the world</p>
+        </div>
+
+        <form id="postForm" novalidate>
+            <div class="form-group">
+                <label for="title">Post Title</label>
+                <input 
+                    type="text" 
+                    id="title" 
+                    name="title" 
+                    placeholder="Enter a compelling title..."
+                    maxlength="200"
+                    required 
+                    autocomplete="off"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="body">Post Content</label>
+                <textarea 
+                    id="body" 
+                    name="body" 
+                    placeholder="Write your story here..."
+                    maxlength="10000"
+                    required
+                ></textarea>
+                <div class="character-count">
+                    <span id="bodyCount">0</span> / 10000 characters
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="tags">Tags (comma-separated)</label>
+                <input type="text" id="tags" name="tags" placeholder="e.g. javascript, productivity" autocomplete="off" />
+            </div>
+
+            <button type="submit" id="submitBtn">
+                <span id="btnText">Create Post</span>
+            </button>
+        </form>
+
+        <div class="message" id="message" role="alert"></div>
+
+        <script>
+            const postForm = document.getElementById('postForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const titleInput = document.getElementById('title');
+            const bodyInput = document.getElementById('body');
+            const messageDiv = document.getElementById('message');
+            const bodyCountSpan = document.getElementById('bodyCount');
+
+            // Update character count
+            bodyInput.addEventListener('input', function() {
+                bodyCountSpan.textContent = this.value.length;
+            });
+
+            // Admin/User access check
+            async function checkAdminAccess() {
+                try {
+                    const response = await fetch('/api/auth/me');
+                    if (response.ok) {
+                        const user = await response.json();
+                        // Allow both admins and users
+                        if (user.isAdmin || user.userId) {
+                            return true;
+                        }
+                        window.location.href = '/login.html?return=/create-post.html';
+                        return false;
+                    }
+                    window.location.href = '/login.html?return=/create-post.html';
+                    return false;
+                } catch (error) {
+                    console.error('Auth check failed:', error);
+                    window.location.href = '/login.html?return=/create-post.html';
+                    return false;
+                }
+            }
+
+            // Show message with styling
+            function showMessage(text, type = 'error') {
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.opacity = '1';
+
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageDiv.style.animation = 'fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                        setTimeout(() => {
+                            messageDiv.textContent = '';
+                            messageDiv.className = 'message';
+                            messageDiv.style.animation = '';
+                        }, 400);
+                    }, 3000);
+                }
+            }
+
+            // Form validation
+            function validateForm() {
+                const title = titleInput.value.trim();
+                const body = bodyInput.value.trim();
+
+                if (!title) {
+                    showMessage('Please enter a post title', 'error');
+                    titleInput.focus();
+                    return false;
+                }
+
+                if (title.length < 3) {
+                    showMessage('Title must be at least 3 characters', 'error');
+                    titleInput.focus();
+                    return false;
+                }
+
+                if (!body) {
+                    showMessage('Please enter post content', 'error');
+                    bodyInput.focus();
+                    return false;
+                }
+
+                if (body.length < 10) {
+                    showMessage('Content must be at least 10 characters', 'error');
+                    bodyInput.focus();
+                    return false;
+                }
+
+                return true;
+            }
+
+            function getQueryParam(name) {
+                return new URLSearchParams(window.location.search).get(name);
+            }
+
+            // Form submission handler
+            postForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                if (!validateForm()) {
+                    return;
+                }
+
+                const title = titleInput.value.trim();
+                const body = bodyInput.value.trim();
+                    const tagsInput = document.getElementById('tags');
+                    const tags = (tagsInput && tagsInput.value) ? tagsInput.value.split(',').map(s=>s.trim()).filter(Boolean) : [];
+                const isEdit = getQueryParam('edit') === '1' || getQueryParam('id');
+                const postId = getQueryParam('id');
+
+                // Disable submit button and show loading state
+                submitBtn.disabled = true;
+                const btnText = document.getElementById('btnText');
+                const originalText = btnText.textContent;
+                btnText.innerHTML = `<span class="spinner"></span> ${isEdit ? 'Saving...' : 'Creating...'}`;
+
+                try {
+                    const url = isEdit && postId ? `/api/posts/${postId}` : '/api/posts';
+                    const method = isEdit && postId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ title, body, tags })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        showMessage(isEdit ? '✓ Post updated! Redirecting...' : '✓ Post created successfully! Redirecting...', 'success');
+                        postForm.reset();
+                        bodyCountSpan.textContent = '0';
+
+                        // Redirect to the post page (if edit) or homepage
+                        setTimeout(() => {
+                            if (isEdit && result.id) window.location.href = `/post.html?id=${result.id}`;
+                            else window.location.href = '/';
+                        }, 1200);
+                    } else {
+                        const errorData = await response.json();
+                        showMessage(
+                            errorData.error || 'Failed to save post. Please try again.',
+                            'error'
+                        );
+                        submitBtn.disabled = false;
+                        btnText.textContent = originalText;
+                    }
+                } catch (error) {
+                    showMessage(
+                        'Network error: ' + (error.message || 'Please check your connection'),
+                        'error'
+                    );
+                    submitBtn.disabled = false;
+                    btnText.textContent = originalText;
+                }
+            });
+
+            // Initialize page
+            async function initializePage() {
+                const allowed = await checkAdminAccess();
+
+                // If edit mode, load existing post
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get('id');
+                const edit = params.get('edit') === '1' || !!id;
+
+                if (edit && id) {
+                    // fetch post data
+                    try {
+                        const resp = await fetch(`/api/posts/${id}`);
+                        if (resp.ok) {
+                            const post = await resp.json();
+                            titleInput.value = post.title;
+                            bodyInput.value = post.body;
+                            if (post.tags && Array.isArray(post.tags)) {
+                                document.getElementById('tags').value = post.tags.join(', ');
+                            } else if (post.tags) {
+                                document.getElementById('tags').value = post.tags.toString();
+                            }
+                            bodyCountSpan.textContent = post.body.length;
+                            document.getElementById('btnText').textContent = 'Save Changes';
+                            document.querySelector('.form-header h1').textContent = 'Edit Post';
+                            document.querySelector('.form-subtitle').textContent = 'Make your changes and save';
+                        } else if (resp.status === 404) {
+                            showMessage('Post not found', 'error');
+                        } else {
+                            showMessage('Unable to load post for editing', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Load post failed', err);
+                        showMessage('Unable to load post for editing', 'error');
+                    }
+                }
+
+                return allowed;
+            }
+
+            // Run on page load
+            window.addEventListener('load', initializePage);
+
+            // Prevent accidental navigation
+            window.addEventListener('beforeunload', function(e) {
+                if (titleInput.value.trim() || bodyInput.value.trim()) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        </script>
+    </body>
+</html> 

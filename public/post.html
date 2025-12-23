@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Blog Post</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
+            }
+
+            .post-header {
+                max-width: 900px;
+                margin: 0 auto 30px;
+                text-align: center;
+            }
+
+            .nav-back {
+                display: inline-block;
+                margin-bottom: 20px;
+                color: #d4a574;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.95rem;
+                transition: color 0.3s ease;
+                letter-spacing: 0.5px;
+            }
+
+            .nav-back:hover {
+                color: #e8b896;
+            }
+
+            h1 {
+                color: #1e3a5f;
+                font-size: 2.8rem;
+                font-weight: 300;
+                letter-spacing: 1px;
+                margin-bottom: 20px;
+                line-height: 1.2;
+            }
+
+            .post-header h1 {
+                color: #1e3a5f;
+            }
+
+            .post-meta {
+                color: #d4a574;
+                font-size: 0.95rem;
+                letter-spacing: 0.5px;
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+
+            .meta-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .loading {
+                text-align: center;
+                color: #ffffff;
+                padding: 60px 20px;
+                font-size: 1.1rem;
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 50px;
+                height: 50px;
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top-color: #ffffff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            .post-container {
+                max-width: 900px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                padding: 60px 50px;
+                opacity: 0;
+                animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .post-divider {
+                height: 3px;
+                background: linear-gradient(to right, #d4a574 0%, transparent 100%);
+                margin: 40px 0;
+            }
+
+            .post-body {
+                color: #2c3e50;
+                font-size: 1.1rem;
+                line-height: 1.9;
+                margin-bottom: 40px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                white-space: pre-wrap;
+            }
+
+            .post-footer {
+                padding-top: 30px;
+                border-top: 2px solid #ecf0f1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+
+            .post-stats {
+                display: flex;
+                gap: 30px;
+                font-size: 0.95rem;
+                color: #7f8c8d;
+            }
+
+            .stat-item {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .stat-label {
+                color: #95a5a6;
+                font-size: 0.85rem;
+                font-weight: 500;
+                letter-spacing: 0.4px;
+                text-transform: uppercase;
+            }
+
+            .stat-value {
+                color: #d4a574;
+                font-weight: 600;
+                font-size: 1rem;
+            }
+
+            .post-actions {
+                display: flex;
+                gap: 12px;
+            }
+
+            button {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.95rem;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .btn-home {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+            }
+
+            .btn-home:hover {
+                background: linear-gradient(135deg, #e8b896 0%, #d4a574 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(212, 165, 116, 0.3);
+            }
+
+            .btn-copy {
+                background: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+            }
+
+            .btn-copy:hover {
+                background: #d4a574;
+                color: #ffffff;
+                border-color: #d4a574;
+            }
+
+            .btn-copy.copied {
+                background: #27ae60;
+                color: #ffffff;
+                border-color: #27ae60;
+            }
+
+            .error-container {
+                max-width: 900px;
+                margin: 0 auto;
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: #ffffff;
+                padding: 40px;
+                border-radius: 12px;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            }
+
+            .error-icon {
+                font-size: 3rem;
+                margin-bottom: 16px;
+            }
+
+            .error-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 10px;
+                letter-spacing: 0.5px;
+            }
+
+            .error-text {
+                font-size: 1rem;
+                margin-bottom: 25px;
+                opacity: 0.95;
+            }
+
+            .error-back {
+                display: inline-block;
+                background: rgba(255, 255, 255, 0.2);
+                color: #ffffff;
+                padding: 12px 24px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .error-back:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+            @media (max-width: 768px) {
+                h1 {
+                    font-size: 1.8rem;
+                }
+
+                .post-container {
+                    padding: 30px 20px;
+                }
+
+                .post-body {
+                    font-size: 1rem;
+                    line-height: 1.8;
+                }
+
+                .post-footer {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                .post-stats {
+                    flex-wrap: wrap;
+                    gap: 20px;
+                }
+
+                .post-actions {
+                    width: 100%;
+                }
+
+                button {
+                    flex: 1;
+                    min-width: 120px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading post...</p>
+        </div>
+
+        <div id="post-wrapper" style="display: none;">
+            <div class="post-header">
+                <a href="/" class="nav-back">← Back to Blog</a>
+                <form id="post-search-form" style="display:inline-block; margin-left:12px;">
+                    <input id="post-search-input" type="search" placeholder="Search blog..." style="padding:8px 10px;border-radius:8px;border:1px solid #dfe6ea;" />
+                    <button id="post-search-btn" type="submit" style="padding:8px 10px;border-radius:8px;border:none;margin-left:6px;background:#d4a574;color:#fff;">🔎</button>
+                </form>
+            </div>
+
+            <div class="post-container">
+                <div class="post-header">
+                    <h1 id="postTitle"></h1>
+                    <div class="post-meta">
+                        <div class="meta-item">
+                            📅 <span id="postDate"></span>
+                        </div>
+                        <div class="meta-item">
+                            📝 <span id="wordCount">0</span> words
+                        </div>
+                        <div class="meta-item">
+                            ⏱️ <span id="readTime">0</span> min read
+                        </div>
+                    </div>
+                </div>
+
+                <div class="post-divider"></div>
+
+                <p class="post-body" id="postBody"></p>
+
+                <div class="post-footer">
+                    <div class="post-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Word Count</span>
+                            <span class="stat-value" id="statWordCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Published</span>
+                            <span class="stat-value" id="statDate"></span>
+                        </div>
+                    </div>
+                    <div class="post-actions">
+                        <button class="btn-copy" onclick="copyPostLink()" id="copyBtn">📋 Copy Link</button>
+                        <button class="btn-home" onclick="location.href='/'">🏠 Back Home</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-wrapper" style="display: none;">
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">Post Not Found</div>
+                <p class="error-text" id="errorMessage">The post you're looking for doesn't exist.</p>
+                <a href="/" class="error-back">← Back to Blog</a>
+            </div>
+        </div>
+
+        <script>
+            const LOADING = document.getElementById('loading');
+            const POST_WRAPPER = document.getElementById('post-wrapper');
+            const ERROR_WRAPPER = document.getElementById('error-wrapper');
+            const ERROR_MESSAGE = document.getElementById('errorMessage');
+
+            // Get post ID from URL query parameter
+            function getPostId() {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('id');
+            }
+
+            // Count words in text
+            function countWords(text) {
+                return text.trim().split(/\s+/).length;
+            }
+
+            // Estimate reading time (200 words per minute)
+            function estimateReadTime(wordCount) {
+                return Math.max(1, Math.ceil(wordCount / 200));
+            }
+
+            // Format date nicely
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+
+            // Escape HTML to prevent XSS
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+
+            // Fetch post by ID
+            async function fetchPost(postId) {
+                try {
+                    const response = await fetch(`/api/posts/${postId}`);
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            showError('The post you\'re looking for doesn\'t exist.');
+                        } else {
+                            showError('Failed to fetch the post.');
+                        }
+                        return null;
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching post:', error);
+                    showError('Unable to load the post. Please try again later.');
+                    return null;
+                }
+            }
+
+            // Render post content
+            function renderPost(post) {
+                const wordCount = countWords(post.body);
+                const readTime = estimateReadTime(wordCount);
+                const formattedDate = formatDate(post.created_at);
+
+                // Update title
+                document.title = `${post.title} | Blog`;
+                document.getElementById('postTitle').textContent = escapeHtml(post.title);
+
+                // Update meta information
+                document.getElementById('postDate').textContent = formattedDate;
+                document.getElementById('wordCount').textContent = wordCount;
+                document.getElementById('readTime').textContent = readTime;
+
+                // Update body
+                document.getElementById('postBody').textContent = post.body;
+
+                // Update stats
+                document.getElementById('statWordCount').textContent = wordCount;
+                document.getElementById('statDate').textContent = formattedDate;
+
+                LOADING.style.display = 'none';
+                POST_WRAPPER.style.display = 'block';
+                // show admin controls if applicable
+                maybeShowAdminActions(post.id);
+            }
+
+            // Fetch current user (to show admin controls)
+            async function fetchCurrentUser() {
+                try {
+                    const response = await fetch('/api/auth/me');
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { isAdmin: data.userRole === 'admin', userId: data.id };
+                    }
+                } catch (err) {
+                    console.error('fetchCurrentUser failed', err);
+                }
+                return { isAdmin: false, userId: null };
+            }
+
+            // Show admin actions (edit/delete)
+            async function maybeShowAdminActions(postId) {
+                const user = await fetchCurrentUser();
+                if (!user.isAdmin) return;
+
+                const actions = document.querySelector('.post-actions');
+                // create edit button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'admin-edit';
+                editBtn.textContent = '✎ Edit';
+                editBtn.style.background = 'transparent';
+                editBtn.style.border = '1px solid #d4a574';
+                editBtn.style.color = '#1e3a5f';
+                editBtn.style.padding = '10px 14px';
+                editBtn.style.borderRadius = '6px';
+                editBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.href = `/create-post.html?id=${postId}&edit=1`;
+                });
+
+                // create delete button
+                const delBtn = document.createElement('button');
+                delBtn.className = 'admin-delete';
+                delBtn.textContent = '🗑 Delete';
+                delBtn.style.background = '#e74c3c';
+                delBtn.style.color = '#fff';
+                delBtn.style.border = 'none';
+                delBtn.style.padding = '10px 14px';
+                delBtn.style.borderRadius = '6px';
+                delBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (!confirm('Delete this post? This cannot be undone.')) return;
+                    try {
+                        const resp = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+                        if (resp.ok) {
+                            window.location.href = '/';
+                        } else {
+                            const err = await resp.json();
+                            showError(err.error || 'Delete failed');
+                        }
+                    } catch (err) {
+                        console.error('delete failed', err);
+                        showError('Delete failed');
+                    }
+                });
+
+                // insert admin buttons before other actions
+                actions.insertBefore(editBtn, actions.firstChild);
+                actions.insertBefore(delBtn, actions.firstChild);
+            }
+
+            // Show error message
+            function showError(message) {
+                ERROR_MESSAGE.textContent = message;
+                LOADING.style.display = 'none';
+                ERROR_WRAPPER.style.display = 'block';
+            }
+
+            // Copy post link to clipboard
+            async function copyPostLink() {
+                const postId = getPostId();
+                const link = `${window.location.origin}/post.html?id=${postId}`;
+                
+                try {
+                    await navigator.clipboard.writeText(link);
+                    const btn = document.getElementById('copyBtn');
+                    const originalText = btn.textContent;
+                    
+                    btn.textContent = '✓ Copied!';
+                    btn.classList.add('copied');
+
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                    alert('Failed to copy link');
+                }
+            }
+
+            // Initialize page
+            async function initializePage() {
+                const postId = getPostId();
+
+                if (!postId) {
+                    showError('No post ID provided. Please go back and select a post.');
+                    return;
+                }
+
+                LOADING.style.display = 'block';
+                const post = await fetchPost(postId);
+
+                if (post) {
+                    renderPost(post);
+                }
+            }
+
+            // Load on page ready
+            // Wire up inline search from post page
+            const POST_SEARCH_FORM = document.getElementById('post-search-form');
+            const POST_SEARCH_INPUT = document.getElementById('post-search-input');
+            if (POST_SEARCH_FORM) {
+                POST_SEARCH_FORM.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const q = (POST_SEARCH_INPUT.value || '').toString().trim();
+                    if (!q) return;
+                    window.location.href = `/?q=${encodeURIComponent(q)}`;
+                });
+            }
+
+            window.addEventListener('load', initializePage);
+        </script>
+    </body>
+</html>
