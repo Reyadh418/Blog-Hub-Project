@@ -475,10 +475,15 @@
                     }
                     currentUser = await meResponse.json();
 
-                    // If admin, redirect to admin profile page
+                    // If admin, redirect to admin profile page immediately
                     if (currentUser.isAdmin) {
                         window.location.href = '/admin-profile.html';
                         return;
+                    }
+
+                    // Must be a user at this point
+                    if (!currentUser.id) {
+                        throw new Error('Invalid user');
                     }
 
                     // Get profile user (current user or specified user)
@@ -506,14 +511,12 @@
                 document.getElementById('profileUsername').textContent = '@' + user.username;
                 document.getElementById('profileEmail').textContent = `Email: ${user.email}`;
                 document.getElementById('profileBio').textContent = user.bio || 'No bio added yet.';
-                document.getElementById('editName').value = user.full_name || '';
-                document.getElementById('editBio').value = user.bio || '';
 
                 // Show edit button only if viewing own profile
                 if (!profileUserId || profileUserId == currentUser.id) {
                     // Edit button already visible
                 } else {
-                    // Hide edit form for other users
+                    // Hide edit button for other users
                     document.querySelector('.action-btn.edit-btn').style.display = 'none';
                 }
 

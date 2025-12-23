@@ -196,13 +196,13 @@ app.post("/api/auth/logout", (req, res) => {
 app.get("/api/auth/me", async (req, res, next) => {
   try {
     if (req.session.isAdmin) {
-      return res.json({ id: null, isAdmin: true, userRole: "admin" });
+      return res.json({ isAdmin: true, userRole: "admin" });
     }
     if (req.session.userId) {
       const user = await dbGet("SELECT id, username, full_name, email, bio FROM users WHERE id = ?", [req.session.userId]);
       return res.json({ id: user.id, userId: user.id, username: user.username, full_name: user.full_name, fullName: user.full_name, email: user.email, bio: user.bio, userRole: "user", isAdmin: false });
     }
-    res.json({ id: null, isAdmin: false, userId: null, userRole: null });
+    res.json({ isAdmin: false, userId: null, userRole: null });
   } catch (err) {
     next(err);
   }
@@ -230,13 +230,13 @@ app.get("/api/users/:id", async (req, res, next) => {
     const userId = Number(req.params.id);
     if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "Invalid user id" });
 
-    const user = await dbGet("SELECT id, username, full_name, bio, created_at FROM users WHERE id = ?", [userId]);
+    const user = await dbGet("SELECT id, username, email, full_name, bio, created_at FROM users WHERE id = ?", [userId]);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     // Get user's posts
     const posts = await dbAll("SELECT id, title, body, created_at FROM posts WHERE author_id = ? ORDER BY created_at DESC", [userId]);
 
-    res.json({ id: user.id, username: user.username, full_name: user.full_name, bio: user.bio, created_at: user.created_at, posts });
+    res.json({ id: user.id, username: user.username, email: user.email, full_name: user.full_name, bio: user.bio, created_at: user.created_at, posts });
   } catch (err) {
     next(err);
   }

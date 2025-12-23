@@ -450,7 +450,7 @@
                     const response = await fetch('/api/auth/me');
                     if (response.ok) {
                         const data = await response.json();
-                        return { isAdmin: data.userRole === 'admin', userId: data.id };
+                        return { isAdmin: data.isAdmin === true, userId: data.id || data.userId || null };
                     }
                 } catch (err) {
                     console.error('fetchCurrentUser failed', err);

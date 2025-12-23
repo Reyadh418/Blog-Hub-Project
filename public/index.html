@@ -449,7 +449,7 @@
                     const response = await fetch('/api/auth/me');
                     if (response.ok) {
                         const data = await response.json();
-                        return { isAdmin: data.userRole === 'admin', userId: data.id, username: data.username };
+                        return { isAdmin: data.isAdmin === true, userId: data.id || data.userId || null, username: data.username };
                     }
                     return { isAdmin: false, userId: null };
                 } catch (error) {
