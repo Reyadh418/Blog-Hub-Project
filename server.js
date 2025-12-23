@@ -246,9 +246,45 @@ app.get("/api/users/:id", async (req, res, next) => {
 app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
   try {
     const fullName = (req.body.full_name || req.body.fullName || "").toString().trim();
+    const email = (req.body.email || "").toString().trim().toLowerCase();
     const bio = (req.body.bio || "").toString().trim();
 
-    await dbRun("UPDATE users SET full_name = ?, bio = ? WHERE id = ?", [fullName, bio, req.session.userId]);
+    // Validate email if provided
+    if (email && !email.includes("@")) {
+      return res.status(400).json({ error: "Valid email required" });
+    }
+
+    // Check if email is already in use by another user
+    if (email) {
+      const existingEmail = await dbGet("SELECT id FROM users WHERE email = ? AND id != ?", [email, req.session.userId]);
+      if (existingEmail) {
+        return res.status(409).json({ error: "Email already in use" });
+      }
+    }
+
+    // Update user profile
+    const updateFields = [];
+    const updateParams = [];
+    
+    if (fullName) {
+      updateFields.push("full_name = ?");
+      updateParams.push(fullName);
+    }
+    if (email) {
+      updateFields.push("email = ?");
+      updateParams.push(email);
+    }
+    if (bio !== undefined) {
+      updateFields.push("bio = ?");
+      updateParams.push(bio);
+    }
+
+    if (updateFields.length > 0) {
+      updateParams.push(req.session.userId);
+      const updateSQL = `UPDATE users SET ${updateFields.join(", ")} WHERE id = ?`;
+      await dbRun(updateSQL, updateParams);
+    }
+
     const user = await dbGet("SELECT id, username, full_name, email, bio FROM users WHERE id = ?", [req.session.userId]);
 
     res.json({ id: user.id, username: user.username, full_name: user.full_name, email: user.email, bio: user.bio });

@@ -432,26 +432,8 @@
                     <div class="profile-info" id="profileEmail"></div>
                     <p class="profile-bio" id="profileBio"></p>
                     <div class="profile-actions">
-                        <button class="action-btn edit-btn" onclick="toggleEditForm()">Edit Profile</button>
+                        <button class="action-btn edit-btn" onclick="location.href='/edit-profile.html'">Edit Profile</button>
                     </div>
-                </div>
-
-                <div id="editForm" class="edit-form">
-                    <h2 style="margin-bottom: 24px; color: #1e3a5f;">Edit Profile</h2>
-                    <form id="profileForm">
-                        <div class="form-group">
-                            <label for="editName">Full Name</label>
-                            <input type="text" id="editName" placeholder="Enter your full name" />
-                        </div>
-                        <div class="form-group">
-                            <label for="editBio">Bio</label>
-                            <textarea id="editBio" placeholder="Tell us about yourself..."></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="save-btn">Save Changes</button>
-                            <button type="button" class="cancel-btn" onclick="toggleEditForm()">Cancel</button>
-                        </div>
-                    </form>
                 </div>
 
                 <div class="posts-section">
@@ -554,42 +536,6 @@
                     postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No posts published yet.</p></div>';
                 }
             }
-
-            function toggleEditForm() {
-                const editForm = document.getElementById('editForm');
-                editForm.classList.toggle('active');
-            }
-
-            profileForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                const fullName = document.getElementById('editName').value.trim();
-                const bio = document.getElementById('editBio').value.trim();
-
-                try {
-                    const response = await fetch('/api/auth/profile', {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ full_name: fullName, bio }),
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        showMessage('✓ Profile updated successfully!', 'success');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        showMessage(result.error || 'Update failed. Please try again.', 'error');
-                    }
-                } catch (error) {
-                    console.error('Update error:', error);
-                    showMessage('Error: ' + error.message, 'error');
-                }
-            });
 
             document.getElementById('logoutBtn').addEventListener('click', async function() {
                 try {
