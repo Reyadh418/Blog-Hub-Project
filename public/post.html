@@ -313,7 +313,10 @@
                             📅 <span id="postDate"></span>
                         </div>
                         <div class="meta-item">
-                            📝 <span id="wordCount">0</span> words
+                            � <span id="authorName">Unknown</span>
+                        </div>
+                        <div class="meta-item">
+                            �📝 <span id="wordCount">0</span> words
                         </div>
                         <div class="meta-item">
                             ⏱️ <span id="readTime">0</span> min read
@@ -421,6 +424,7 @@
                 const wordCount = countWords(post.body);
                 const readTime = estimateReadTime(wordCount);
                 const formattedDate = formatDate(post.created_at);
+                const authorDisplay = post.author_name || 'Unknown';
 
                 // Update title
                 document.title = `${post.title} | Blog`;
@@ -430,6 +434,7 @@
                 document.getElementById('postDate').textContent = formattedDate;
                 document.getElementById('wordCount').textContent = wordCount;
                 document.getElementById('readTime').textContent = readTime;
+                document.getElementById('authorName').textContent = authorDisplay;
 
                 // Update body
                 document.getElementById('postBody').textContent = post.body;

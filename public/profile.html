@@ -530,6 +530,7 @@
                                 <p class="post-excerpt">${escapeHtml(post.body.substring(0, 150))}${post.body.length > 150 ? '...' : ''}</p>
                                 <div class="post-meta">
                                     <span>📅 ${new Date(post.created_at).toLocaleDateString()}</span>
+                                    <span style="color:#d4a574; font-weight:600;">👤 ${escapeHtml(user.username)}</span>
                                 </div>
                             </div>
                         `)

@@ -295,7 +295,26 @@ app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
 
 app.get("/api/posts", async (req, res, next) => {
   try {
-    const rows = await dbAll("SELECT id, title, body, created_at, author_id, tags FROM posts ORDER BY id DESC");
+    const rows = await dbAll(`
+      SELECT 
+        p.id, 
+        p.title, 
+        p.body, 
+        p.created_at, 
+        p.author_id, 
+        p.tags,
+        CASE 
+          WHEN p.author_id IS NULL THEN '@admin'
+          ELSE u.username
+        END as author_name,
+        CASE 
+          WHEN p.author_id IS NULL THEN 1
+          ELSE 0
+        END as is_admin_post
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id
+      ORDER BY p.id DESC
+    `);
     res.json(rows);
   } catch (err) {
     next(err);
@@ -310,10 +329,26 @@ app.get("/api/posts/:id", async (req, res, next) => {
       return res.status(400).json({ error: "Invalid post id" });
     }
 
-    const rows = await dbAll(
-      "SELECT id, title, body, created_at, tags FROM posts WHERE id = ?",
-      [id]
-    );
+    const rows = await dbAll(`
+      SELECT 
+        p.id, 
+        p.title, 
+        p.body, 
+        p.created_at, 
+        p.author_id,
+        p.tags,
+        CASE 
+          WHEN p.author_id IS NULL THEN '@admin'
+          ELSE u.username
+        END as author_name,
+        CASE 
+          WHEN p.author_id IS NULL THEN 1
+          ELSE 0
+        END as is_admin_post
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE p.id = ?
+    `, [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ error: "Post not found" });
@@ -370,8 +405,10 @@ app.delete("/api/posts/:id", requireAdmin, async (req, res, next) => {
 app.post("/api/posts", async (req, res, next) => {
   try {
     // Allow both admin and authenticated users to create posts
-    const authorId = req.session.isAdmin ? 1 : (req.session.userId || null);
-    if (!authorId) return res.status(401).json({ error: "Authentication required" });
+    if (!req.session.isAdmin && !req.session.userId) return res.status(401).json({ error: "Authentication required" });
+
+    // For admins, store NULL in author_id so admin posts are distinct
+    const authorId = req.session.isAdmin ? null : req.session.userId;
 
     const title = (req.body.title || "").toString().trim();
     const body = (req.body.body || "").toString().trim();
@@ -384,7 +421,16 @@ app.post("/api/posts", async (req, res, next) => {
 
     const result = await dbRun("INSERT INTO posts (author_id, title, body, tags) VALUES (?, ?, ?, ?)", 
       [authorId, title, body, JSON.stringify(tags)]);
-    res.status(201).json({ id: result.lastID, title, body, tags, authorId });
+
+    // Return created resource including author info
+    const created = await dbGet(`
+      SELECT p.id, p.title, p.body, p.created_at, p.tags, 
+        CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
+      FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?
+    `, [result.lastID]);
+
+    res.status(201).json(created);
   } catch (err) {
     next(err);
   }
@@ -396,13 +442,28 @@ app.get('/api/search', async (req, res, next) => {
     const q = (req.query.q || '').toString().trim();
     if (!q) {
       // if no query, return all posts
-      const rows = await dbAll("SELECT id, title, body, created_at, tags FROM posts ORDER BY id DESC");
+      const rows = await dbAll(`
+        SELECT p.id, p.title, p.body, p.created_at, p.tags,
+          CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        ORDER BY p.id DESC
+      `);
       return res.json(rows);
     }
 
     const like = `%${q}%`;
     const rows = await dbAll(
-      `SELECT id, title, body, created_at, tags FROM posts WHERE title LIKE ? OR body LIKE ? OR tags LIKE ? ORDER BY id DESC`,
+      `
+        SELECT p.id, p.title, p.body, p.created_at, p.tags,
+          CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
+        FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        WHERE p.title LIKE ? OR p.body LIKE ? OR p.tags LIKE ?
+        ORDER BY p.id DESC
+      `,
       [like, like, like]
     );
 

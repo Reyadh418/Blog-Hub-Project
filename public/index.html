@@ -519,6 +519,7 @@
                     const excerpt = truncateText(post.body, 200);
                     const date = post.created_at ? formatDate(post.created_at) : '';
                     const postUrl = `/post.html?id=${post.id}`;
+                    const authorDisplay = post.author_name || 'Unknown';
 
                     const postElement = document.createElement('article');
                     postElement.className = 'post';
@@ -533,6 +534,7 @@
                         <div class="post-meta">
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <span class="post-word-count">${wordCount} words</span>
+                                <span style="color:#d4a574; font-weight:600;">👤 ${escapeHtml(authorDisplay)}</span>
                                 <span>→ Read More</span>
                             </div>
                             ${CURRENT_USER.isAdmin || CURRENT_USER.userId ? `<div class="admin-controls">
