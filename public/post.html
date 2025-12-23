@@ -472,6 +472,18 @@
                 return { isAdmin: false, userId: null };
             }
 
+            // Toast system
+            function showToast(message, type='info', duration=3000) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<span class="toast-icon">${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span><div class="toast-message">${message}</div><span class="toast-close">&times;</span>`;
+                container.appendChild(toast);
+                toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
+                if (duration>0) setTimeout(()=> { if (toast.parentElement) toast.remove(); }, duration);
+            }
+
             // Show admin actions (edit/delete/flag)
             async function maybeShowAdminActions(postId, authorId) {
                 const user = await fetchCurrentUser();
@@ -508,16 +520,19 @@
                                 if (!isFlagged) {
                                     document.getElementById('flagNotice').style.display = 'block';
                                     flagBtn.textContent = '✓ Unflag';
+                                    showToast('Post flagged', 'success', 1800);
                                 } else {
                                     document.getElementById('flagNotice').style.display = 'none';
                                     flagBtn.textContent = '🚩 Flag';
+                                    showToast('Post unflagged', 'success', 1200);
                                 }
                             } else {
-                                alert('Failed to flag/unflag post');
+                                const err = await resp.json().catch(()=>({error:'Failed to flag/unflag'}));
+                                showToast(err.error || 'Failed to flag/unflag post', 'error');
                             }
                         } catch (error) {
                             console.error('Flag error:', error);
-                            alert('Error flagging post');
+                            showToast('Error flagging post', 'error');
                         }
                     };
                 }
@@ -541,15 +556,15 @@
                         if (!confirm('Delete this post? This action cannot be undone.')) return;
                         try {
                             const resp = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
-                            if (resp.ok) {
+                                if (resp.ok) {
                                 window.location.href = '/';
                             } else {
-                                const err = await resp.json();
-                                alert(err.error || 'Failed to delete post');
+                                const err = await resp.json().catch(()=>({error:'Failed to delete post'}));
+                                showToast(err.error || 'Failed to delete post', 'error');
                             }
                         } catch (error) {
                             console.error('Delete error:', error);
-                            alert('Error deleting post');
+                            showToast('Error deleting post', 'error');
                         }
                     };
                 }
@@ -582,7 +597,7 @@
                     }, 2000);
                 } catch (err) {
                     console.error('Failed to copy:', err);
-                    alert('Failed to copy link');
+                    showToast('Failed to copy link', 'error');
                 }
             }
 

@@ -5,6 +5,17 @@ const db = new sqlite3.Database("./blog.db", (err) => {
   else console.log("DB connected");
 });
 
+// Improve performance and concurrency
+db.serialize(() => {
+  try {
+    db.run("PRAGMA foreign_keys = ON;");
+    db.run("PRAGMA journal_mode = WAL;");
+    db.run("PRAGMA synchronous = NORMAL;");
+  } catch (e) {
+    // ignore if PRAGMA unsupported
+  }
+});
+
 // Create users table
 db.run(`
   CREATE TABLE IF NOT EXISTS users (
@@ -43,5 +54,12 @@ db.run(`ALTER TABLE posts ADD COLUMN author_id INTEGER DEFAULT 1`, (err) => {
 db.run(`ALTER TABLE posts ADD COLUMN is_flagged INTEGER DEFAULT 0`, (err) => {
   // Safe — if column exists, error is silently ignored
 });
+
+// Create useful indexes to speed up common queries
+db.run(`CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_posts_is_flagged ON posts(is_flagged)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_posts_title ON posts(title)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts(tags)`);
 
 module.exports = db;
