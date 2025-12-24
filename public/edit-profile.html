@@ -421,48 +421,47 @@
         </div>
 
         <script>
-            const editForm = document.getElementById('editForm');
-                    <script>
-                        // Toast notification system
-                        function showToast(message, type = 'info', duration = 3000) {
-                            const container = document.getElementById('toastContainer');
-                            const toast = document.createElement('div');
-                            toast.className = `toast ${type}`;
-                
-                            const icons = {
-                                success: '✓',
-                                error: '✕',
-                                info: 'ℹ',
-                                warning: '⚠'
-                            };
-                
-                            toast.innerHTML = `
-                                <span class="toast-icon">${icons[type] || icons.info}</span>
-                                <span class="toast-message">${message}</span>
-                                <span class="toast-close">&times;</span>
-                            `;
-                
-                            container.appendChild(toast);
-                
-                            const closeBtn = toast.querySelector('.toast-close');
-                            closeBtn.addEventListener('click', () => {
-                                toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
-                                setTimeout(() => toast.remove(), 300);
-                            });
-                
-                            if (duration > 0) {
-                                setTimeout(() => {
-                                    if (toast.parentElement) {
-                                        toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
-                                        setTimeout(() => toast.remove(), 300);
-                                    }
-                                }, duration);
-                            }
-                
-                            return toast;
-                        }
+            // Toast notification system
+            function showToast(message, type = 'info', duration = 3000) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return null;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
 
-                        const editForm = document.getElementById('editForm');
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    info: 'ℹ',
+                    warning: '⚠'
+                };
+
+                toast.innerHTML = `
+                    <span class="toast-icon">${icons[type] || icons.info}</span>
+                    <span class="toast-message">${message}</span>
+                    <span class="toast-close">&times;</span>
+                `;
+
+                container.appendChild(toast);
+
+                const closeBtn = toast.querySelector('.toast-close');
+                if (closeBtn) closeBtn.addEventListener('click', () => {
+                    toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    setTimeout(() => toast.remove(), 300);
+                });
+
+                if (duration > 0) {
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
+                            setTimeout(() => toast.remove(), 300);
+                        }
+                    }, duration);
+                }
+
+                return toast;
+            }
+
+            const editForm = document.getElementById('editForm');
             const submitBtn = document.getElementById('submitBtn');
             const btnText = document.getElementById('btnText');
             const messageDiv = document.getElementById('message');
