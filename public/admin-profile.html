@@ -291,6 +291,83 @@
                 margin-bottom: 40px;
             }
 
+            .credentials-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 32px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                margin-bottom: 32px;
+                border: 1px solid #e8e8e8;
+            }
+
+            .credential-form {
+                display: grid;
+                gap: 18px;
+                margin-top: 12px;
+            }
+
+            .credential-form label {
+                color: #1e3a5f;
+                font-weight: 600;
+                font-size: 0.95rem;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .credential-form input {
+                padding: 12px 14px;
+                border: 1px solid #dcdcdc;
+                border-radius: 6px;
+                font-size: 1rem;
+                background: #fafafa;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .credential-form input:focus {
+                outline: none;
+                border-color: #d4a574;
+                box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2);
+                background: #fff;
+            }
+
+            .form-actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .form-actions button {
+                padding: 12px 18px;
+                border: none;
+                border-radius: 6px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .save-btn {
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                color: #fff;
+                box-shadow: 0 6px 14px rgba(30, 58, 95, 0.25);
+            }
+
+            .reset-btn {
+                background: #f4f4f4;
+                color: #2c3e50;
+                border: 1px solid #e0e0e0;
+            }
+
+            .form-actions button:hover {
+                transform: translateY(-1px);
+            }
+
+            .form-hint {
+                color: #666;
+                font-size: 0.9rem;
+            }
+
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -381,6 +458,30 @@
                     <div class="profile-avatar">🔐</div>
                     <h1 class="profile-title">Admin Dashboard</h1>
                     <p class="profile-subtitle">The Guardians of Content Quality</p>
+                    <p class="profile-subtitle" style="margin-top:8px; font-size:0.95rem;">Current username: <span id="currentAdminUsername">—</span></p>
+                </div>
+
+                <div class="credentials-section">
+                    <h2 class="section-title" style="margin-bottom:18px;">Secure Admin Credentials</h2>
+                    <form id="adminCredentialsForm" class="credential-form">
+                        <label>Current password
+                            <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" autocomplete="current-password" required />
+                        </label>
+                        <label>New username
+                            <input type="text" id="newUsername" name="newUsername" placeholder="Keep or change admin username" autocomplete="username" />
+                        </label>
+                        <label>New password
+                            <input type="password" id="newPassword" name="newPassword" placeholder="Leave blank to keep existing" autocomplete="new-password" />
+                        </label>
+                        <label>Confirm new password
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-type new password" autocomplete="new-password" />
+                        </label>
+                        <div class="form-actions">
+                            <button type="submit" class="save-btn">Save changes</button>
+                            <button type="button" class="reset-btn" id="resetForm">Reset</button>
+                            <span class="form-hint">Current password is required to change username or password.</span>
+                        </div>
+                    </form>
                 </div>
 
                 <div class="stats-section">
@@ -500,6 +601,13 @@
             }
             const loadingContainer = document.getElementById('loadingContainer');
             const profileContainer = document.getElementById('profileContainer');
+            const newUsernameInput = document.getElementById('newUsername');
+            const currentPasswordInput = document.getElementById('currentPassword');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const resetFormButton = document.getElementById('resetForm');
+            const adminCredentialsForm = document.getElementById('adminCredentialsForm');
+            let cachedAdminUsername = '';
 
             // Load admin dashboard
             async function loadAdminDashboard() {
@@ -516,6 +624,14 @@
                         return;
                     }
 
+                    const adminProfileResponse = await fetch('/api/admin/profile');
+                    if (adminProfileResponse.ok) {
+                        const profile = await adminProfileResponse.json();
+                        cachedAdminUsername = profile.username;
+                        document.getElementById('currentAdminUsername').textContent = profile.username;
+                        if (newUsernameInput) newUsernameInput.value = profile.username;
+                    }
+
                     // Load stats
                     const postsResponse = await fetch('/api/posts');
                     const posts = postsResponse.ok ? await postsResponse.json() : [];
@@ -530,6 +646,81 @@
                     console.error('Load dashboard error:', error);
                     window.location.href = '/login.html';
                 }
+            }
+
+            function resetCredentialsForm() {
+                if (newUsernameInput) newUsernameInput.value = cachedAdminUsername;
+                if (currentPasswordInput) currentPasswordInput.value = '';
+                if (newPasswordInput) newPasswordInput.value = '';
+                if (confirmPasswordInput) confirmPasswordInput.value = '';
+            }
+
+            if (resetFormButton) {
+                resetFormButton.addEventListener('click', () => {
+                    resetCredentialsForm();
+                    showToast('Form reset', 'info', 1400);
+                });
+            }
+
+            if (adminCredentialsForm) {
+                adminCredentialsForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const currentPassword = (currentPasswordInput?.value || '').trim();
+                    const newUsername = (newUsernameInput?.value || '').trim();
+                    const newPassword = (newPasswordInput?.value || '').trim();
+                    const confirmPassword = (confirmPasswordInput?.value || '').trim();
+
+                    if (!currentPassword) {
+                        showToast('Enter your current password', 'error');
+                        return;
+                    }
+
+                    if (newPassword && newPassword.length < 6) {
+                        showToast('New password must be at least 6 characters', 'error');
+                        return;
+                    }
+
+                    if (newPassword && newPassword !== confirmPassword) {
+                        showToast('New passwords do not match', 'error');
+                        return;
+                    }
+
+                    const usernameChanged = newUsername && newUsername !== cachedAdminUsername;
+                    const passwordChanged = Boolean(newPassword);
+
+                    if (!usernameChanged && !passwordChanged) {
+                        showToast('Nothing to update', 'warning');
+                        return;
+                    }
+
+                    const payload = { currentPassword };
+                    if (usernameChanged) payload.newUsername = newUsername;
+                    if (passwordChanged) payload.newPassword = newPassword;
+
+                    try {
+                        const response = await fetch('/api/admin/credentials', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        });
+
+                        const result = await response.json();
+                        if (!response.ok) {
+                            const message = result && result.error ? result.error : 'Update failed';
+                            showToast(message, 'error');
+                            return;
+                        }
+
+                        cachedAdminUsername = result.username || newUsername || cachedAdminUsername;
+                        document.getElementById('currentAdminUsername').textContent = cachedAdminUsername;
+                        if (newUsernameInput) newUsernameInput.value = cachedAdminUsername;
+                        resetCredentialsForm();
+                        showToast('Admin credentials updated', 'success', 2000);
+                    } catch (err) {
+                        console.error('Credentials update error:', err);
+                        showToast('Unable to update credentials', 'error');
+                    }
+                });
             }
 
             document.getElementById('logoutBtn').addEventListener('click', async function() {

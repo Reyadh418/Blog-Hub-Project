@@ -23,11 +23,15 @@ db.run(`
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
+    is_admin INTEGER DEFAULT 0,
     full_name TEXT DEFAULT '',
     bio TEXT DEFAULT '',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Add is_admin column for existing databases (safe if already present)
+db.run(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`, () => {});
 
 // Create posts table with author_id
 db.run(`
@@ -91,6 +95,7 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_is_flagged ON posts(is_flagged)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_title ON posts(title)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts(tags)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)`);

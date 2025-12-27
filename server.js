@@ -37,25 +37,48 @@ app.use(express.static(path.join(__dirname, "public")));
 // Helpers
 // --------------------
 
-function hashPassword(password) {
-  return crypto.createHash("sha256").update(password + process.env.PASSWORD_SALT || "default_salt").digest("hex");
+function getPasswordSalt() {
+  return process.env.PASSWORD_SALT !== undefined ? process.env.PASSWORD_SALT : "undefined";
 }
 
-// Ensure there's a concrete user row for the admin so actions that require user_id (e.g., comments/reactions) work.
+function hashPassword(password) {
+  const salt = getPasswordSalt();
+  return crypto.createHash("sha256").update(`${password}${salt}`).digest("hex");
+}
+
+async function getAdminUser() {
+  return dbGet("SELECT id, username, password_hash FROM users WHERE is_admin = 1 LIMIT 1");
+}
+
+// Ensure there's a concrete user row for the admin backed by the database (hashed credentials)
 async function ensureAdminUser() {
-  // Use a stable username/email to avoid duplicates.
-  const adminUsername = "@admin";
-  const adminEmail = "admin@example.local";
-  const existing = await dbGet("SELECT id, username FROM users WHERE username = ?", [adminUsername]);
+  const existing = await getAdminUser();
   if (existing) return existing;
 
-  // Insert a placeholder password hash; admin authentication is still via env vars.
-  const placeholderHash = hashPassword("admin_placeholder");
+  const fallbackUsername = "@admin";
+  const envUsername = (process.env.ADMIN_USER || fallbackUsername).toString().trim() || fallbackUsername;
+  const normalizedUsername = envUsername.toLowerCase();
+
+  let adminPassword = (process.env.ADMIN_PASS || "").toString();
+  if (!adminPassword) {
+    // Generate a strong temporary password so the admin can log in and rotate it immediately
+    adminPassword = crypto.randomBytes(12).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+    console.warn("[admin] ADMIN_PASS not set. Generated temporary admin password:", adminPassword);
+  }
+
+  const email = "admin@example.local";
+  const passwordHash = hashPassword(adminPassword);
+
   const created = await dbRun(
-    "INSERT INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)",
-    [adminUsername, adminEmail, placeholderHash, "Site Admin"]
+    "INSERT OR IGNORE INTO users (username, email, password_hash, is_admin, full_name) VALUES (?, ?, ?, 1, ?)",
+    [normalizedUsername, email, passwordHash, "Site Admin"]
   );
-  return { id: created.lastID, username: adminUsername };
+
+  const admin = await getAdminUser();
+  if (admin) return admin;
+
+  // If somehow still missing (e.g., username/email conflict), surface a clear error
+  throw new Error("Failed to ensure admin user exists. Resolve username/email conflicts and retry.");
 }
 
 function requireAdmin(req, res, next) {
@@ -176,31 +199,101 @@ app.post("/api/auth/login", async (req, res, next) => {
   }
 });
 
-// Admin Login (existing)
+// Admin Login (DB-backed, hashed)
 app.post("/api/admin/login", async (req, res, next) => {
   try {
-    const username = (req.body.username || "").toString();
+    const username = (req.body.username || "").toString().trim().toLowerCase();
     const password = (req.body.password || "").toString();
 
     if (!username || !password) return res.status(400).json({ error: "username and password required" });
 
-    if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
-      const adminUser = await ensureAdminUser();
+    const adminUser = await ensureAdminUser();
+    if (!adminUser) return res.status(500).json({ error: "Admin user is not initialized" });
 
-      req.session.isAdmin = true;
-      req.session.userRole = "admin";
-      req.session.userId = adminUser.id; // so admin actions needing user_id work
-      req.session.username = adminUser.username;
-
-      // Save session before responding to preserve login
-      req.session.save((err) => {
-        if (err) return res.status(500).json({ error: "Failed to create session" });
-        res.json({ ok: true, userId: adminUser.id, username: adminUser.username });
-      });
-      return;
+    if (adminUser.username !== username) {
+      return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
-    return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    const passwordHash = hashPassword(password);
+    if (adminUser.password_hash !== passwordHash) {
+      return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    }
+
+    req.session.isAdmin = true;
+    req.session.userRole = "admin";
+    req.session.userId = adminUser.id; // so admin actions needing user_id work
+    req.session.username = adminUser.username;
+
+    // Save session before responding to preserve login
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ error: "Failed to create session" });
+      res.json({ ok: true, userId: adminUser.id, username: adminUser.username });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Admin profile (fetch minimal data)
+app.get("/api/admin/profile", requireAdmin, async (req, res, next) => {
+  try {
+    const admin = await getAdminUser();
+    if (!admin) return res.status(404).json({ error: "Admin user not found" });
+    res.json({ id: admin.id, username: admin.username });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update admin credentials (requires current password)
+app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
+  try {
+    const currentPassword = (req.body.currentPassword || "").toString();
+    const newUsernameRaw = (req.body.newUsername || "").toString().trim();
+    const newPassword = (req.body.newPassword || "").toString();
+
+    if (!currentPassword) return res.status(400).json({ error: "Current password is required" });
+
+    const admin = await getAdminUser();
+    if (!admin) return res.status(404).json({ error: "Admin user not found" });
+
+    const providedHash = hashPassword(currentPassword);
+    if (providedHash !== admin.password_hash) {
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    const updates = [];
+    const params = [];
+
+    if (newUsernameRaw && newUsernameRaw.toLowerCase() !== admin.username) {
+      const newUsername = newUsernameRaw.toLowerCase();
+      const existing = await dbGet("SELECT id FROM users WHERE username = ? AND id != ?", [newUsername, admin.id]);
+      if (existing) return res.status(409).json({ error: "Username is already taken" });
+      updates.push("username = ?");
+      params.push(newUsername);
+    }
+
+    if (newPassword) {
+      if (newPassword.length < 6) return res.status(400).json({ error: "New password must be at least 6 characters" });
+      updates.push("password_hash = ?");
+      params.push(hashPassword(newPassword));
+    }
+
+    if (!updates.length) return res.status(400).json({ error: "Nothing to update" });
+
+    params.push(admin.id);
+    await dbRun(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, params);
+
+    const updated = await getAdminUser();
+    req.session.username = updated.username;
+    req.session.userId = updated.id;
+    req.session.isAdmin = true;
+    req.session.userRole = "admin";
+
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ error: "Failed to refresh session" });
+      res.json({ ok: true, username: updated.username });
+    });
   } catch (err) {
     next(err);
   }
@@ -218,7 +311,13 @@ app.post("/api/auth/logout", (req, res) => {
 app.get("/api/auth/me", async (req, res, next) => {
   try {
     if (req.session.isAdmin) {
-      return res.json({ isAdmin: true, userRole: "admin", userId: req.session.userId || null, username: req.session.username || "@admin" });
+      const admin = await getAdminUser();
+      return res.json({
+        isAdmin: true,
+        userRole: "admin",
+        userId: (admin && admin.id) || req.session.userId || null,
+        username: (admin && admin.username) || req.session.username || "@admin",
+      });
     }
     if (req.session.userId) {
       const user = await dbGet("SELECT id, username, full_name, email, bio FROM users WHERE id = ?", [req.session.userId]);
@@ -234,7 +333,8 @@ app.get("/api/auth/me", async (req, res, next) => {
 app.get("/api/me", async (req, res, next) => {
   try {
     if (req.session.isAdmin) {
-      return res.json({ isAdmin: true, userId: req.session.userId || null, username: req.session.username || "@admin" });
+      const admin = await getAdminUser();
+      return res.json({ isAdmin: true, userId: (admin && admin.id) || req.session.userId || null, username: (admin && admin.username) || req.session.username || "@admin" });
     }
     if (req.session.userId) {
       const user = await dbGet("SELECT id, username, full_name FROM users WHERE id = ?", [req.session.userId]);
