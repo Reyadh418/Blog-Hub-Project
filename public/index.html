@@ -311,6 +311,28 @@
                 font-weight: 500;
             }
 
+            .reaction-useful-btn, .reaction-notuseful-btn {
+                transition: all 0.2s ease;
+                padding: 2px 6px;
+                border-radius: 4px;
+                user-select: none;
+            }
+
+            .reaction-useful-btn:hover {
+                background: rgba(39, 174, 96, 0.2);
+                transform: scale(1.1);
+            }
+
+            .reaction-notuseful-btn:hover {
+                background: rgba(231, 76, 60, 0.2);
+                transform: scale(1.1);
+            }
+
+            .reaction-useful-btn:disabled, .reaction-notuseful-btn:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+
             .error-message {
                 background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
                 color: #ffffff;
@@ -425,6 +447,12 @@
                     transform: translateX(0);
                     opacity: 1;
                 }
+            }
+
+            @keyframes buttonPulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.08); }
+                100% { transform: scale(1); }
             }
 
             @media (max-width: 600px) {
@@ -704,6 +732,9 @@
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <span class="post-word-count">${wordCount} words</span>
                                 <span style="color:#d4a574; font-weight:600;">👤 ${escapeHtml(authorDisplay)}</span>
+                                <span style="color:#d4a574;">💬 ${post.comment_count || 0}</span>
+                                <span style="color:#27ae60; cursor:pointer; font-weight:600;" class="reaction-useful-btn" data-id="${post.id}">👍 ${post.useful_count || 0}</span>
+                                <span style="color:#e74c3c; cursor:pointer; font-weight:600;" class="reaction-notuseful-btn" data-id="${post.id}">👎 ${post.notuseful_count || 0}</span>
                                 <span>→ Read More</span>
                             </div>
                             ${canEdit || canDelete || canFlag ? `<div class="admin-controls">
@@ -790,6 +821,90 @@
                             } catch (error) {
                                 console.error('Flag failed', error);
                                 showError('Flag failed. Try again.');
+                            }
+                        });
+                    }
+
+                    // Reaction buttons (useful/notuseful)
+                    const usefulBtn = postElement.querySelector('.reaction-useful-btn');
+                    const notusefulBtn = postElement.querySelector('.reaction-notuseful-btn');
+
+                    if (usefulBtn) {
+                        usefulBtn.addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            // Check if user is authenticated (user OR admin)
+                            if (!CURRENT_USER.userId && !CURRENT_USER.isAdmin) {
+                                window.location.href = '/login.html';
+                                return;
+                            }
+                            const id = ev.currentTarget.getAttribute('data-id');
+                            
+                            ev.currentTarget.disabled = true;
+                            const originalText = ev.currentTarget.textContent;
+                            const btnClass = ev.currentTarget;
+                            
+                            try {
+                                const resp = await fetch(`/api/posts/${id}/reactions`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ reaction_type: 'useful' })
+                                });
+                                if (resp.ok) {
+                                    const data = await resp.json();
+                                    usefulBtn.textContent = `👍 ${data.useful}`;
+                                    notusefulBtn.textContent = `👎 ${data.notUseful}`;
+                                    
+                                    // Add visual feedback
+                                    btnClass.style.animation = 'buttonPulse 0.3s ease';
+                                    showToast('✓ Reaction updated!', 'success', 1500);
+                                } else if (resp.status === 400) {
+                                    showToast('Already voted this way', 'info', 1500);
+                                }
+                            } catch (error) {
+                                console.error('Reaction failed', error);
+                                showError('Reaction failed. Try again.');
+                            } finally {
+                                ev.currentTarget.disabled = false;
+                            }
+                        });
+                    }
+
+                    if (notusefulBtn) {
+                        notusefulBtn.addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            // Check if user is authenticated (user OR admin)
+                            if (!CURRENT_USER.userId && !CURRENT_USER.isAdmin) {
+                                window.location.href = '/login.html';
+                                return;
+                            }
+                            const id = ev.currentTarget.getAttribute('data-id');
+                            
+                            ev.currentTarget.disabled = true;
+                            const originalText = ev.currentTarget.textContent;
+                            const btnClass = ev.currentTarget;
+                            
+                            try {
+                                const resp = await fetch(`/api/posts/${id}/reactions`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ reaction_type: 'notuseful' })
+                                });
+                                if (resp.ok) {
+                                    const data = await resp.json();
+                                    usefulBtn.textContent = `👍 ${data.useful}`;
+                                    notusefulBtn.textContent = `👎 ${data.notUseful}`;
+                                    
+                                    // Add visual feedback
+                                    btnClass.style.animation = 'buttonPulse 0.3s ease';
+                                    showToast('✓ Reaction updated!', 'success', 1500);
+                                } else if (resp.status === 400) {
+                                    showToast('Already voted this way', 'info', 1500);
+                                }
+                            } catch (error) {
+                                console.error('Reaction failed', error);
+                                showError('Reaction failed. Try again.');
+                            } finally {
+                                ev.currentTarget.disabled = false;
                             }
                         });
                     }

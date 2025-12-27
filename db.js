@@ -55,11 +55,45 @@ db.run(`ALTER TABLE posts ADD COLUMN is_flagged INTEGER DEFAULT 0`, (err) => {
   // Safe — if column exists, error is silently ignored
 });
 
+// Create comments table
+db.run(`
+  CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )
+`);
+
+// Create reactions table (for useful/not useful thumbs)
+// reaction_type: 'useful' or 'notuseful'
+// User can have at most one reaction per post
+db.run(`
+  CREATE TABLE IF NOT EXISTS reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    reaction_type TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(post_id, user_id)
+  )
+`);
+
 // Create useful indexes to speed up common queries
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_is_flagged ON posts(is_flagged)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_title ON posts(title)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts(tags)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_user_id ON reactions(user_id)`);
 
 module.exports = db;

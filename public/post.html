@@ -138,6 +138,56 @@
                 gap: 20px;
             }
 
+            /* Animation styles */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes scaleIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            @keyframes buttonPulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+
+            .comment-item {
+                animation: fadeIn 0.3s ease-out;
+            }
+
+            .reaction-btn {
+                transition: all 0.2s ease;
+            }
+
+            .reaction-btn:active {
+                animation: buttonPulse 0.3s ease;
+            }
+
+            .reaction-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            .comment-form-container {
+                animation: scaleIn 0.3s ease-out;
+            }
+
             .post-stats {
                 display: flex;
                 gap: 30px;
@@ -346,6 +396,52 @@
                         <button id="editPostBtn" class="btn-home" style="display:none;">✎ Edit</button>
                         <button id="deletePostBtn" class="btn-home" style="display:none;">🗑 Delete</button>
                         <button class="btn-home" onclick="location.href='/'">🏠 Back Home</button>
+                    </div>
+                </div>
+
+                <!-- Reactions Section -->
+                <div style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); animation: fadeIn 0.5s ease-out;">
+                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+                        <span style="font-weight: 600; color: #1e3a5f; font-size: 1.1rem; letter-spacing: 0.3px;">Was this helpful?</span>
+                        <button id="usefulBtn" class="reaction-btn" style="display:none; background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%); border: 2px solid #27ae60; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; color: #27ae60; transition: all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, #d4f1d4 0%, #f0f9f0 100%)'; this.style.boxShadow='0 4px 12px rgba(39, 174, 96, 0.2)';" onmouseout="this.style.background='linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%)'; this.style.boxShadow='none';">👍 <span id="usefulCount">0</span></button>
+                        <button id="notusefulBtn" class="reaction-btn" style="display:none; background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%); border: 2px solid #e74c3c; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; color: #e74c3c; transition: all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, #fde4e4 0%, #fff0f0 100%)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.2)';" onmouseout="this.style.background='linear-gradient(135deg, #fff0f0 0%, #ffffff 100%)'; this.style.boxShadow='none';">👎 <span id="notusefulCount">0</span></button>
+                        <span id="reactLoginPrompt" style="color: #7f8c8d; font-size: 0.95rem; padding: 10px 16px; background: #ecf0f1; border-radius: 8px;">📝 <a href="/login.html" style="color: #4a90e2; text-decoration: none; font-weight: 600;">Log in to react</a></span>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div style="margin-top: 50px; animation: fadeIn 0.6s ease-out;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
+                        <h2 style="font-size: 1.5rem; color: #1e3a5f; margin: 0; font-weight: 600; letter-spacing: 0.3px;">💬 Comments <span style="background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%); color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.9rem; margin-left: 10px;">(<span id="commentCount">0</span>)</span></h2>
+                    </div>
+
+                    <!-- Comment Form (only for logged in users) -->
+                    <div id="commentForm" style="display: none; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-left: 4px solid #d4a574; animation: scaleIn 0.3s ease-out;" class="comment-form-container">
+                        <form onsubmit="submitComment(event)">
+                            <label style="display: block; margin-bottom: 10px; color: #1e3a5f; font-weight: 600;">Share your thoughts</label>
+                            <textarea id="commentBody" placeholder="What do you think about this post?" style="width: 100%; padding: 14px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: inherit; font-size: 0.95rem; min-height: 110px; resize: vertical; transition: all 0.3s ease; color: #2c3e50;" onfocus="this.style.borderColor='#d4a574'; this.style.boxShadow='0 0 0 3px rgba(212, 165, 116, 0.1)';" onblur="this.style.borderColor='#ecf0f1'; this.style.boxShadow='none';"></textarea>
+                            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button type="submit" id="submitCommentBtn" style="background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%); color: #fff; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(212, 165, 116, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(212, 165, 116, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(212, 165, 116, 0.2)';">✓ Post Comment</button>
+                                <button type="button" onclick="document.getElementById('commentForm').style.display='none'; document.getElementById('commentBody').value='';" style="background: #ecf0f1; color: #2c3e50; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.background='#ddd';" onmouseout="this.style.background='#ecf0f1';">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Comment prompt for non-logged-in users -->
+                    <div id="commentLoginPrompt" style="display: none; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #e8f4f8 0%, #f0f8fc 100%); border-radius: 12px; text-align: center; color: #1e3a5f; border-left: 4px solid #4a90e2; animation: slideUp 0.3s ease-out;">
+                        <p style="margin: 0 0 15px 0; font-weight: 600; font-size: 1.05rem;">📝 Log in to join the conversation</p>
+                        <button onclick="window.location.href='/login.html'" style="margin-top: 0; background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); color: #fff; padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(74, 144, 226, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(74, 144, 226, 0.2)';">Log In or Sign Up</button>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div id="commentsList" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Comments will be inserted here -->
+                    </div>
+
+                    <!-- No comments message -->
+                    <div id="noComments" style="text-align: center; padding: 50px 30px; color: #95a5a6; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; animation: fadeIn 0.4s ease-out;">
+                        <span style="font-size: 2rem;">💭</span>
+                        <p style="margin-top: 10px; font-size: 1rem;">No comments yet. Be the first to share your thoughts!</p>
                     </div>
                 </div>
             </div>
@@ -629,6 +725,318 @@
                     if (!q) return;
                     window.location.href = `/?q=${encodeURIComponent(q)}`;
                 });
+            }
+
+            // ===== REACTIONS CODE =====
+            let currentUser = null;
+            let currentUserReaction = null;
+
+            async function loadReactions(postId) {
+                try {
+                    const response = await fetch(`/api/posts/${postId}/reactions`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('usefulCount').textContent = data.useful;
+                        document.getElementById('notusefulCount').textContent = data.notUseful;
+                        currentUserReaction = data.userReaction;
+                        updateReactionButtonStyles(data.userReaction);
+                    }
+                } catch (err) {
+                    console.error('Error loading reactions:', err);
+                }
+            }
+
+            function updateReactionButtonStyles(userReaction) {
+                const usefulBtn = document.getElementById('usefulBtn');
+                const notusefulBtn = document.getElementById('notusefulBtn');
+                
+                if (userReaction === 'useful') {
+                    usefulBtn.style.borderColor = '#27ae60';
+                    usefulBtn.style.background = '#d4f1d4';
+                    notusefulBtn.style.borderColor = 'transparent';
+                    notusefulBtn.style.background = '#ecf0f1';
+                } else if (userReaction === 'notuseful') {
+                    notusefulBtn.style.borderColor = '#e74c3c';
+                    notusefulBtn.style.background = '#fde4e4';
+                    usefulBtn.style.borderColor = 'transparent';
+                    usefulBtn.style.background = '#ecf0f1';
+                } else {
+                    usefulBtn.style.borderColor = 'transparent';
+                    usefulBtn.style.background = '#ecf0f1';
+                    notusefulBtn.style.borderColor = 'transparent';
+                    notusefulBtn.style.background = '#ecf0f1';
+                }
+            }
+
+            async function submitReaction(reactionType) {
+                if (!currentUser || (!currentUser.userId && !currentUser.isAdmin)) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const usefulBtn = document.getElementById('usefulBtn');
+                const notusefulBtn = document.getElementById('notusefulBtn');
+                
+                usefulBtn.disabled = true;
+                notusefulBtn.disabled = true;
+
+                try {
+                    const postId = getPostId();
+                    const response = await fetch(`/api/posts/${postId}/reactions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reaction_type: reactionType })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Smooth number update with animation
+                        const usefulCountEl = document.getElementById('usefulCount');
+                        const notusefulCountEl = document.getElementById('notusefulCount');
+                        
+                        usefulCountEl.style.transition = 'all 0.3s ease';
+                        notusefulCountEl.style.transition = 'all 0.3s ease';
+                        
+                        usefulCountEl.textContent = data.useful;
+                        notusefulCountEl.textContent = data.notUseful;
+                        
+                        currentUserReaction = data.userReaction;
+                        updateReactionButtonStyles(data.userReaction);
+                        showToast('✓ Reaction updated!', 'success', 1500);
+                    } else if (response.status === 400) {
+                        showToast('Already voted this way. Switch or remove your reaction.', 'info', 2000);
+                    }
+                } catch (err) {
+                    console.error('Error submitting reaction:', err);
+                    showToast('Error updating reaction', 'error');
+                } finally {
+                    usefulBtn.disabled = false;
+                    notusefulBtn.disabled = false;
+                }
+            }
+
+            // ===== COMMENTS CODE =====
+            async function loadComments(postId) {
+                try {
+                    const response = await fetch(`/api/posts/${postId}/comments`);
+                    if (response.ok) {
+                        const comments = await response.json();
+                        renderComments(comments);
+                    }
+                } catch (err) {
+                    console.error('Error loading comments:', err);
+                }
+            }
+
+            function renderComments(comments) {
+                const commentsList = document.getElementById('commentsList');
+                const noComments = document.getElementById('noComments');
+                const commentCount = document.getElementById('commentCount');
+
+                commentCount.textContent = comments.length;
+
+                if (comments.length === 0) {
+                    commentsList.innerHTML = '';
+                    noComments.style.display = 'block';
+                    return;
+                }
+
+                noComments.style.display = 'none';
+                commentsList.innerHTML = comments.map((comment, index) => {
+                    const canEdit = currentUser && currentUser.userId === comment.user_id;
+                    const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
+                    return `
+                    <div style="padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #d4a574; animation: fadeIn 0.3s ease-out; animation-delay: ${index * 0.05}s;" class="comment-item">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div>
+                                <strong style="color: #1e3a5f; font-size: 1rem;">${escapeHtml(comment.username)}</strong>
+                                <span style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatDate(comment.created_at)}</span>
+                                ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
+                            </div>
+                            ${ (canEdit || canDelete) ? `
+                                <div style="display: flex; gap: 8px;">
+                                    ${ canEdit ? `<button onclick="editComment(${comment.id}, '${escapeHtml(comment.body).replace(/'/g, "\\'")}', ${comment.post_id})" style="background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(74, 144, 226, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">✎ Edit</button>` : '' }
+                                    ${ canDelete ? `<button onclick="deleteComment(${comment.id}, ${comment.post_id})" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(231, 76, 60, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">✕ Delete</button>` : '' }
+                                </div>
+                            ` : ''}
+                        </div>
+                        <p style="color: #2c3e50; margin: 12px 0; line-height: 1.7; word-wrap: break-word;">${escapeHtml(comment.body).replace(/\n/g, '<br>')}</p>
+                    </div>
+                `;
+                }).join('');
+            }
+
+            async function submitComment(e) {
+                e.preventDefault();
+                if (!currentUser || (!currentUser.userId && !currentUser.isAdmin)) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const body = document.getElementById('commentBody').value.trim();
+                if (!body) {
+                    showToast('Comment cannot be empty', 'error');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitCommentBtn');
+                submitBtn.disabled = true;
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = '⏳ Posting...';
+
+                try {
+                    const postId = getPostId();
+                    const response = await fetch(`/api/posts/${postId}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ body })
+                    });
+
+                    if (response.ok) {
+                        document.getElementById('commentBody').value = '';
+                        document.getElementById('commentForm').style.display = 'none';
+                        submitBtn.textContent = '✓ Posted!';
+                        showToast('✓ Comment posted successfully!', 'success', 2000);
+                        
+                        setTimeout(() => {
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                        }, 500);
+                        
+                        loadComments(postId);
+                    } else {
+                        const err = await response.json();
+                        showToast(err.error || 'Failed to post comment', 'error');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error('Error posting comment:', err);
+                    showToast('Error posting comment', 'error');
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            }
+
+            async function editComment(commentId, originalBody, postId) {
+                const newBody = prompt('Edit your comment:', originalBody);
+                if (newBody === null || !newBody.trim()) return;
+
+                try {
+                    const response = await fetch(`/api/comments/${commentId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ body: newBody.trim() })
+                    });
+
+                    if (response.ok) {
+                        showToast('✓ Comment updated successfully!', 'success', 1500);
+                        loadComments(postId);
+                    } else {
+                        const err = await response.json();
+                        showToast(err.error || 'Failed to update comment', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error editing comment:', err);
+                    showToast('Error editing comment', 'error');
+                }
+            }
+
+            async function deleteComment(commentId, postId) {
+                if (!confirm('Delete this comment? This action cannot be undone.')) return;
+
+                try {
+                    const response = await fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        showToast('✓ Comment deleted!', 'success', 1500);
+                        loadComments(postId);
+                    } else {
+                        const err = await response.json();
+                        showToast(err.error || 'Failed to delete comment', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error deleting comment:', err);
+                    showToast('Error deleting comment', 'error');
+                }
+            }
+
+            // Initialize page
+            async function initializePage() {
+                const postId = getPostId();
+
+                if (!postId) {
+                    showError('No post ID provided. Please go back and select a post.');
+                    return;
+                }
+
+                LOADING.style.display = 'block';
+                const post = await fetchPost(postId);
+
+                if (post) {
+                    renderPost(post);
+                    
+                    // Load reactions and comments
+                    currentUser = await fetchCurrentUser();
+                    loadReactions(postId);
+                    loadComments(postId);
+
+                    // Show/hide reactions and comments UI based on login status
+                    const usefulBtn = document.getElementById('usefulBtn');
+                    const notusefulBtn = document.getElementById('notusefulBtn');
+                    const reactLoginPrompt = document.getElementById('reactLoginPrompt');
+                    const commentForm = document.getElementById('commentForm');
+                    const commentLoginPrompt = document.getElementById('commentLoginPrompt');
+
+                    // Check if user is authenticated (user OR admin)
+                    const isAuthenticated = currentUser && (currentUser.userId || currentUser.isAdmin);
+
+                    if (isAuthenticated) {
+                        usefulBtn.style.display = 'inline-block';
+                        notusefulBtn.style.display = 'inline-block';
+                        reactLoginPrompt.style.display = 'none';
+                        commentForm.style.display = 'block';
+                        commentLoginPrompt.style.display = 'none';
+
+                        usefulBtn.onclick = () => submitReaction('useful');
+                        notusefulBtn.onclick = () => submitReaction('notuseful');
+
+                        // Add "Comment" button to post
+                        const postActions = document.querySelector('.post-actions');
+                        if (postActions && !document.getElementById('commentBtn')) {
+                            const commentBtn = document.createElement('button');
+                            commentBtn.id = 'commentBtn';
+                            commentBtn.className = 'btn-home';
+                            commentBtn.style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
+                            commentBtn.style.transition = 'all 0.3s ease';
+                            commentBtn.textContent = '💬 Comment';
+                            commentBtn.onmouseover = function() {
+                                this.style.transform = 'translateY(-2px)';
+                                this.style.boxShadow = '0 6px 20px rgba(39, 174, 96, 0.3)';
+                            };
+                            commentBtn.onmouseout = function() {
+                                this.style.transform = 'translateY(0)';
+                                this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+                            };
+                            commentBtn.onclick = () => {
+                                document.getElementById('commentForm').style.display = 'block';
+                                document.getElementById('commentBody').focus();
+                                // Smooth scroll to form
+                                document.getElementById('commentForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            };
+                            postActions.appendChild(commentBtn);
+                        }
+                    } else {
+                        usefulBtn.style.display = 'none';
+                        notusefulBtn.style.display = 'none';
+                        reactLoginPrompt.style.display = 'inline-block';
+                        commentForm.style.display = 'none';
+                        commentLoginPrompt.style.display = 'block';
+                    }
+                }
             }
 
             window.addEventListener('load', initializePage);

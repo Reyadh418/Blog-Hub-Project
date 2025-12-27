@@ -41,6 +41,23 @@ function hashPassword(password) {
   return crypto.createHash("sha256").update(password + process.env.PASSWORD_SALT || "default_salt").digest("hex");
 }
 
+// Ensure there's a concrete user row for the admin so actions that require user_id (e.g., comments/reactions) work.
+async function ensureAdminUser() {
+  // Use a stable username/email to avoid duplicates.
+  const adminUsername = "@admin";
+  const adminEmail = "admin@example.local";
+  const existing = await dbGet("SELECT id, username FROM users WHERE username = ?", [adminUsername]);
+  if (existing) return existing;
+
+  // Insert a placeholder password hash; admin authentication is still via env vars.
+  const placeholderHash = hashPassword("admin_placeholder");
+  const created = await dbRun(
+    "INSERT INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)",
+    [adminUsername, adminEmail, placeholderHash, "Site Admin"]
+  );
+  return { id: created.lastID, username: adminUsername };
+}
+
 function requireAdmin(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   return res.status(403).json({ error: "Admin only" });
@@ -168,12 +185,17 @@ app.post("/api/admin/login", async (req, res, next) => {
     if (!username || !password) return res.status(400).json({ error: "username and password required" });
 
     if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+      const adminUser = await ensureAdminUser();
+
       req.session.isAdmin = true;
       req.session.userRole = "admin";
+      req.session.userId = adminUser.id; // so admin actions needing user_id work
+      req.session.username = adminUser.username;
+
       // Save session before responding to preserve login
       req.session.save((err) => {
         if (err) return res.status(500).json({ error: "Failed to create session" });
-        res.json({ ok: true });
+        res.json({ ok: true, userId: adminUser.id, username: adminUser.username });
       });
       return;
     }
@@ -196,7 +218,7 @@ app.post("/api/auth/logout", (req, res) => {
 app.get("/api/auth/me", async (req, res, next) => {
   try {
     if (req.session.isAdmin) {
-      return res.json({ isAdmin: true, userRole: "admin" });
+      return res.json({ isAdmin: true, userRole: "admin", userId: req.session.userId || null, username: req.session.username || "@admin" });
     }
     if (req.session.userId) {
       const user = await dbGet("SELECT id, username, full_name, email, bio FROM users WHERE id = ?", [req.session.userId]);
@@ -212,7 +234,7 @@ app.get("/api/auth/me", async (req, res, next) => {
 app.get("/api/me", async (req, res, next) => {
   try {
     if (req.session.isAdmin) {
-      return res.json({ isAdmin: true });
+      return res.json({ isAdmin: true, userId: req.session.userId || null, username: req.session.username || "@admin" });
     }
     if (req.session.userId) {
       const user = await dbGet("SELECT id, username, full_name FROM users WHERE id = ?", [req.session.userId]);
@@ -311,7 +333,10 @@ app.get("/api/posts", async (req, res, next) => {
         CASE 
           WHEN p.author_id IS NULL THEN 1
           ELSE 0
-        END as is_admin_post
+        END as is_admin_post,
+        COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
       ORDER BY p.id DESC
@@ -346,7 +371,10 @@ app.get("/api/posts/:id", async (req, res, next) => {
         CASE 
           WHEN p.author_id IS NULL THEN 1
           ELSE 0
-        END as is_admin_post
+        END as is_admin_post,
+        COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
       WHERE p.id = ?
@@ -519,6 +547,252 @@ app.post("/api/posts", async (req, res, next) => {
   }
 });
 
+// --------- COMMENTS ENDPOINTS ---------
+// Get all comments for a post
+app.get('/api/posts/:postId/comments', async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const comments = await dbAll(`
+      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.post_id = ?
+      ORDER BY c.created_at DESC
+    `, [postId]);
+
+    res.json(comments);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Create a comment (requires auth)
+app.post('/api/posts/:postId/comments', requireAuth, async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const body = (req.body.body || "").toString().trim();
+    if (!body) return res.status(400).json({ error: "Comment body is required" });
+
+    // Check post exists
+    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [postId]);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    const result = await dbRun(
+      "INSERT INTO comments (post_id, user_id, body) VALUES (?, ?, ?)",
+      [postId, req.session.userId, body]
+    );
+
+    const comment = await dbGet(`
+      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = ?
+    `, [result.lastID]);
+
+    res.status(201).json(comment);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update a comment (owner only)
+app.put('/api/comments/:commentId', async (req, res, next) => {
+  try {
+    if (!req.session.userId) return res.status(401).json({ error: "Authentication required" });
+
+    const commentId = Number(req.params.commentId);
+    if (!Number.isInteger(commentId) || commentId <= 0) return res.status(400).json({ error: "Invalid comment id" });
+
+    const body = (req.body.body || "").toString().trim();
+    if (!body) return res.status(400).json({ error: "Comment body is required" });
+
+    // Check comment exists and user owns it
+    const comment = await dbGet("SELECT id, user_id FROM comments WHERE id = ?", [commentId]);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    if (comment.user_id !== req.session.userId) {
+      return res.status(403).json({ error: "You can only edit your own comments" });
+    }
+
+    await dbRun(
+      "UPDATE comments SET body = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [body, commentId]
+    );
+
+    const updated = await dbGet(`
+      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = ?
+    `, [commentId]);
+
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Delete a comment (owner or admin)
+app.delete('/api/comments/:commentId', async (req, res, next) => {
+  try {
+    if (!req.session.userId && !req.session.isAdmin) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const commentId = Number(req.params.commentId);
+    if (!Number.isInteger(commentId) || commentId <= 0) return res.status(400).json({ error: "Invalid comment id" });
+
+    const comment = await dbGet("SELECT id, user_id FROM comments WHERE id = ?", [commentId]);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    // User can only delete their own, admin can delete any
+    if (!req.session.isAdmin && comment.user_id !== req.session.userId) {
+      return res.status(403).json({ error: "You can only delete your own comments" });
+    }
+
+    const result = await dbRun("DELETE FROM comments WHERE id = ?", [commentId]);
+    if (!result.changes) return res.status(404).json({ error: "Comment not found" });
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --------- REACTIONS ENDPOINTS ---------
+// Get reaction counts for a post
+app.get('/api/posts/:postId/reactions', async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const useful = await dbGet(
+      "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'useful'",
+      [postId]
+    );
+    const notUseful = await dbGet(
+      "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'notuseful'",
+      [postId]
+    );
+
+    // Get user's reaction if logged in
+    let userReaction = null;
+    if (req.session.userId) {
+      const reaction = await dbGet(
+        "SELECT reaction_type FROM reactions WHERE post_id = ? AND user_id = ?",
+        [postId, req.session.userId]
+      );
+      if (reaction) userReaction = reaction.reaction_type;
+    }
+
+    res.json({
+      useful: useful.count,
+      notUseful: notUseful.count,
+      userReaction
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Add or update a reaction (requires auth)
+app.post('/api/posts/:postId/reactions', requireAuth, async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const reactionType = (req.body.reaction_type || "").toString().toLowerCase();
+    if (!['useful', 'notuseful'].includes(reactionType)) {
+      return res.status(400).json({ error: "Reaction type must be 'useful' or 'notuseful'" });
+    }
+
+    // Check post exists
+    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [postId]);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Check if user already has a reaction
+    const existing = await dbGet(
+      "SELECT id, reaction_type FROM reactions WHERE post_id = ? AND user_id = ?",
+      [postId, req.session.userId]
+    );
+
+    if (existing) {
+      if (existing.reaction_type === reactionType) {
+        // Same reaction, no change
+        return res.status(400).json({ error: "You already have this reaction" });
+      }
+      // Update existing reaction to new type
+      await dbRun(
+        "UPDATE reactions SET reaction_type = ? WHERE post_id = ? AND user_id = ?",
+        [reactionType, postId, req.session.userId]
+      );
+    } else {
+      // Insert new reaction
+      await dbRun(
+        "INSERT INTO reactions (post_id, user_id, reaction_type) VALUES (?, ?, ?)",
+        [postId, req.session.userId, reactionType]
+      );
+    }
+
+    // Return updated counts and user's reaction
+    const useful = await dbGet(
+      "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'useful'",
+      [postId]
+    );
+    const notUseful = await dbGet(
+      "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'notuseful'",
+      [postId]
+    );
+
+    res.json({
+      ok: true,
+      useful: useful.count,
+      notUseful: notUseful.count,
+      userReaction: reactionType
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Remove a reaction
+app.delete('/api/posts/:postId/reactions', requireAuth, async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const result = await dbRun(
+      "DELETE FROM reactions WHERE post_id = ? AND user_id = ?",
+      [postId, req.session.userId]
+    );
+
+    if (!result.changes) return res.status(404).json({ error: "Reaction not found" });
+
+    // Return updated counts
+    const useful = await dbGet(
+      "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'useful'",
+      [postId]
+    );
+    const notUseful = await dbGet(
+      "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'notuseful'",
+      [postId]
+    );
+
+    res.json({
+      ok: true,
+      useful: useful.count,
+      notUseful: notUseful.count,
+      userReaction: null
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Search endpoint: search by title/body/tags (case-insensitive LIKE)
 app.get('/api/search', async (req, res, next) => {
   try {
@@ -528,7 +802,10 @@ app.get('/api/search', async (req, res, next) => {
       const rows = await dbAll(`
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
-          CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
+          COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
+          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
+          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
         ORDER BY p.id DESC
@@ -541,7 +818,10 @@ app.get('/api/search', async (req, res, next) => {
       `
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
-          CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
+          COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
+          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
+          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
         WHERE p.title LIKE ? OR p.body LIKE ? OR p.tags LIKE ?
