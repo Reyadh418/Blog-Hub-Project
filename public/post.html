@@ -184,8 +184,145 @@
                 cursor: not-allowed;
             }
 
+            .reaction-btn.is-active-useful {
+                box-shadow: 0 6px 14px rgba(39, 174, 96, 0.25);
+                transform: translateY(-1px);
+                border-color: #27ae60 !important;
+            }
+
+            .reaction-btn.is-active-notuseful {
+                box-shadow: 0 6px 14px rgba(231, 76, 60, 0.25);
+                transform: translateY(-1px);
+                border-color: #e74c3c !important;
+            }
+
             .comment-form-container {
                 animation: scaleIn 0.3s ease-out;
+            }
+
+            /* Comment cards & inline edit */
+            .comment-card {
+                padding: 20px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                border-radius: 10px;
+                border-left: 4px solid #d4a574;
+                animation: fadeIn 0.3s ease-out;
+            }
+
+            .comment-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 12px;
+                gap: 12px;
+            }
+
+            .comment-actions {
+                display: flex;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .comment-action-btn {
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                color: #fff;
+            }
+
+            .comment-action-btn.edit {
+                background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            }
+
+            .comment-action-btn.delete {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            }
+
+            .comment-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+            }
+
+            .comment-body {
+                color: #2c3e50;
+                margin: 12px 0;
+                line-height: 1.7;
+                word-wrap: break-word;
+            }
+
+            .comment-edit {
+                display: none;
+                animation: scaleIn 0.25s ease-out;
+            }
+
+            .comment-edit.show {
+                display: block;
+            }
+
+            .comment-edit textarea {
+                width: 100%;
+                min-height: 110px;
+                padding: 12px;
+                border-radius: 8px;
+                border: 2px solid #ecf0f1;
+                font-family: inherit;
+                font-size: 0.95rem;
+                transition: all 0.2s ease;
+                color: #2c3e50;
+            }
+
+            .comment-edit textarea:focus {
+                border-color: #d4a574;
+                box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.15);
+                outline: none;
+            }
+
+            .comment-edit-actions {
+                margin-top: 12px;
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .comment-edit-actions .save-btn {
+                background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+                color: #fff;
+                border: none;
+                padding: 10px 18px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 700;
+                transition: all 0.2s ease;
+            }
+
+            .comment-edit-actions .cancel-btn {
+                background: #ecf0f1;
+                color: #2c3e50;
+                border: none;
+                padding: 10px 18px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.2s ease;
+            }
+
+            .comment-edit-actions button:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+
+            .count-bump {
+                animation: bump 0.35s ease;
+            }
+
+            @keyframes bump {
+                0% { transform: translateY(0); }
+                40% { transform: translateY(-4px); }
+                100% { transform: translateY(0); }
             }
 
             .post-stats {
@@ -750,6 +887,9 @@
                 const usefulBtn = document.getElementById('usefulBtn');
                 const notusefulBtn = document.getElementById('notusefulBtn');
                 
+                usefulBtn.classList.toggle('is-active-useful', userReaction === 'useful');
+                notusefulBtn.classList.toggle('is-active-notuseful', userReaction === 'notuseful');
+
                 if (userReaction === 'useful') {
                     usefulBtn.style.borderColor = '#27ae60';
                     usefulBtn.style.background = '#d4f1d4';
@@ -800,6 +940,13 @@
                         
                         usefulCountEl.textContent = data.useful;
                         notusefulCountEl.textContent = data.notUseful;
+
+                        // bump animation
+                        usefulCountEl.classList.remove('count-bump');
+                        notusefulCountEl.classList.remove('count-bump');
+                        void usefulCountEl.offsetWidth;
+                        usefulCountEl.classList.add('count-bump');
+                        notusefulCountEl.classList.add('count-bump');
                         
                         currentUserReaction = data.userReaction;
                         updateReactionButtonStyles(data.userReaction);
@@ -847,21 +994,28 @@
                     const canEdit = currentUser && currentUser.userId === comment.user_id;
                     const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
                     return `
-                    <div style="padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #d4a574; animation: fadeIn 0.3s ease-out; animation-delay: ${index * 0.05}s;" class="comment-item">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div class="comment-card comment-item" style="animation-delay: ${index * 0.05}s;">
+                        <div class="comment-meta">
                             <div>
                                 <strong style="color: #1e3a5f; font-size: 1rem;">${escapeHtml(comment.username)}</strong>
                                 <span style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatDate(comment.created_at)}</span>
                                 ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
                             </div>
                             ${ (canEdit || canDelete) ? `
-                                <div style="display: flex; gap: 8px;">
-                                    ${ canEdit ? `<button onclick="editComment(${comment.id}, '${escapeHtml(comment.body).replace(/'/g, "\\'")}', ${comment.post_id})" style="background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(74, 144, 226, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">✎ Edit</button>` : '' }
-                                    ${ canDelete ? `<button onclick="deleteComment(${comment.id}, ${comment.post_id})" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(231, 76, 60, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">✕ Delete</button>` : '' }
+                                <div class="comment-actions">
+                                    ${ canEdit ? `<button class="comment-action-btn edit" onclick="openEdit(${comment.id})">✎ Edit</button>` : '' }
+                                    ${ canDelete ? `<button class="comment-action-btn delete" onclick="deleteComment(${comment.id}, ${comment.post_id})">✕ Delete</button>` : '' }
                                 </div>
                             ` : ''}
                         </div>
-                        <p style="color: #2c3e50; margin: 12px 0; line-height: 1.7; word-wrap: break-word;">${escapeHtml(comment.body).replace(/\n/g, '<br>')}</p>
+                        <div id="comment-body-${comment.id}" class="comment-body">${escapeHtml(comment.body).replace(/\n/g, '<br>')}</div>
+                        <div id="comment-edit-${comment.id}" class="comment-edit">
+                            <textarea id="edit-text-${comment.id}" aria-label="Edit comment">${escapeHtml(comment.body)}</textarea>
+                            <div class="comment-edit-actions">
+                                <button class="save-btn" onclick="saveEdit(${comment.id}, ${comment.post_id})">Save</button>
+                                <button class="cancel-btn" onclick="cancelEdit(${comment.id})">Cancel</button>
+                            </div>
+                        </div>
                     </div>
                 `;
                 }).join('');
@@ -919,19 +1073,59 @@
                 }
             }
 
-            async function editComment(commentId, originalBody, postId) {
-                const newBody = prompt('Edit your comment:', originalBody);
-                if (newBody === null || !newBody.trim()) return;
+            function openEdit(commentId) {
+                // hide any other open edits
+                document.querySelectorAll('.comment-edit.show').forEach(el => {
+                    el.classList.remove('show');
+                });
+                document.querySelectorAll('.comment-body').forEach(el => {
+                    el.style.display = 'block';
+                });
+
+                const bodyEl = document.getElementById(`comment-body-${commentId}`);
+                const editEl = document.getElementById(`comment-edit-${commentId}`);
+                if (bodyEl && editEl) {
+                    bodyEl.style.display = 'none';
+                    editEl.classList.add('show');
+                    const textarea = document.getElementById(`edit-text-${commentId}`);
+                    if (textarea) {
+                        textarea.focus();
+                        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                    }
+                }
+            }
+
+            function cancelEdit(commentId) {
+                const bodyEl = document.getElementById(`comment-body-${commentId}`);
+                const editEl = document.getElementById(`comment-edit-${commentId}`);
+                if (bodyEl && editEl) {
+                    bodyEl.style.display = 'block';
+                    editEl.classList.remove('show');
+                }
+            }
+
+            async function saveEdit(commentId, postId) {
+                const textarea = document.getElementById(`edit-text-${commentId}`);
+                if (!textarea) return;
+                const newBody = textarea.value.trim();
+                if (!newBody) {
+                    showToast('Comment cannot be empty', 'error');
+                    return;
+                }
+
+                const editContainer = document.getElementById(`comment-edit-${commentId}`);
+                const buttons = editContainer ? editContainer.querySelectorAll('button') : [];
+                buttons.forEach(btn => btn.disabled = true);
 
                 try {
                     const response = await fetch(`/api/comments/${commentId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ body: newBody.trim() })
+                        body: JSON.stringify({ body: newBody })
                     });
 
                     if (response.ok) {
-                        showToast('✓ Comment updated successfully!', 'success', 1500);
+                        showToast('✓ Comment updated!', 'success', 1500);
                         loadComments(postId);
                     } else {
                         const err = await response.json();
@@ -940,6 +1134,8 @@
                 } catch (err) {
                     console.error('Error editing comment:', err);
                     showToast('Error editing comment', 'error');
+                } finally {
+                    buttons.forEach(btn => btn.disabled = false);
                 }
             }
 

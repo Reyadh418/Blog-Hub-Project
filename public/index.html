@@ -333,6 +333,37 @@
                 cursor: not-allowed;
             }
 
+            .reaction-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                border-radius: 999px;
+                background: #f4f6f8;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                transition: all 0.2s ease;
+            }
+
+            .reaction-chip.useful {
+                color: #27ae60;
+                border: 1px solid rgba(39, 174, 96, 0.15);
+            }
+
+            .reaction-chip.notuseful {
+                color: #e74c3c;
+                border: 1px solid rgba(231, 76, 60, 0.15);
+            }
+
+            .reaction-chip:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            }
+
+            .reaction-chip .reaction-count {
+                font-weight: 700;
+                color: inherit;
+            }
+
             .error-message {
                 background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
                 color: #ffffff;
@@ -453,6 +484,16 @@
                 0% { transform: scale(1); }
                 50% { transform: scale(1.08); }
                 100% { transform: scale(1); }
+            }
+
+            .count-bump {
+                animation: bump 0.35s ease;
+            }
+
+            @keyframes bump {
+                0% { transform: translateY(0); }
+                40% { transform: translateY(-4px); }
+                100% { transform: translateY(0); }
             }
 
             @media (max-width: 600px) {
@@ -733,8 +774,8 @@
                                 <span class="post-word-count">${wordCount} words</span>
                                 <span style="color:#d4a574; font-weight:600;">👤 ${escapeHtml(authorDisplay)}</span>
                                 <span style="color:#d4a574;">💬 ${post.comment_count || 0}</span>
-                                <span style="color:#27ae60; cursor:pointer; font-weight:600;" class="reaction-useful-btn" data-id="${post.id}">👍 ${post.useful_count || 0}</span>
-                                <span style="color:#e74c3c; cursor:pointer; font-weight:600;" class="reaction-notuseful-btn" data-id="${post.id}">👎 ${post.notuseful_count || 0}</span>
+                                <span class="reaction-chip useful reaction-useful-btn" data-id="${post.id}">👍 <span class="reaction-count">${post.useful_count || 0}</span></span>
+                                <span class="reaction-chip notuseful reaction-notuseful-btn" data-id="${post.id}">👎 <span class="reaction-count">${post.notuseful_count || 0}</span></span>
                                 <span>→ Read More</span>
                             </div>
                             ${canEdit || canDelete || canFlag ? `<div class="admin-controls">
@@ -851,8 +892,17 @@
                                 });
                                 if (resp.ok) {
                                     const data = await resp.json();
-                                    usefulBtn.textContent = `👍 ${data.useful}`;
-                                    notusefulBtn.textContent = `👎 ${data.notUseful}`;
+                                    const uCount = usefulBtn.querySelector('.reaction-count');
+                                    const nCount = notusefulBtn.querySelector('.reaction-count');
+                                    if (uCount && nCount) {
+                                        uCount.textContent = data.useful;
+                                        nCount.textContent = data.notUseful;
+                                        uCount.classList.remove('count-bump');
+                                        nCount.classList.remove('count-bump');
+                                        void uCount.offsetWidth;
+                                        uCount.classList.add('count-bump');
+                                        nCount.classList.add('count-bump');
+                                    }
                                     
                                     // Add visual feedback
                                     btnClass.style.animation = 'buttonPulse 0.3s ease';
@@ -891,8 +941,17 @@
                                 });
                                 if (resp.ok) {
                                     const data = await resp.json();
-                                    usefulBtn.textContent = `👍 ${data.useful}`;
-                                    notusefulBtn.textContent = `👎 ${data.notUseful}`;
+                                    const uCount = usefulBtn.querySelector('.reaction-count');
+                                    const nCount = notusefulBtn.querySelector('.reaction-count');
+                                    if (uCount && nCount) {
+                                        uCount.textContent = data.useful;
+                                        nCount.textContent = data.notUseful;
+                                        uCount.classList.remove('count-bump');
+                                        nCount.classList.remove('count-bump');
+                                        void uCount.offsetWidth;
+                                        uCount.classList.add('count-bump');
+                                        nCount.classList.add('count-bump');
+                                    }
                                     
                                     // Add visual feedback
                                     btnClass.style.animation = 'buttonPulse 0.3s ease';
