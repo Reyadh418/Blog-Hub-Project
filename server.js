@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "admin.env" });
+// dotenv removed; admin credentials are DB-backed now.
 
 const express = require("express");
 const path = require("path");
@@ -77,15 +77,11 @@ async function ensureAdminUser() {
   if (existing) return existing;
 
   const fallbackUsername = "@admin";
-  const envUsername = (process.env.ADMIN_USER || fallbackUsername).toString().trim() || fallbackUsername;
-  const normalizedUsername = envUsername.toLowerCase();
+  const normalizedUsername = fallbackUsername;
 
-  let adminPassword = (process.env.ADMIN_PASS || "").toString();
-  if (!adminPassword) {
-    // Generate a strong temporary password so the admin can log in and rotate it immediately
-    adminPassword = crypto.randomBytes(12).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
-    console.warn("[admin] ADMIN_PASS not set. Generated temporary admin password:", adminPassword);
-  }
+  // Generate a strong temporary password; admin should rotate it immediately
+  let adminPassword = crypto.randomBytes(12).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+  console.warn("[admin] Generated temporary admin password:", adminPassword);
 
   const email = "admin@example.local";
   const passwordHash = hashPassword(adminPassword);
@@ -110,6 +106,16 @@ function requireAdmin(req, res, next) {
 function requireAuth(req, res, next) {
   if (req.session && req.session.userId) return next();
   return res.status(401).json({ error: "Authentication required" });
+}
+
+function requireUserOnly(req, res, next) {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  if (req.session.isAdmin) {
+    return res.status(403).json({ error: "Not available for admin" });
+  }
+  return next();
 }
 
 const dbAll = (sql, params = []) =>
@@ -146,6 +152,22 @@ const dbGet = (sql, params = []) =>
       resolve(row || null);
     });
   });
+
+async function createNotification({ userId, postId, type, message }) {
+  try {
+    if (!userId || !postId || !type || !message) return null;
+    const user = await dbGet("SELECT id, is_admin FROM users WHERE id = ?", [userId]);
+    if (!user || user.is_admin) return null;
+    const result = await dbRun(
+      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, ?, ?, ?)",
+      [userId, postId, type, message]
+    );
+    return result.lastID;
+  } catch (err) {
+    console.error("notification error", err.message);
+    return null;
+  }
+}
 
 // --------------------
 // API routes
@@ -670,7 +692,7 @@ app.patch("/api/posts/:id/flag", async (req, res, next) => {
     const flagged = req.body.flag === true ? 1 : 0;
 
     // Check if post exists
-    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [id]);
+    const post = await dbGet("SELECT id, author_id FROM posts WHERE id = ?", [id]);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
     const result = await dbRun("UPDATE posts SET is_flagged = ? WHERE id = ?", [flagged, id]);
@@ -683,6 +705,11 @@ app.patch("/api/posts/:id/flag", async (req, res, next) => {
       LEFT JOIN users u ON p.author_id = u.id
       WHERE p.id = ?
     `, [id]);
+
+    if (post.author_id) {
+      const msg = flagged ? "Admin has flagged your post." : "Admin removed flag from your post.";
+      await createNotification({ userId: post.author_id, postId: id, type: flagged ? "flagged" : "flag_removed", message: msg });
+    }
 
     res.json({ ok: true, is_flagged: flagged, post: updated });
   } catch (err) {
@@ -757,7 +784,7 @@ app.post('/api/posts/:postId/comments', requireAuth, async (req, res, next) => {
     if (!body) return res.status(400).json({ error: "Comment body is required" });
 
     // Check post exists
-    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [postId]);
+    const post = await dbGet("SELECT id, author_id FROM posts WHERE id = ?", [postId]);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
     const result = await dbRun(
@@ -772,6 +799,16 @@ app.post('/api/posts/:postId/comments', requireAuth, async (req, res, next) => {
       JOIN users u ON c.user_id = u.id
       WHERE c.id = ?
     `, [result.lastID]);
+
+    if (post.author_id && post.author_id !== req.session.userId) {
+      const actor = (comment && comment.username) ? comment.username : "Someone";
+      await createNotification({
+        userId: post.author_id,
+        postId: postId,
+        type: "comment",
+        message: `${actor} commented on your post.`
+      });
+    }
 
     res.status(201).json(comment);
   } catch (err) {
@@ -891,7 +928,7 @@ app.post('/api/posts/:postId/reactions', requireAuth, async (req, res, next) => 
     }
 
     // Check post exists
-    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [postId]);
+    const post = await dbGet("SELECT id, author_id FROM posts WHERE id = ?", [postId]);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
     // Check if user already has a reaction
@@ -927,6 +964,17 @@ app.post('/api/posts/:postId/reactions', requireAuth, async (req, res, next) => 
       "SELECT COUNT(*) as count FROM reactions WHERE post_id = ? AND reaction_type = 'notuseful'",
       [postId]
     );
+
+    if (post.author_id && post.author_id !== req.session.userId) {
+      const actor = req.session.username || "Someone";
+      const reactionLabel = reactionType === 'useful' ? 'a 👍 reaction' : 'a 👎 reaction';
+      await createNotification({
+        userId: post.author_id,
+        postId,
+        type: "reaction",
+        message: `${actor} left ${reactionLabel} on your post.`
+      });
+    }
 
     res.json({
       ok: true,
@@ -968,6 +1016,47 @@ app.delete('/api/posts/:postId/reactions', requireAuth, async (req, res, next) =
       notUseful: notUseful.count,
       userReaction: null
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --------- NOTIFICATIONS (user only) ---------
+app.get('/api/notifications', requireUserOnly, async (req, res, next) => {
+  try {
+    const rows = await dbAll(`
+      SELECT n.id, n.post_id, n.type, n.message, n.is_read, n.created_at, COALESCE(p.title, '') as post_title
+      FROM notifications n
+      LEFT JOIN posts p ON n.post_id = p.id
+      WHERE n.user_id = ?
+      ORDER BY datetime(n.created_at) DESC
+      LIMIT 100
+    `, [req.session.userId]);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch('/api/notifications/:id/read', requireUserOnly, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid notification id" });
+    const result = await dbRun("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?", [id, req.session.userId]);
+    if (!result.changes) return res.status(404).json({ error: "Notification not found" });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete('/api/notifications/:id', requireUserOnly, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid notification id" });
+    const result = await dbRun("DELETE FROM notifications WHERE id = ? AND user_id = ?", [id, req.session.userId]);
+    if (!result.changes) return res.status(404).json({ error: "Notification not found" });
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

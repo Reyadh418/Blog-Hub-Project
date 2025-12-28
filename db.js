@@ -92,6 +92,21 @@ db.run(`
   )
 `);
 
+// Notifications (user-only, tied to posts)
+db.run(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+  )
+`);
+
 // Create useful indexes to speed up common queries
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
@@ -104,5 +119,6 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_user_id ON reactions(user_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON notifications(user_id, created_at DESC)`);
 
 module.exports = db;

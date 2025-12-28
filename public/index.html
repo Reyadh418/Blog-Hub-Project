@@ -97,6 +97,105 @@
                 transform: none;
             }
 
+            /* Animated confirm dialog */
+            .confirm-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: rgba(10, 24, 47, 0.8);
+                backdrop-filter: blur(4px);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.22s ease;
+                z-index: 12000;
+                padding: 20px;
+            }
+
+            .confirm-overlay.show {
+                display: flex;
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            .confirm-card {
+                width: min(460px, 100%);
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 26px 26px 22px;
+                box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+                transform: translateY(8px) scale(0.98);
+                opacity: 0;
+                transition: transform 0.25s ease, opacity 0.25s ease;
+            }
+
+            .confirm-overlay.show .confirm-card {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+
+            .confirm-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: #ffffff;
+                font-size: 1.3rem;
+                box-shadow: 0 8px 20px rgba(231, 76, 60, 0.35);
+                margin-bottom: 14px;
+            }
+
+            .confirm-card h3 {
+                margin: 0 0 8px;
+                color: #1e3a5f;
+                font-size: 1.2rem;
+                letter-spacing: 0.3px;
+            }
+
+            .confirm-card p {
+                margin: 0 0 18px;
+                color: #4a5568;
+                line-height: 1.6;
+            }
+
+            .confirm-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .confirm-btn {
+                border: none;
+                border-radius: 8px;
+                padding: 12px 18px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+                letter-spacing: 0.4px;
+                font-size: 0.95rem;
+            }
+
+            .confirm-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .confirm-btn.ghost {
+                background: #f3f4f6;
+                color: #1e3a5f;
+                box-shadow: inset 0 0 0 1px #d9dce2;
+            }
+
+            .confirm-btn.danger {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: #ffffff;
+                box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+            }
+
             #create-post-btn {
                 background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
                 color: #ffffff;
@@ -510,6 +609,195 @@
                 100% { transform: translateY(0); }
             }
 
+            /* Notifications UI */
+            .notif-btn {
+                position: relative;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                color: #ffffff;
+                display: none;
+            }
+
+            .notif-badge {
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: linear-gradient(135deg, #f83600 0%, #f9d423 100%);
+                color: #fff;
+                border-radius: 999px;
+                padding: 2px 7px;
+                font-size: 0.72rem;
+                font-weight: 800;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+                display: none;
+            }
+
+            .notification-panel {
+                position: fixed;
+                top: 110px;
+                right: 20px;
+                width: min(420px, calc(100% - 32px));
+                background: rgba(255,255,255,0.97);
+                backdrop-filter: blur(10px);
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+                border: 1px solid rgba(255,255,255,0.5);
+                padding: 14px;
+                z-index: 11000;
+                opacity: 0;
+                transform: translateY(-8px) scale(0.98);
+                pointer-events: none;
+                transition: opacity 0.18s ease, transform 0.2s ease;
+            }
+
+            .notification-panel.show {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                pointer-events: all;
+            }
+
+            .notification-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                padding: 6px 6px 10px;
+            }
+
+            .notification-title {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: #1e3a5f;
+                font-weight: 800;
+                letter-spacing: 0.3px;
+            }
+
+            .notification-actions {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+
+            .notif-chip {
+                border: none;
+                background: #f3f4f6;
+                color: #1e3a5f;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+
+            .notif-chip:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+
+            .notification-list {
+                max-height: 420px;
+                overflow-y: auto;
+                padding: 4px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .notif-item {
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                gap: 12px;
+                align-items: center;
+                background: linear-gradient(135deg, rgba(212,165,116,0.08) 0%, rgba(30,58,95,0.06) 100%);
+                border: 1px solid rgba(0,0,0,0.04);
+                border-radius: 12px;
+                padding: 12px 12px;
+                transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.2s ease;
+                cursor: pointer;
+            }
+
+            .notif-item:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+            }
+
+            .notif-item.unread {
+                background: linear-gradient(135deg, rgba(24,118,210,0.08) 0%, rgba(104,159,56,0.08) 100%);
+                border-color: rgba(104,159,56,0.16);
+            }
+
+            .notif-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.1rem;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                color: #fff;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+            }
+
+            .notif-body {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .notif-message {
+                font-weight: 700;
+                color: #1e3a5f;
+                letter-spacing: 0.2px;
+            }
+
+            .notif-meta {
+                font-size: 0.88rem;
+                color: #6b7280;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .notif-pill {
+                padding: 3px 9px;
+                border-radius: 999px;
+                font-weight: 700;
+                font-size: 0.78rem;
+                background: #ecf0f1;
+                color: #1e3a5f;
+            }
+
+            .notif-delete {
+                border: none;
+                background: #f3f4f6;
+                color: #c0392b;
+                border-radius: 10px;
+                padding: 8px 10px;
+                cursor: pointer;
+                transition: background 0.16s ease, transform 0.16s ease;
+            }
+
+            .notif-delete:hover {
+                background: #fbeaea;
+                transform: translateY(-1px);
+            }
+
+            .notif-empty {
+                text-align: center;
+                color: #6b7280;
+                padding: 20px 10px;
+            }
+
+            @media (max-width: 600px) {
+                .notification-panel {
+                    right: 10px;
+                    left: 10px;
+                    top: 90px;
+                    width: auto;
+                }
+            }
+
             @media (max-width: 600px) {
                 .toast-container {
                     right: 10px;
@@ -526,6 +814,18 @@
     <body>
         <div class="toast-container" id="toastContainer"></div>
 
+        <div class="notification-panel" id="notificationPanel" aria-live="polite">
+            <div class="notification-header">
+                <div class="notification-title">✨ Notifications</div>
+                <div class="notification-actions">
+                    <button class="notif-chip" id="notifRefresh" aria-label="Refresh notifications">↻ Refresh</button>
+                    <button class="notif-chip" id="notifClose" aria-label="Close notifications">✖ Close</button>
+                </div>
+            </div>
+            <div id="notificationList" class="notification-list"></div>
+            <div id="notificationEmpty" class="notif-empty" style="display:none;">No notifications yet. Engage with the community to see updates here.</div>
+        </div>
+
         <div class="header">
             <h1>Blog Hub</h1>
             <p class="header-subtitle">Discover inspiring stories and insights</p>
@@ -537,11 +837,18 @@
                 <button id="search-btn" aria-label="Search">🔎 Search</button>
                 <button id="clear-search-btn" style="display:none; background:#ecf0f1;" aria-label="Clear search">✖</button>
             </div>
+            <button id="notifications-btn" class="notif-btn" aria-label="Notifications" style="display:none;">
+                🔔 Notifications
+                <span id="notifBadge" class="notif-badge">0</span>
+            </button>
             <button id="create-post-btn" onclick="location.href='create-post.html'" style="display: none;">
                 ✎ Create New Post
             </button>
             <button id="admin-login-btn" onclick="location.href='login.html'" style="display: none;">
                 👤 Login
+            </button>
+            <button id="register-btn" onclick="location.href='register.html'" style="display: none; background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%); color: #ffffff;">
+                ✨ Register
             </button>
             <button id="profile-btn" onclick="goToProfile()" style="display: none;">
                 👤 My Profile
@@ -574,7 +881,18 @@
             const SEARCH_BTN = document.getElementById('search-btn');
             const CLEAR_SEARCH_BTN = document.getElementById('clear-search-btn');
             const SEARCH_INFO = document.getElementById('search-info');
+            const REGISTER_BTN = document.getElementById('register-btn');
+            const NOTIF_BTN = document.getElementById('notifications-btn');
+            const NOTIF_BADGE = document.getElementById('notifBadge');
+            const NOTIF_PANEL = document.getElementById('notificationPanel');
+            const NOTIF_LIST = document.getElementById('notificationList');
+            const NOTIF_EMPTY = document.getElementById('notificationEmpty');
+            const NOTIF_REFRESH = document.getElementById('notifRefresh');
+            const NOTIF_CLOSE = document.getElementById('notifClose');
             let CURRENT_USER = { isAdmin: false, userId: null };
+            let NOTIFICATIONS = [];
+            let notifPoll = null;
+            let notifPanelOpen = false;
 
             const AVATAR_PALETTE = {
                 aurora: 'linear-gradient(135deg, #5efce8 0%, #736efe 100%)',
@@ -631,6 +949,58 @@
                 }
                 
                 return toast;
+            }
+
+            function ensureConfirmDialog() {
+                if (document.getElementById('confirmOverlay')) return;
+                const overlay = document.createElement('div');
+                overlay.id = 'confirmOverlay';
+                overlay.className = 'confirm-overlay';
+                overlay.innerHTML = `
+                    <div class="confirm-card">
+                        <div class="confirm-icon">🗑</div>
+                        <h3 id="confirmTitle">Confirm delete</h3>
+                        <p id="confirmMessage">This action cannot be undone.</p>
+                        <div class="confirm-actions">
+                            <button class="confirm-btn ghost" id="confirmCancel">Cancel</button>
+                            <button class="confirm-btn danger" id="confirmConfirm">Delete</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+
+            function confirmAction(message, confirmLabel = 'Delete', title = 'Are you sure?') {
+                ensureConfirmDialog();
+                const overlay = document.getElementById('confirmOverlay');
+                const messageEl = document.getElementById('confirmMessage');
+                const titleEl = document.getElementById('confirmTitle');
+                const confirmBtn = document.getElementById('confirmConfirm');
+                const cancelBtn = document.getElementById('confirmCancel');
+
+                messageEl.textContent = message;
+                titleEl.textContent = title;
+                confirmBtn.textContent = confirmLabel;
+
+                overlay.style.display = 'flex';
+                requestAnimationFrame(() => overlay.classList.add('show'));
+
+                return new Promise((resolve) => {
+                    const cleanup = (result) => {
+                        overlay.classList.remove('show');
+                        setTimeout(() => { overlay.style.display = 'none'; }, 220);
+                        confirmBtn.onclick = null;
+                        cancelBtn.onclick = null;
+                        overlay.onclick = null;
+                        resolve(result);
+                    };
+
+                    confirmBtn.onclick = (e) => { e.stopPropagation(); cleanup(true); };
+                    cancelBtn.onclick = (e) => { e.stopPropagation(); cleanup(false); };
+                    overlay.onclick = (e) => {
+                        if (e.target === overlay) cleanup(false);
+                    };
+                });
             }
 
             function getQueryParam(name) {
@@ -733,6 +1103,20 @@
                 const date = new Date(dateString);
                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
                 return date.toLocaleDateString('en-US', options);
+            }
+
+            function timeAgo(dateString) {
+                const now = new Date();
+                const then = new Date(dateString);
+                const diff = Math.max(0, now - then);
+                const mins = Math.floor(diff / 60000);
+                if (mins < 1) return 'Just now';
+                if (mins < 60) return `${mins}m ago`;
+                const hours = Math.floor(mins / 60);
+                if (hours < 24) return `${hours}h ago`;
+                const days = Math.floor(hours / 24);
+                if (days < 7) return `${days}d ago`;
+                return formatDate(dateString);
             }
 
             // Count words in text
@@ -853,7 +1237,8 @@
                         deleteBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
                             const id = ev.currentTarget.getAttribute('data-id');
-                            if (!confirm('Delete this post? This action cannot be undone.')) return;
+                            const confirmed = await confirmAction('Delete this post? This action cannot be undone.', 'Delete post', 'Delete post?');
+                            if (!confirmed) return;
                             try {
                                 const resp = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
                                 if (resp.ok) {
@@ -1027,23 +1412,206 @@
                 return text.replace(/[&<>"']/g, m => map[m]);
             }
 
+            function notificationsAllowed() {
+                return CURRENT_USER && CURRENT_USER.userId && !CURRENT_USER.isAdmin;
+            }
+
+            function stopNotificationPolling() {
+                if (notifPoll) {
+                    clearInterval(notifPoll);
+                    notifPoll = null;
+                }
+            }
+
+            function startNotificationPolling() {
+                stopNotificationPolling();
+                notifPoll = setInterval(() => fetchNotifications(true), 20000);
+            }
+
+            function updateNotificationBadge() {
+                if (!NOTIF_BADGE) return;
+                const unread = NOTIFICATIONS.filter(n => !n.is_read).length;
+                if (unread > 0) {
+                    NOTIF_BADGE.style.display = 'inline-block';
+                    NOTIF_BADGE.textContent = unread > 99 ? '99+' : unread;
+                } else {
+                    NOTIF_BADGE.style.display = 'none';
+                }
+            }
+
+            function renderNotifications() {
+                if (!NOTIF_LIST) return;
+                NOTIF_LIST.innerHTML = '';
+
+                if (!NOTIFICATIONS.length) {
+                    if (NOTIF_EMPTY) NOTIF_EMPTY.style.display = 'block';
+                    updateNotificationBadge();
+                    return;
+                }
+                if (NOTIF_EMPTY) NOTIF_EMPTY.style.display = 'none';
+
+                const typeIcons = {
+                    flagged: '🚩',
+                    flag_removed: '✅',
+                    reaction: '👍',
+                    comment: '💬'
+                };
+
+                const typePills = {
+                    flagged: 'Flagged',
+                    flag_removed: 'Flag removed',
+                    reaction: 'Reaction',
+                    comment: 'Comment'
+                };
+
+                NOTIFICATIONS.forEach((n) => {
+                    const item = document.createElement('div');
+                    item.className = `notif-item ${n.is_read ? 'read' : 'unread'}`;
+                    const icon = typeIcons[n.type] || '✨';
+                    const pill = typePills[n.type] || 'Update';
+                    item.innerHTML = `
+                        <div class="notif-icon">${icon}</div>
+                        <div class="notif-body">
+                            <div class="notif-message">${escapeHtml(n.message || 'You have a new update')}</div>
+                            <div class="notif-meta">
+                                <span class="notif-pill">${pill}</span>
+                                <span>${timeAgo(n.created_at)}</span>
+                            </div>
+                        </div>
+                        <button class="notif-delete" aria-label="Delete notification">🗑</button>
+                    `;
+
+                    item.addEventListener('click', async () => {
+                        if (!n.post_id) return;
+                        await markNotificationRead(n.id);
+                        window.location.href = `/post.html?id=${n.post_id}`;
+                    });
+
+                    const delBtn = item.querySelector('.notif-delete');
+                    if (delBtn) {
+                        delBtn.addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            await deleteNotification(n.id);
+                        });
+                    }
+
+                    NOTIF_LIST.appendChild(item);
+                });
+
+                updateNotificationBadge();
+            }
+
+            async function fetchNotifications(isBackground = false) {
+                if (!notificationsAllowed()) {
+                    NOTIFICATIONS = [];
+                    renderNotifications();
+                    return;
+                }
+                try {
+                    const resp = await fetch('/api/notifications');
+                    if (!resp.ok) throw new Error('Failed to load notifications');
+                    const data = await resp.json();
+                    NOTIFICATIONS = Array.isArray(data) ? data : [];
+                    renderNotifications();
+                    if (!isBackground && !notifPanelOpen && NOTIFICATIONS.some(n => !n.is_read)) {
+                        NOTIF_BADGE.classList.add('count-bump');
+                        setTimeout(() => NOTIF_BADGE.classList.remove('count-bump'), 350);
+                    }
+                } catch (err) {
+                    console.error('Notifications error', err);
+                    if (!isBackground) showToast('Could not load notifications', 'error');
+                }
+            }
+
+            async function markNotificationRead(id) {
+                const target = NOTIFICATIONS.find(n => n.id === id);
+                if (target && target.is_read) return true;
+                try {
+                    const resp = await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+                    if (resp.ok) {
+                        if (target) target.is_read = 1;
+                        updateNotificationBadge();
+                        return true;
+                    }
+                } catch (err) {
+                    console.error('Mark read failed', err);
+                }
+                return false;
+            }
+
+            async function deleteNotification(id) {
+                try {
+                    const resp = await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+                    if (resp.ok) {
+                        NOTIFICATIONS = NOTIFICATIONS.filter(n => n.id !== id);
+                        renderNotifications();
+                        return true;
+                    }
+                } catch (err) {
+                    console.error('Delete notification failed', err);
+                }
+                showToast('Could not delete notification', 'error');
+                return false;
+            }
+
+            function toggleNotificationPanel(force) {
+                if (!notificationsAllowed() || !NOTIF_PANEL) return;
+                const nextState = force !== undefined ? force : !notifPanelOpen;
+                notifPanelOpen = nextState;
+                NOTIF_PANEL.classList.toggle('show', nextState);
+                if (nextState) {
+                    fetchNotifications(true);
+                }
+            }
+
+            function setNotificationAccess(user) {
+                if (!NOTIF_BTN) return;
+                if (user && user.userId && !user.isAdmin) {
+                    NOTIF_BTN.style.display = 'inline-block';
+                    startNotificationPolling();
+                    fetchNotifications(true);
+                } else {
+                    NOTIF_BTN.style.display = 'none';
+                    toggleNotificationPanel(false);
+                    NOTIFICATIONS = [];
+                    renderNotifications();
+                    stopNotificationPolling();
+                }
+            }
+
+            if (NOTIF_BTN) NOTIF_BTN.addEventListener('click', () => toggleNotificationPanel());
+            if (NOTIF_REFRESH) NOTIF_REFRESH.addEventListener('click', () => fetchNotifications());
+            if (NOTIF_CLOSE) NOTIF_CLOSE.addEventListener('click', () => toggleNotificationPanel(false));
+            document.addEventListener('click', (e) => {
+                if (!notifPanelOpen) return;
+                const withinPanel = NOTIF_PANEL && NOTIF_PANEL.contains(e.target);
+                const withinBtn = NOTIF_BTN && NOTIF_BTN.contains(e.target);
+                if (!withinPanel && !withinBtn) toggleNotificationPanel(false);
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && notifPanelOpen) toggleNotificationPanel(false);
+            });
+
             // Update auth buttons display
             function updateAuthButtons(user) {
                 if (user.isAdmin) {
                     CREATE_POST_BTN.style.display = 'inline-block';
                     ADMIN_LOGIN_BTN.style.display = 'none';
+                    REGISTER_BTN.style.display = 'none';
                     PROFILE_BTN.style.display = 'inline-block';
                     LOGOUT_BTN.style.display = 'inline-block';
                 } else if (user.userId) {
                     // Regular user logged in
                     CREATE_POST_BTN.style.display = 'inline-block';
                     ADMIN_LOGIN_BTN.style.display = 'none';
+                    REGISTER_BTN.style.display = 'none';
                     PROFILE_BTN.style.display = 'inline-block';
                     LOGOUT_BTN.style.display = 'inline-block';
                 } else {
                     // Not logged in
                     CREATE_POST_BTN.style.display = 'none';
                     ADMIN_LOGIN_BTN.style.display = 'inline-block';
+                    REGISTER_BTN.style.display = 'inline-block';
                     PROFILE_BTN.style.display = 'none';
                     LOGOUT_BTN.style.display = 'none';
                 }
@@ -1058,6 +1626,7 @@
                     if (response.ok) {
                         showToast('Logged out successfully!', 'success', 1500);
                         updateAuthButtons({ isAdmin: false, userId: null });
+                        setNotificationAccess({ userId: null, isAdmin: false });
                         setTimeout(() => window.location.reload(), 500);
                     }
                 } catch (error) {
@@ -1081,6 +1650,7 @@
                     const user = await fetchCurrentUser();
                     CURRENT_USER = user || { isAdmin: false, userId: null };
                     updateAuthButtons(CURRENT_USER);
+                    setNotificationAccess(CURRENT_USER);
 
                     const q = getQueryParam('q');
                     if (q) {
