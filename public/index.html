@@ -364,6 +364,20 @@
                 color: inherit;
             }
 
+            .avatar-chip {
+                width: 34px;
+                height: 34px;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                color: #fff;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+                text-transform: uppercase;
+                flex-shrink: 0;
+            }
+
             .error-message {
                 background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
                 color: #ffffff;
@@ -562,6 +576,22 @@
             const SEARCH_INFO = document.getElementById('search-info');
             let CURRENT_USER = { isAdmin: false, userId: null };
 
+            const AVATAR_PALETTE = {
+                aurora: 'linear-gradient(135deg, #5efce8 0%, #736efe 100%)',
+                sunset: 'linear-gradient(135deg, #f83600 0%, #f9d423 100%)',
+                wave: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
+                forest: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                midnight: 'linear-gradient(135deg, #141e30 0%, #243b55 100%)',
+                plum: 'linear-gradient(135deg, #cc2b5e 0%, #753a88 100%)',
+                citrus: 'linear-gradient(135deg, #fceabb 0%, #f8b500 100%)',
+                ember: 'linear-gradient(135deg, #e65c00 0%, #f9d423 100%)',
+                mint: 'linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%)',
+            };
+
+            function avatarStyle(key) {
+                return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)';
+            }
+
             let searchTimeout = null;
 
             // Toast notification system
@@ -741,6 +771,9 @@
                     const date = post.created_at ? formatDate(post.created_at) : '';
                     const postUrl = `/post.html?id=${post.id}`;
                     const authorDisplay = post.author_name || 'Unknown';
+                    const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
+                    const authorInitial = (authorDisplay || 'U').toString().charAt(0).toUpperCase();
+                    const avatarBg = avatarStyle(post.author_avatar || '');
 
                     // Determine if current user can edit/delete this post
                     let canEdit = false;
@@ -772,7 +805,17 @@
                         <div class="post-meta">
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <span class="post-word-count">${wordCount} words</span>
-                                <span style="color:#d4a574; font-weight:600;">👤 ${escapeHtml(authorDisplay)}</span>
+                                ${isAdminPost ? `
+                                    <span style="display:flex; align-items:center; gap:8px; color:#1e3a5f; font-weight:700;">
+                                        <span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span>
+                                        Admin
+                                    </span>
+                                ` : `
+                                    <span style="display:flex; align-items:center; gap:8px; color:#d4a574; font-weight:600;">
+                                        <span class="avatar-chip" style="background:${avatarBg}">${escapeHtml(authorInitial)}</span>
+                                        ${escapeHtml(authorDisplay)}
+                                    </span>
+                                `}
                                 <span style="color:#d4a574;">💬 ${post.comment_count || 0}</span>
                                 <span class="reaction-chip useful reaction-useful-btn" data-id="${post.id}">👍 <span class="reaction-count">${post.useful_count || 0}</span></span>
                                 <span class="reaction-chip notuseful reaction-notuseful-btn" data-id="${post.id}">👎 <span class="reaction-count">${post.notuseful_count || 0}</span></span>

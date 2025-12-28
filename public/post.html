@@ -68,6 +68,20 @@
                 gap: 6px;
             }
 
+            .avatar-chip {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+                text-transform: uppercase;
+                flex-shrink: 0;
+            }
+
             .loading {
                 text-align: center;
                 color: #ffffff;
@@ -599,6 +613,22 @@
             const ERROR_WRAPPER = document.getElementById('error-wrapper');
             const ERROR_MESSAGE = document.getElementById('errorMessage');
 
+            const AVATAR_PALETTE = {
+                aurora: 'linear-gradient(135deg, #5efce8 0%, #736efe 100%)',
+                sunset: 'linear-gradient(135deg, #f83600 0%, #f9d423 100%)',
+                wave: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
+                forest: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                midnight: 'linear-gradient(135deg, #141e30 0%, #243b55 100%)',
+                plum: 'linear-gradient(135deg, #cc2b5e 0%, #753a88 100%)',
+                citrus: 'linear-gradient(135deg, #fceabb 0%, #f8b500 100%)',
+                ember: 'linear-gradient(135deg, #e65c00 0%, #f9d423 100%)',
+                mint: 'linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%)',
+            };
+
+            function avatarStyle(key) {
+                return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)';
+            }
+
             // Get post ID from URL query parameter
             function getPostId() {
                 const params = new URLSearchParams(window.location.search);
@@ -662,6 +692,9 @@
                 const readTime = estimateReadTime(wordCount);
                 const formattedDate = formatDate(post.created_at);
                 const authorDisplay = post.author_name || 'Unknown';
+                const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
+                const authorInitial = authorDisplay.charAt(0).toUpperCase();
+                const authorAvatarBg = avatarStyle(post.author_avatar || '');
 
                 // Update title
                 document.title = `${post.title} | Blog`;
@@ -676,7 +709,9 @@
                 document.getElementById('postDate').textContent = formattedDate;
                 document.getElementById('wordCount').textContent = wordCount;
                 document.getElementById('readTime').textContent = readTime;
-                document.getElementById('authorName').textContent = authorDisplay;
+                document.getElementById('authorName').innerHTML = isAdminPost
+                    ? `<span style="display:flex; align-items:center; gap:8px; color:#1e3a5f; font-weight:700;"><span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span><span>Admin</span></span>`
+                    : `<span class="avatar-chip" style="background:${authorAvatarBg}">${escapeHtml(authorInitial)}</span><span>${escapeHtml(authorDisplay)}</span>`;
 
                 // Update body
                 document.getElementById('postBody').textContent = post.body;
@@ -993,13 +1028,21 @@
                 commentsList.innerHTML = comments.map((comment, index) => {
                     const canEdit = currentUser && currentUser.userId === comment.user_id;
                     const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
+                    const isAdminComment = comment.is_admin === 1 || comment.is_admin === true;
+                    const nameDisplay = isAdminComment ? 'Admin' : comment.username;
+                    const avatarMarkup = isAdminComment
+                        ? `<span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span>`
+                        : `<span class="avatar-chip" style="background:${avatarStyle(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
                     return `
                     <div class="comment-card comment-item" style="animation-delay: ${index * 0.05}s;">
                         <div class="comment-meta">
-                            <div>
-                                <strong style="color: #1e3a5f; font-size: 1rem;">${escapeHtml(comment.username)}</strong>
-                                <span style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatDate(comment.created_at)}</span>
-                                ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                ${avatarMarkup}
+                                <div>
+                                    <strong style="color: #1e3a5f; font-size: 1rem;">${escapeHtml(nameDisplay)}</strong>
+                                    <span style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatDate(comment.created_at)}</span>
+                                    ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
+                                </div>
                             </div>
                             ${ (canEdit || canDelete) ? `
                                 <div class="comment-actions">

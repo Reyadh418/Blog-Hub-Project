@@ -37,6 +37,27 @@ app.use(express.static(path.join(__dirname, "public")));
 // Helpers
 // --------------------
 
+const ALLOWED_AVATARS = [
+  "aurora",
+  "sunset",
+  "wave",
+  "forest",
+  "midnight",
+  "plum",
+  "citrus",
+  "ember",
+  "mint",
+];
+
+function safeAvatar(value) {
+  if (!value) return "";
+  return ALLOWED_AVATARS.includes(value) ? value : "";
+}
+
+function defaultAvatar() {
+  return ALLOWED_AVATARS[0];
+}
+
 function getPasswordSalt() {
   return process.env.PASSWORD_SALT !== undefined ? process.env.PASSWORD_SALT : "undefined";
 }
@@ -134,6 +155,38 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", uptime: process.uptime(), now: new Date().toISOString() });
 });
 
+// --------- ADMIN UTILITIES ---------
+app.get("/api/admin/users/count", requireAdmin, async (req, res, next) => {
+  try {
+    const row = await dbGet("SELECT COUNT(*) as count FROM users WHERE is_admin = 0", []);
+    res.json({ count: row ? row.count : 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
+  try {
+    const search = (req.query.search || "").toString().trim().toLowerCase();
+    const params = [];
+    let where = "WHERE is_admin = 0";
+    if (search) {
+      where += " AND lower(username) LIKE ?";
+      params.push(`%${search}%`);
+    }
+    const rows = await dbAll(
+      `SELECT id, username, full_name, email, avatar, bio, created_at
+       FROM users
+       ${where}
+       ORDER BY lower(username) ASC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // User Registration
 app.post("/api/auth/register", async (req, res, next) => {
   try {
@@ -153,8 +206,9 @@ app.post("/api/auth/register", async (req, res, next) => {
 
     // Hash password and create user
     const passwordHash = hashPassword(password);
-    const result = await dbRun("INSERT INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)", 
-      [username, email, passwordHash, fullName]);
+    const avatar = defaultAvatar();
+    const result = await dbRun("INSERT INTO users (username, email, password_hash, full_name, avatar) VALUES (?, ?, ?, ?, ?)", 
+      [username, email, passwordHash, fullName, avatar]);
 
     // Auto-login after registration
     req.session.userId = result.lastID;
@@ -317,11 +371,12 @@ app.get("/api/auth/me", async (req, res, next) => {
         userRole: "admin",
         userId: (admin && admin.id) || req.session.userId || null,
         username: (admin && admin.username) || req.session.username || "@admin",
+        avatar: "", // Admin deliberately has no avatar
       });
     }
     if (req.session.userId) {
-      const user = await dbGet("SELECT id, username, full_name, email, bio FROM users WHERE id = ?", [req.session.userId]);
-      return res.json({ id: user.id, userId: user.id, username: user.username, full_name: user.full_name, fullName: user.full_name, email: user.email, bio: user.bio, userRole: "user", isAdmin: false });
+      const user = await dbGet("SELECT id, username, full_name, email, bio, avatar FROM users WHERE id = ?", [req.session.userId]);
+      return res.json({ id: user.id, userId: user.id, username: user.username, full_name: user.full_name, fullName: user.full_name, email: user.email, bio: user.bio, avatar: user.avatar || "", userRole: "user", isAdmin: false });
     }
     res.json({ isAdmin: false, userId: null, userRole: null });
   } catch (err) {
@@ -334,11 +389,11 @@ app.get("/api/me", async (req, res, next) => {
   try {
     if (req.session.isAdmin) {
       const admin = await getAdminUser();
-      return res.json({ isAdmin: true, userId: (admin && admin.id) || req.session.userId || null, username: (admin && admin.username) || req.session.username || "@admin" });
+      return res.json({ isAdmin: true, userId: (admin && admin.id) || req.session.userId || null, username: (admin && admin.username) || req.session.username || "@admin", avatar: "" });
     }
     if (req.session.userId) {
-      const user = await dbGet("SELECT id, username, full_name FROM users WHERE id = ?", [req.session.userId]);
-      return res.json({ isAdmin: false, userId: user.id, username: user.username });
+      const user = await dbGet("SELECT id, username, full_name, avatar FROM users WHERE id = ?", [req.session.userId]);
+      return res.json({ isAdmin: false, userId: user.id, username: user.username, avatar: user.avatar || "" });
     }
     res.json({ isAdmin: false });
   } catch (err) {
@@ -352,13 +407,27 @@ app.get("/api/users/:id", async (req, res, next) => {
     const userId = Number(req.params.id);
     if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "Invalid user id" });
 
-    const user = await dbGet("SELECT id, username, email, full_name, bio, created_at FROM users WHERE id = ?", [userId]);
+    const user = await dbGet("SELECT id, username, email, full_name, bio, created_at, avatar, is_admin FROM users WHERE id = ?", [userId]);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.is_admin) {
+      return res.status(403).json({ error: "Admin profile is not viewable here" });
+    }
 
     // Get user's posts
     const posts = await dbAll("SELECT id, title, body, created_at FROM posts WHERE author_id = ? ORDER BY created_at DESC", [userId]);
 
-    res.json({ id: user.id, username: user.username, email: user.email, full_name: user.full_name, bio: user.bio, created_at: user.created_at, posts });
+    // Get user's comments with post context
+    const comments = await dbAll(
+      `SELECT c.id, c.post_id, c.body, c.created_at, c.updated_at, p.title as post_title
+       FROM comments c
+       JOIN posts p ON p.id = c.post_id
+       WHERE c.user_id = ?
+       ORDER BY c.created_at DESC`,
+      [userId]
+    );
+
+    res.json({ id: user.id, username: user.username, email: user.email, full_name: user.full_name, bio: user.bio, avatar: user.avatar || "", created_at: user.created_at, posts, comments });
   } catch (err) {
     next(err);
   }
@@ -370,6 +439,7 @@ app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
     const fullName = (req.body.full_name || req.body.fullName || "").toString().trim();
     const email = (req.body.email || "").toString().trim().toLowerCase();
     const bio = (req.body.bio || "").toString().trim();
+    const avatar = safeAvatar((req.body.avatar || "").toString());
 
     // Validate email if provided
     if (email && !email.includes("@")) {
@@ -401,15 +471,20 @@ app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
       updateParams.push(bio);
     }
 
+    if (avatar) {
+      updateFields.push("avatar = ?");
+      updateParams.push(avatar);
+    }
+
     if (updateFields.length > 0) {
       updateParams.push(req.session.userId);
       const updateSQL = `UPDATE users SET ${updateFields.join(", ")} WHERE id = ?`;
       await dbRun(updateSQL, updateParams);
     }
 
-    const user = await dbGet("SELECT id, username, full_name, email, bio FROM users WHERE id = ?", [req.session.userId]);
+    const user = await dbGet("SELECT id, username, full_name, email, bio, avatar FROM users WHERE id = ?", [req.session.userId]);
 
-    res.json({ id: user.id, username: user.username, full_name: user.full_name, email: user.email, bio: user.bio });
+    res.json({ id: user.id, username: user.username, full_name: user.full_name, email: user.email, bio: user.bio, avatar: user.avatar || "" });
   } catch (err) {
     next(err);
   }
@@ -430,6 +505,7 @@ app.get("/api/posts", async (req, res, next) => {
           WHEN p.author_id IS NULL THEN '@admin'
           ELSE u.username
         END as author_name,
+        COALESCE(u.avatar, '') as author_avatar,
         CASE 
           WHEN p.author_id IS NULL THEN 1
           ELSE 0
@@ -468,6 +544,7 @@ app.get("/api/posts/:id", async (req, res, next) => {
           WHEN p.author_id IS NULL THEN '@admin'
           ELSE u.username
         END as author_name,
+        COALESCE(u.avatar, '') as author_avatar,
         CASE 
           WHEN p.author_id IS NULL THEN 1
           ELSE 0
@@ -534,7 +611,8 @@ app.put("/api/posts/:id", async (req, res, next) => {
 
     const rows = await dbAll(`
       SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
-        CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name
+        CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+        COALESCE(u.avatar, '') as author_avatar
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
       WHERE p.id = ?
@@ -637,6 +715,7 @@ app.post("/api/posts", async (req, res, next) => {
     const created = await dbGet(`
       SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
         CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+        COALESCE(u.avatar, '') as author_avatar,
         CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
       FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?
     `, [result.lastID]);
@@ -655,7 +734,7 @@ app.get('/api/posts/:postId/comments', async (req, res, next) => {
     if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
 
     const comments = await dbAll(`
-      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username, COALESCE(u.avatar, '') as avatar, COALESCE(u.is_admin, 0) as is_admin
       FROM comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.post_id = ?
@@ -688,6 +767,7 @@ app.post('/api/posts/:postId/comments', requireAuth, async (req, res, next) => {
 
     const comment = await dbGet(`
       SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      , COALESCE(u.avatar, '') as avatar, COALESCE(u.is_admin, 0) as is_admin
       FROM comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.id = ?
@@ -902,6 +982,7 @@ app.get('/api/search', async (req, res, next) => {
       const rows = await dbAll(`
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+          COALESCE(u.avatar, '') as author_avatar,
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
           COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
@@ -918,6 +999,7 @@ app.get('/api/search', async (req, res, next) => {
       `
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+          COALESCE(u.avatar, '') as author_avatar,
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
           COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,

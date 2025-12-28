@@ -493,7 +493,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="totalUsers">0</div>
-                            <div class="stat-label">Registered Users</div>
+                            <div class="stat-label" id="totalUsersLabel" style="cursor:pointer;">Registered Users</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="adminRole">1</div>
@@ -635,10 +635,13 @@
                     // Load stats
                     const postsResponse = await fetch('/api/posts');
                     const posts = postsResponse.ok ? await postsResponse.json() : [];
+
+                    const usersCountResponse = await fetch('/api/admin/users/count');
+                    const usersCountData = usersCountResponse.ok ? await usersCountResponse.json() : { count: '?' };
                     
                     // Display stats
                     document.getElementById('totalPosts').textContent = posts.length;
-                    document.getElementById('totalUsers').textContent = '?'; // Would need a users count endpoint
+                    document.getElementById('totalUsers').textContent = usersCountData.count;
                     
                     loadingContainer.style.display = 'none';
                     profileContainer.style.display = 'block';
@@ -734,6 +737,13 @@
                     showToast('Logout failed', 'error'); console.error('Logout error:', error);
                 }
             });
+
+            const usersStatLabel = document.getElementById('totalUsersLabel');
+            if (usersStatLabel) {
+                usersStatLabel.addEventListener('click', () => {
+                    window.location.href = '/admin-users.html';
+                });
+            }
 
             // Load dashboard on page load
             loadAdminDashboard();
