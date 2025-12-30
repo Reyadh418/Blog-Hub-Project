@@ -31,10 +31,11 @@ A small Express + SQLite blog/playground with basic accounts, admin moderation, 
 - Disk write access for `blog.db`
 
 ## Quick start (local)
-1) Install deps: `npm install`
-2) Run: `SESSION_SECRET="change_this" npm start` (or `node server.js`)
-3) Open: http://localhost:3000
-4) An admin user is ensured on first run; in non-production a temporary password is printed to the console. Change it right after login.
+```
+npm install
+npm start
+```
+The app starts on http://localhost:3000. In production, set a strong SESSION_SECRET and run behind HTTPS.
 
 ## Usage highlights
 - Users: register, log in, create/edit/delete their own posts; comment and react; view notifications.

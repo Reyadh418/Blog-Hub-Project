@@ -17,6 +17,10 @@ app.use(express.json({ limit: "512kb" }));
 if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
+if (process.env.NODE_ENV === "production" && (!SESSION_SECRET || SESSION_SECRET.length < 16)) {
+  console.error("[security] SESSION_SECRET is required in production and must be at least 16 characters. Set a strong random value.");
+  process.exit(1);
+}
 if (!SESSION_SECRET || SESSION_SECRET.length < 16) {
   console.warn("[security] SESSION_SECRET is weak or missing; set a strong value in production.");
 }
@@ -250,11 +254,12 @@ const dbGet = (sql, params = []) =>
     });
   });
 
-async function createNotification({ userId, postId, type, message }) {
+async function createNotification({ userId, postId, type, message, allowAdmin = false }) {
   try {
     if (!userId || !postId || !type || !message) return null;
     const user = await dbGet("SELECT id, is_admin FROM users WHERE id = ?", [userId]);
-    if (!user || user.is_admin) return null;
+    if (!user) return null;
+    if (user.is_admin && !allowAdmin) return null;
     const result = await dbRun(
       "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, ?, ?, ?)",
       [userId, postId, type, message]
@@ -263,6 +268,45 @@ async function createNotification({ userId, postId, type, message }) {
   } catch (err) {
     console.error("notification error", err.message);
     return null;
+  }
+}
+
+function extractMentions(text = "") {
+  const mentions = new Set();
+  const regex = /@([a-zA-Z0-9._-]{3,32})/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    mentions.add(match[1].toLowerCase());
+  }
+  return Array.from(mentions);
+}
+
+async function resolveUsernames(usernames = []) {
+  if (!usernames.length) return [];
+  const placeholders = usernames.map(() => "?").join(",");
+  const rows = await dbAll(
+    `SELECT id, username, is_admin FROM users WHERE lower(username) IN (${placeholders})`,
+    usernames
+  );
+  return rows || [];
+}
+
+async function notifyMentions({ actorId, actorUsername, text, postId }) {
+  if (!text || !postId) return;
+  const usernames = extractMentions(text);
+  if (!usernames.length) return;
+  const targets = await resolveUsernames(usernames);
+  for (const target of targets) {
+    if (actorId && target.id === actorId) continue; // skip self-mention
+    const label = actorUsername ? `@${actorUsername}` : "Someone";
+    const message = `${label} mentioned you.`;
+    await createNotification({
+      userId: target.id,
+      postId,
+      type: "mention",
+      message,
+      allowAdmin: true,
+    });
   }
 }
 
@@ -508,6 +552,32 @@ app.get("/api/auth/me", async (req, res, next) => {
   }
 });
 
+// Username suggestions for mentions (must be authed to avoid harvesting)
+app.get("/api/users/mention-suggest", requireAuth, async (req, res, next) => {
+  try {
+    const q = (req.query.q || "").toString().trim().toLowerCase();
+    if (!q || q.length < 2) return res.json([]);
+
+    const rows = await dbAll(
+      `SELECT id, username, avatar, is_admin
+         FROM users
+         WHERE lower(username) LIKE ?
+         ORDER BY is_admin DESC, lower(username) ASC
+         LIMIT 6`,
+      [`%${q}%`]
+    );
+
+    res.json(rows.map((r) => ({
+      id: r.id,
+      username: r.username,
+      avatar: r.avatar || "",
+      is_admin: !!r.is_admin,
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Keep /api/me for backwards compatibility
 app.get("/api/me", async (req, res, next) => {
   try {
@@ -741,6 +811,9 @@ app.put("/api/posts/:id", async (req, res, next) => {
       LEFT JOIN users u ON p.author_id = u.id
       WHERE p.id = ?
     `, [id]);
+    const actorUsername = req.session.username || (req.session.isAdmin ? "admin" : "someone");
+    await notifyMentions({ actorId: req.session.userId || null, actorUsername, text: `${title}\n${body}`, postId: id });
+
     res.json(rows[0]);
   } catch (err) {
     next(err);
@@ -857,6 +930,9 @@ app.post("/api/posts", async (req, res, next) => {
       FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?
     `, [result.lastID]);
 
+    const actorUsername = req.session.username || (req.session.isAdmin ? "admin" : "someone");
+    await notifyMentions({ actorId: req.session.userId || null, actorUsername, text: `${title}\n${body}`, postId: result.lastID });
+
     res.status(201).json(created);
   } catch (err) {
     next(err);
@@ -920,6 +996,9 @@ app.post('/api/posts/:postId/comments', requireAuth, async (req, res, next) => {
       });
     }
 
+    const actorUsername = (comment && comment.username) || req.session.username || "someone";
+    await notifyMentions({ actorId: req.session.userId || null, actorUsername, text: body, postId });
+
     res.status(201).json(comment);
   } catch (err) {
     next(err);
@@ -956,6 +1035,9 @@ app.put('/api/comments/:commentId', async (req, res, next) => {
       JOIN users u ON c.user_id = u.id
       WHERE c.id = ?
     `, [commentId]);
+
+    const actorUsername = (updated && updated.username) || req.session.username || "someone";
+    await notifyMentions({ actorId: req.session.userId || null, actorUsername, text: body, postId: updated ? updated.post_id : undefined });
 
     res.json(updated);
   } catch (err) {

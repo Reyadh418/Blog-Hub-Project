@@ -429,6 +429,87 @@
                 cursor: not-allowed;
             }
 
+            /* Mention styling */
+            .mention {
+                display: inline-flex;
+                align-items: center;
+                padding: 2px 6px;
+                margin: 0 2px;
+                border-radius: 999px;
+                background: rgba(212, 165, 116, 0.18);
+                color: #b35312;
+                font-weight: 700;
+                letter-spacing: 0.1px;
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+            .mention:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.25);
+            }
+            .mention-hint {
+                margin-top: 8px;
+                color: #7f8c8d;
+                font-size: 0.9rem;
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                opacity: 0.9;
+                animation: fadeIn 0.3s ease-out;
+            }
+            .mention-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #d4a574;
+                box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.4);
+                animation: pulse 1.6s ease-in-out infinite;
+            }
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.4); }
+                70% { box-shadow: 0 0 0 10px rgba(212, 165, 116, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(212, 165, 116, 0); }
+            }
+
+            /* Mention suggestions */
+            .mention-suggestions {
+                position: absolute;
+                z-index: 5000;
+                background: #fff;
+                border: 1px solid #e6edf5;
+                border-radius: 10px;
+                box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+                padding: 6px;
+                width: min(360px, 90vw);
+                max-height: 240px;
+                overflow-y: auto;
+                display: none;
+                animation: fadeIn 0.18s ease-out;
+            }
+            .mention-suggestions.show { display: block; }
+            .mention-suggestion {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 10px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background 0.15s ease, transform 0.12s ease;
+            }
+            .mention-suggestion:hover { background: #f6f8fb; transform: translateY(-1px); }
+            .mention-suggestion-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-weight: 800;
+                font-size: 0.9rem;
+            }
+            .mention-suggestion-name { color: #1e3a5f; font-weight: 700; }
+            .mention-suggestion-admin { color: #d35400; font-weight: 700; font-size: 0.85rem; }
+
             .count-bump {
                 animation: bump 0.35s ease;
             }
@@ -872,7 +953,11 @@
                     <div id="commentForm" style="display: none; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-left: 4px solid #d4a574; animation: scaleIn 0.3s ease-out;" class="comment-form-container">
                         <form onsubmit="submitComment(event)">
                             <label style="display: block; margin-bottom: 10px; color: #1e3a5f; font-weight: 600;">Share your thoughts</label>
-                            <textarea id="commentBody" placeholder="What do you think about this post?" style="width: 100%; padding: 14px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: inherit; font-size: 0.95rem; min-height: 110px; resize: vertical; transition: all 0.3s ease; color: #2c3e50;" onfocus="this.style.borderColor='#d4a574'; this.style.boxShadow='0 0 0 3px rgba(212, 165, 116, 0.1)';" onblur="this.style.borderColor='#ecf0f1'; this.style.boxShadow='none';"></textarea>
+                            <div style="position: relative;">
+                                <textarea id="commentBody" class="mentionable" placeholder="What do you think about this post?" style="width: 100%; padding: 14px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: inherit; font-size: 0.95rem; min-height: 110px; resize: vertical; transition: all 0.3s ease; color: #2c3e50;" onfocus="this.style.borderColor='#d4a574'; this.style.boxShadow='0 0 0 3px rgba(212, 165, 116, 0.1)';" onblur="this.style.borderColor='#ecf0f1'; this.style.boxShadow='none';"></textarea>
+                                <div id="mentionSuggestions" class="mention-suggestions"></div>
+                            </div>
+                            <div class="mention-hint"><span class="mention-dot"></span><span>Type @username to mention someone — they’ll get notified.</span></div>
                             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button type="submit" id="submitCommentBtn" style="background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%); color: #fff; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(212, 165, 116, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(212, 165, 116, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(212, 165, 116, 0.2)';">✓ Post Comment</button>
                                 <button type="button" onclick="document.getElementById('commentForm').style.display='none'; document.getElementById('commentBody').value='';" style="background: #ecf0f1; color: #2c3e50; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.background='#ddd';" onmouseout="this.style.background='#ecf0f1';">Cancel</button>
@@ -961,10 +1046,29 @@
             }
 
             // Format date nicely
+            function parseUtc(dateString='') {
+                if (!dateString) return Date.now();
+                // Treat DB timestamps (UTC) as UTC by appending Z if missing
+                return new Date(dateString.includes('Z') ? dateString : `${dateString}Z`).getTime();
+            }
+
             function formatDate(dateString) {
-                const date = new Date(dateString);
+                const date = new Date(parseUtc(dateString));
                 const options = { year: 'numeric', month: 'long', day: 'numeric' };
                 return date.toLocaleDateString('en-US', options);
+            }
+
+            function formatRelative(dateString) {
+                const now = Date.now();
+                const then = parseUtc(dateString);
+                const diffSec = Math.max(0, Math.floor((now - then) / 1000));
+                if (diffSec < 5) return 'now';
+                if (diffSec < 60) return `${diffSec}s ago`;
+                const diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return `${diffMin}m ago`;
+                const diffHr = Math.floor(diffMin / 60);
+                if (diffHr < 24) return `${diffHr}h ago`;
+                return formatDate(dateString);
             }
 
             function timeAgo(dateString) {
@@ -982,7 +1086,7 @@
             }
 
             // Escape HTML to prevent XSS
-            function escapeHtml(text) {
+            function escapeHtml(text = '') {
                 const map = {
                     '&': '&amp;',
                     '<': '&lt;',
@@ -991,6 +1095,142 @@
                     "'": '&#039;'
                 };
                 return text.replace(/[&<>"']/g, m => map[m]);
+            }
+
+            // Highlight mentions while keeping content escaped
+            function formatMentions(raw = '') {
+                const escaped = escapeHtml(raw);
+                return escaped.replace(/@([a-zA-Z0-9._-]{3,32})/g, '<span class="mention">@$1</span>');
+            }
+
+            // Mention suggestions state
+            let mentionTimeout = null;
+            let currentMentionQuery = null;
+            const mentionBox = document.getElementById('mentionSuggestions');
+            const mentionPalette = AVATAR_PALETTE;
+
+            function caretInfo(textarea) {
+                return { value: textarea.value, pos: textarea.selectionStart || 0 };
+            }
+
+            function findMentionQuery(value, caretPos) {
+                const uptoCaret = value.slice(0, caretPos);
+                const match = uptoCaret.match(/@([a-zA-Z0-9._-]{2,32})$/);
+                if (!match) return null;
+                return match[1].toLowerCase();
+            }
+
+            function closeMentionBox() {
+                if (mentionBox) {
+                    mentionBox.classList.remove('show');
+                    mentionBox.innerHTML = '';
+                }
+                currentMentionQuery = null;
+            }
+
+            function renderMentionSuggestions(list, insertCb) {
+                if (!mentionBox) return;
+                if (!list.length) {
+                    mentionBox.innerHTML = '<div style="padding:10px; color:#7f8c8d;">No matches</div>';
+                    mentionBox.classList.add('show');
+                    return;
+                }
+                mentionBox.innerHTML = list.map(u => {
+                    const initial = (u.username || 'U').charAt(0).toUpperCase();
+                    const bg = u.avatar ? avatarStyle(u.avatar) : avatarStyle('');
+                    const adminTag = u.is_admin ? '<span class="mention-suggestion-admin">ADMIN</span>' : '';
+                    return `<div class="mention-suggestion" data-username="${escapeHtml(u.username)}">
+                        <span class="mention-suggestion-avatar" style="background:${bg}">${escapeHtml(initial)}</span>
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <span class="mention-suggestion-name">@${escapeHtml(u.username)}</span>
+                            ${adminTag}
+                        </div>
+                    </div>`;
+                }).join('');
+                mentionBox.classList.add('show');
+
+                mentionBox.querySelectorAll('.mention-suggestion').forEach(item => {
+                    item.addEventListener('mousedown', (e) => {
+                        // Prevent textarea blur before we insert the mention
+                        e.preventDefault();
+                    });
+                    item.addEventListener('click', () => {
+                        const username = item.getAttribute('data-username');
+                        if (!username) return;
+                        insertCb(username);
+                        closeMentionBox();
+                    });
+                });
+            }
+
+            async function fetchMentionSuggestions(q, insertCb) {
+                if (!q || q.length < 2) {
+                    closeMentionBox();
+                    return;
+                }
+                try {
+                    const resp = await fetch(`/api/users/mention-suggest?q=${encodeURIComponent(q)}`);
+                    if (!resp.ok) throw new Error('suggest failed');
+                    const data = await resp.json();
+                    renderMentionSuggestions(Array.isArray(data) ? data : [], insertCb);
+                } catch (err) {
+                    console.error('mention suggest error', err);
+                    closeMentionBox();
+                }
+            }
+
+            function attachMentionHandler(textarea) {
+                if (!textarea) return;
+                textarea.addEventListener('input', () => {
+                    const { value, pos } = caretInfo(textarea);
+                    const q = findMentionQuery(value, pos);
+                    if (!q) {
+                        closeMentionBox();
+                        return;
+                    }
+
+                    currentMentionQuery = q;
+                    if (mentionTimeout) clearTimeout(mentionTimeout);
+                    mentionTimeout = setTimeout(() => {
+                        fetchMentionSuggestions(q, (username) => {
+                            const { value: val, pos: caret } = caretInfo(textarea);
+                            const before = val.slice(0, caret);
+                            const after = val.slice(caret);
+                            const replaced = before.replace(/@([a-zA-Z0-9._-]{0,32})$/, `@${username} `);
+                            const newVal = replaced + after;
+                            const newCaret = replaced.length;
+                            textarea.value = newVal;
+                            textarea.focus();
+                            textarea.setSelectionRange(newCaret, newCaret);
+                        });
+                    }, 140);
+                });
+
+                textarea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') closeMentionBox();
+                });
+
+                textarea.addEventListener('blur', () => {
+                    setTimeout(closeMentionBox, 120);
+                });
+
+                textarea.addEventListener('click', () => {
+                    const { value, pos } = caretInfo(textarea);
+                    const q = findMentionQuery(value, pos);
+                    if (q && q.length >= 2) {
+                        fetchMentionSuggestions(q, (username) => {
+                            const { value: val, pos: caret } = caretInfo(textarea);
+                            const before = val.slice(0, caret);
+                            const after = val.slice(caret);
+                            const replaced = before.replace(/@([a-zA-Z0-9._-]{0,32})$/, `@${username} `);
+                            const newVal = replaced + after;
+                            const newCaret = replaced.length;
+                            textarea.value = newVal;
+                            textarea.focus();
+                            textarea.setSelectionRange(newCaret, newCaret);
+                        });
+                    }
+                });
             }
 
             function notificationsAllowed() {
@@ -1018,6 +1258,13 @@
                 } else {
                     NOTIF_BADGE.style.display = 'none';
                 }
+            }
+
+            function refreshRelativeTimes() {
+                document.querySelectorAll('[data-timestamp]').forEach(el => {
+                    const ts = el.getAttribute('data-timestamp');
+                    if (ts) el.textContent = formatRelative(ts);
+                });
             }
 
             function renderNotifications() {
@@ -1185,7 +1432,7 @@
             }
 
             // Render post content
-            function renderPost(post) {
+            function renderPost(post, viewer = currentUser) {
                 const wordCount = countWords(post.body);
                 const readTime = estimateReadTime(wordCount);
                 const formattedDate = formatDate(post.created_at);
@@ -1193,6 +1440,13 @@
                 const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
                 const authorInitial = authorDisplay.charAt(0).toUpperCase();
                 const authorAvatarBg = avatarStyle(post.author_avatar || '');
+                const canViewProfiles = viewer && viewer.isAdmin;
+                const shouldLinkAuthor = canViewProfiles && !isAdminPost && post.author_id;
+                const authorLabel = escapeHtml(authorDisplay);
+                const authorChip = `<span class="avatar-chip" style="background:${authorAvatarBg}">${escapeHtml(authorInitial)}</span><span>${authorLabel}</span>`;
+                const authorMarkup = shouldLinkAuthor
+                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" style="display:flex; align-items:center; gap:8px; color:#1e3a5f; font-weight:700; text-decoration:none;">${authorChip}</a>`
+                    : authorChip;
 
                 // Update title
                 document.title = `${post.title} | Blog`;
@@ -1204,15 +1458,18 @@
                 }
 
                 // Update meta information
-                document.getElementById('postDate').textContent = formattedDate;
+                const postDateEl = document.getElementById('postDate');
+                postDateEl.textContent = formatRelative(post.created_at);
+                postDateEl.dataset.timestamp = post.created_at;
                 document.getElementById('wordCount').textContent = wordCount;
                 document.getElementById('readTime').textContent = readTime;
                 document.getElementById('authorName').innerHTML = isAdminPost
                     ? `<span style="display:flex; align-items:center; gap:8px; color:#1e3a5f; font-weight:700;"><span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span><span>Admin</span></span>`
-                    : `<span class="avatar-chip" style="background:${authorAvatarBg}">${escapeHtml(authorInitial)}</span><span>${escapeHtml(authorDisplay)}</span>`;
+                    : authorMarkup;
 
-                // Update body
-                document.getElementById('postBody').textContent = post.body;
+                // Update body with mention highlighting
+                const postBody = document.getElementById('postBody');
+                postBody.innerHTML = formatMentions(post.body || '').replace(/\n/g, '<br>');
 
                 // Update stats
                 document.getElementById('statWordCount').textContent = wordCount;
@@ -1547,6 +1804,7 @@
                 const commentsList = document.getElementById('commentsList');
                 const noComments = document.getElementById('noComments');
                 const commentCount = document.getElementById('commentCount');
+                const isAdminViewer = currentUser && currentUser.isAdmin;
 
                 commentCount.textContent = comments.length;
 
@@ -1562,6 +1820,10 @@
                     const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
                     const isAdminComment = comment.is_admin === 1 || comment.is_admin === true;
                     const nameDisplay = isAdminComment ? 'Admin' : comment.username;
+                    const safeName = escapeHtml(nameDisplay || '');
+                    const nameMarkup = (!isAdminComment && isAdminViewer)
+                        ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" style="color:#1e3a5f; font-weight:700; text-decoration:none;">${safeName}</a>`
+                        : safeName;
                     const avatarMarkup = isAdminComment
                         ? `<span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span>`
                         : `<span class="avatar-chip" style="background:${avatarStyle(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
@@ -1571,8 +1833,8 @@
                             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                 ${avatarMarkup}
                                 <div>
-                                    <strong style="color: #1e3a5f; font-size: 1rem;">${escapeHtml(nameDisplay)}</strong>
-                                    <span style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatDate(comment.created_at)}</span>
+                                    <strong style="color: #1e3a5f; font-size: 1rem;">${nameMarkup}</strong>
+                                    <span class="rel-time" data-timestamp="${comment.created_at}" style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatRelative(comment.created_at)}</span>
                                     ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
                                 </div>
                             </div>
@@ -1583,11 +1845,11 @@
                                 </div>
                             ` : ''}
                         </div>
-                        <div id="comment-body-${comment.id}" class="comment-body">${escapeHtml(comment.body).replace(/\n/g, '<br>')}</div>
+                        <div id="comment-body-${comment.id}" class="comment-body">${formatMentions(comment.body).replace(/\n/g, '<br>')}</div>
                         <div id="comment-edit-${comment.id}" class="comment-edit">
                             <textarea id="edit-text-${comment.id}" aria-label="Edit comment">${escapeHtml(comment.body)}</textarea>
                             <div class="comment-edit-actions">
-                                <button class="save-btn" onclick="saveEdit(${comment.id}, ${comment.post_id})">Save</button>
+                                <button class="save-btn" onclick="saveEdit(${comment.id}, ${comment.post_id || 'null'})">Save</button>
                                 <button class="cancel-btn" onclick="cancelEdit(${comment.id})">Cancel</button>
                             </div>
                         </div>
@@ -1688,6 +1950,8 @@
                     return;
                 }
 
+                const effectivePostId = postId || getPostId();
+
                 const editContainer = document.getElementById(`comment-edit-${commentId}`);
                 const buttons = editContainer ? editContainer.querySelectorAll('button') : [];
                 buttons.forEach(btn => btn.disabled = true);
@@ -1701,7 +1965,7 @@
 
                     if (response.ok) {
                         showToast('✓ Comment updated!', 'success', 1500);
-                        loadComments(postId);
+                        loadComments(effectivePostId);
                     } else {
                         const err = await response.json();
                         showToast(err.error || 'Failed to update comment', 'error');
@@ -1718,6 +1982,8 @@
                 const confirmed = await confirmAction('Delete this comment? This action cannot be undone.', 'Delete comment', 'Delete comment?');
                 if (!confirmed) return;
 
+                const effectivePostId = postId || getPostId();
+
                 try {
                     const response = await fetch(`/api/comments/${commentId}`, {
                         method: 'DELETE'
@@ -1725,7 +1991,7 @@
 
                     if (response.ok) {
                         showToast('✓ Comment deleted!', 'success', 1500);
-                        loadComments(postId);
+                        loadComments(effectivePostId);
                     } else {
                         const err = await response.json();
                         showToast(err.error || 'Failed to delete comment', 'error');
@@ -1749,14 +2015,16 @@
                 const post = await fetchPost(postId);
 
                 if (post) {
-                    renderPost(post);
-                    
-                    // Load reactions and comments
                     currentUser = await fetchCurrentUser();
+                    renderPost(post, currentUser);
+
+                    // Load reactions and comments
                     setNotificationAccess(currentUser || { userId: null, isAdmin: false });
                     fetchNotifications(true);
                     loadReactions(postId);
                     loadComments(postId);
+                    refreshRelativeTimes();
+                    setInterval(refreshRelativeTimes, 60000);
 
                     // Show/hide reactions and comments UI based on login status
                     const usefulBtn = document.getElementById('usefulBtn');
@@ -1774,6 +2042,9 @@
                         reactLoginPrompt.style.display = 'none';
                         commentForm.style.display = 'block';
                         commentLoginPrompt.style.display = 'none';
+
+                        // Wire mention suggestions on comment box
+                        attachMentionHandler(document.getElementById('commentBody'));
 
                         usefulBtn.onclick = () => submitReaction('useful');
                         notusefulBtn.onclick = () => submitReaction('notuseful');
