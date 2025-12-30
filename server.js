@@ -4,34 +4,73 @@ const express = require("express");
 const path = require("path");
 const session = require("express-session");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 
 const db = require("./db");
 
 const app = express();
 
-// Parse JSON body (so POST requests work)
-app.use(express.json());
+// Parse JSON body (so POST requests work) with sensible limits
+app.use(express.json({ limit: "512kb" }));
 
 // In production behind a proxy, honor secure cookies when NODE_ENV=production
 if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET || SESSION_SECRET.length < 16) {
+  console.warn("[security] SESSION_SECRET is weak or missing; set a strong value in production.");
+}
+
 app.use(
   session({
     name: process.env.SESSION_NAME || "sid",
-    secret: process.env.SESSION_SECRET || "dev_secret_change_me",
+    secret: SESSION_SECRET || "dev_secret_change_me", // development fallback only
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 12, // 12 hours
     },
   })
 );
 
+// Lightweight security headers (CSP kept permissive due to inline assets)
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data:; frame-ancestors 'none';"
+  );
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+
+// CSRF token provisioning
+app.use((req, res, next) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(24).toString("hex");
+  }
+  res.setHeader("x-csrf-token", req.session.csrfToken);
+  next();
+});
+
 // Serve frontend files from /public
 app.use(express.static(path.join(__dirname, "public")));
+
+// Apply generic write limiter to all mutating requests
+app.use((req, res, next) => {
+  if (CSRF_METHODS.has(req.method)) return writeLimiter(req, res, next);
+  return next();
+});
+
+// CSRF protection for mutating requests
+app.use(csrfGuard);
 
 // --------------------
 // Helpers
@@ -58,13 +97,37 @@ function defaultAvatar() {
   return ALLOWED_AVATARS[0];
 }
 
-function getPasswordSalt() {
-  return process.env.PASSWORD_SALT !== undefined ? process.env.PASSWORD_SALT : "undefined";
+const BCRYPT_ROUNDS = (() => {
+  const val = parseInt(process.env.BCRYPT_ROUNDS || "12", 10);
+  if (Number.isNaN(val) || val < 8) return 12;
+  if (val > 14) return 14;
+  return val;
+})();
+
+async function hashPassword(password) {
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
-function hashPassword(password) {
-  const salt = getPasswordSalt();
-  return crypto.createHash("sha256").update(`${password}${salt}`).digest("hex");
+async function verifyPassword(password, storedHash, userId) {
+  if (!storedHash) return false;
+  // bcrypt path
+  if (storedHash.startsWith("$2")) {
+    return bcrypt.compare(password, storedHash);
+  }
+  // legacy sha256 path for existing users; migrate when validated
+  const legacySalt = process.env.PASSWORD_SALT !== undefined ? process.env.PASSWORD_SALT : "undefined";
+  const legacyHash = crypto.createHash("sha256").update(`${password}${legacySalt}`).digest("hex");
+  const ok = legacyHash === storedHash;
+  if (ok && userId) {
+    // opportunistic migration to bcrypt
+    try {
+      const newHash = await hashPassword(password);
+      await dbRun("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, userId]);
+    } catch (e) {
+      console.warn("[security] failed to migrate password hash for user", userId, e.message);
+    }
+  }
+  return ok;
 }
 
 async function getAdminUser() {
@@ -81,10 +144,14 @@ async function ensureAdminUser() {
 
   // Generate a strong temporary password; admin should rotate it immediately
   let adminPassword = crypto.randomBytes(12).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
-  console.warn("[admin] Generated temporary admin password:", adminPassword);
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[admin] Generated temporary admin password:", adminPassword);
+  } else {
+    console.warn("[admin] Generated temporary admin password; rotate immediately (value hidden in production logs)");
+  }
 
   const email = "admin@example.local";
-  const passwordHash = hashPassword(adminPassword);
+  const passwordHash = await hashPassword(adminPassword);
 
   const created = await dbRun(
     "INSERT OR IGNORE INTO users (username, email, password_hash, is_admin, full_name) VALUES (?, ?, ?, 1, ?)",
@@ -116,6 +183,36 @@ function requireUserOnly(req, res, next) {
     return res.status(403).json({ error: "Not available for admin" });
   }
   return next();
+}
+
+// Simple in-memory rate limiter (per IP)
+function createRateLimiter({ limit, windowMs }) {
+  const buckets = new Map();
+  return (req, res, next) => 
+  {
+    const now = Date.now();
+    const key = req.ip || "global";
+    const entry = buckets.get(key) || [];
+    const fresh = entry.filter((ts) => now - ts < windowMs);
+    fresh.push(now);
+    buckets.set(key, fresh);
+    if (fresh.length > limit) {
+      return res.status(429).json({ error: "Too many requests. Please slow down." });
+    }
+    next();
+  };
+}
+
+const authLimiter = createRateLimiter({ limit: 10, windowMs: 5 * 60 * 1000 });
+const writeLimiter = createRateLimiter({ limit: 200, windowMs: 5 * 60 * 1000 });
+
+// CSRF guard for state-changing requests
+const CSRF_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+function csrfGuard(req, res, next) {
+  if (!CSRF_METHODS.has(req.method)) return next();
+  const token = req.headers["x-csrf-token"];
+  if (token && req.session && token === req.session.csrfToken) return next();
+  return res.status(403).json({ error: "CSRF token invalid or missing" });
 }
 
 const dbAll = (sql, params = []) =>
@@ -210,7 +307,7 @@ app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
 });
 
 // User Registration
-app.post("/api/auth/register", async (req, res, next) => {
+app.post("/api/auth/register", authLimiter, async (req, res, next) => {
   try {
     const username = (req.body.username || "").toString().trim().toLowerCase();
     const email = (req.body.email || "").toString().trim().toLowerCase();
@@ -227,7 +324,7 @@ app.post("/api/auth/register", async (req, res, next) => {
     if (existing) return res.status(409).json({ error: "Username or email already exists" });
 
     // Hash password and create user
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
     const avatar = defaultAvatar();
     const result = await dbRun("INSERT INTO users (username, email, password_hash, full_name, avatar) VALUES (?, ?, ?, ?, ?)", 
       [username, email, passwordHash, fullName, avatar]);
@@ -248,7 +345,7 @@ app.post("/api/auth/register", async (req, res, next) => {
 });
 
 // User Login
-app.post("/api/auth/login", async (req, res, next) => {
+app.post("/api/auth/login", authLimiter, async (req, res, next) => {
   try {
     const username = (req.body.username || "").toString().trim().toLowerCase();
     const password = (req.body.password || "").toString();
@@ -258,8 +355,8 @@ app.post("/api/auth/login", async (req, res, next) => {
     const user = await dbGet("SELECT id, username, password_hash FROM users WHERE username = ?", [username]);
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
-    const passwordHash = hashPassword(password);
-    if (user.password_hash !== passwordHash) return res.status(401).json({ error: "Invalid credentials" });
+    const valid = await verifyPassword(password, user.password_hash, user.id);
+    if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
     req.session.userId = user.id;
     req.session.username = user.username;
@@ -276,7 +373,7 @@ app.post("/api/auth/login", async (req, res, next) => {
 });
 
 // Admin Login (DB-backed, hashed)
-app.post("/api/admin/login", async (req, res, next) => {
+app.post("/api/admin/login", authLimiter, async (req, res, next) => {
   try {
     const username = (req.body.username || "").toString().trim().toLowerCase();
     const password = (req.body.password || "").toString();
@@ -290,8 +387,8 @@ app.post("/api/admin/login", async (req, res, next) => {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
-    const passwordHash = hashPassword(password);
-    if (adminUser.password_hash !== passwordHash) {
+    const valid = await verifyPassword(password, adminUser.password_hash, adminUser.id);
+    if (!valid) {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
@@ -333,8 +430,8 @@ app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
     const admin = await getAdminUser();
     if (!admin) return res.status(404).json({ error: "Admin user not found" });
 
-    const providedHash = hashPassword(currentPassword);
-    if (providedHash !== admin.password_hash) {
+    const valid = await verifyPassword(currentPassword, admin.password_hash, admin.id);
+    if (!valid) {
       return res.status(401).json({ error: "Current password is incorrect" });
     }
 
@@ -352,7 +449,7 @@ app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
     if (newPassword) {
       if (newPassword.length < 6) return res.status(400).json({ error: "New password must be at least 6 characters" });
       updates.push("password_hash = ?");
-      params.push(hashPassword(newPassword));
+      params.push(await hashPassword(newPassword));
     }
 
     if (!updates.length) return res.status(400).json({ error: "Nothing to update" });
@@ -381,6 +478,11 @@ app.post("/api/auth/logout", (req, res) => {
     if (err) return res.status(500).json({ error: "Failed to destroy session" });
     res.json({ ok: true });
   });
+});
+
+// CSRF token fetch
+app.get("/api/auth/csrf", (req, res) => {
+  res.json({ token: req.session.csrfToken });
 });
 
 // Get current user (replaces /api/me)
@@ -673,6 +775,10 @@ app.delete("/api/posts/:id", async (req, res, next) => {
     const result = await dbRun("DELETE FROM posts WHERE id = ?", [id]);
     if (!result.changes) return res.status(404).json({ error: "Post not found" });
 
+    if (req.session.isAdmin) {
+      console.info(`[audit] admin ${req.session.username || '@admin'} deleted post ${id}`);
+    }
+
     res.json({ ok: true });
   } catch (err) {
     next(err);
@@ -705,6 +811,10 @@ app.patch("/api/posts/:id/flag", async (req, res, next) => {
       LEFT JOIN users u ON p.author_id = u.id
       WHERE p.id = ?
     `, [id]);
+
+    if (req.session.isAdmin) {
+      console.info(`[audit] admin ${req.session.username || '@admin'} ${flagged ? 'flagged' : 'unflagged'} post ${id}`);
+    }
 
     if (post.author_id) {
       const msg = flagged ? "Admin has flagged your post." : "Admin removed flag from your post.";
