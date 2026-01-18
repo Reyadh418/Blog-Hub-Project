@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Blog Post</title>
         <script src="/csrf.js"></script>
+        <script src="/page-transitions.js"></script>
         <style>
             * {
                 margin: 0;
@@ -857,10 +858,321 @@
                     min-width: 120px;
                 }
             }
+
+            /* ========== READING MODE ========== */
+            .reading-mode-btn {
+                position: fixed !important;
+                bottom: 30px !important;
+                right: 30px !important;
+                left: auto !important;
+                top: auto !important;
+                z-index: 9000;
+                width: 56px;
+                height: 56px;
+                min-width: 56px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                color: #fff;
+                border: none;
+                box-shadow: 0 8px 30px rgba(30, 58, 95, 0.4);
+                cursor: pointer;
+                font-size: 1.4rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                padding: 0;
+                margin: 0;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .reading-mode-btn:hover {
+                transform: scale(1.1) translateY(-2px);
+                box-shadow: 0 12px 40px rgba(30, 58, 95, 0.5);
+            }
+
+            .reading-mode-btn.ready {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .reading-mode-btn .tooltip {
+                position: absolute;
+                right: 70px;
+                background: #1e3a5f;
+                color: #fff;
+                padding: 8px 14px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+            }
+
+            .reading-mode-btn:hover .tooltip {
+                opacity: 1;
+            }
+
+            /* Reading Mode Overlay */
+            .reading-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 50000;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.4s ease, visibility 0.4s ease;
+                background: var(--reading-bg, #f5f1eb);
+                color: var(--reading-text, #5b4636);
+            }
+
+            .reading-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .reading-overlay .reading-backdrop {
+                display: none;
+            }
+
+            .reading-overlay .reading-container {
+                position: relative;
+                z-index: 1;
+                height: 100%;
+                overflow-y: auto;
+                padding: 60px 40px 100px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .reading-overlay .reading-content {
+                max-width: var(--reading-width, 700px);
+                width: 100%;
+                color: var(--reading-text, #5b4636);
+                font-size: var(--reading-font-size, 1.2rem);
+                line-height: var(--reading-line-height, 1.9);
+                font-family: Georgia, 'Times New Roman', serif;
+                transition: all 0.3s ease;
+                background: transparent;
+            }
+
+            .reading-overlay .reading-title {
+                font-size: 2.4rem;
+                font-weight: 400;
+                margin-bottom: 20px;
+                color: var(--reading-title, #3d2914);
+                line-height: 1.3;
+                letter-spacing: 0.5px;
+            }
+
+            .reading-overlay .reading-meta {
+                font-size: 0.95rem;
+                color: var(--reading-meta, #8b7355);
+                margin-bottom: 40px;
+                padding-bottom: 30px;
+                border-bottom: 1px solid var(--reading-border, #e0dbd4);
+                display: flex;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+
+            .reading-overlay .reading-body {
+                white-space: pre-wrap;
+                color: inherit;
+            }
+
+            /* Reading Mode Controls */
+            .reading-controls {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 50002;
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                background: var(--reading-control-bg, rgba(255,255,255,0.95));
+                backdrop-filter: blur(10px);
+                padding: 12px 16px;
+                border-radius: 14px;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+                opacity: 0;
+                transform: translateY(-20px);
+                transition: all 0.3s ease;
+            }
+
+            .reading-overlay.active .reading-controls {
+                opacity: 1;
+                transform: translateY(0);
+                transition-delay: 0.2s;
+            }
+
+            .reading-control-btn {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                border: none;
+                background: var(--reading-btn-bg, #f0ebe4);
+                color: var(--reading-btn-text, #1e3a5f);
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .reading-control-btn:hover {
+                background: var(--reading-btn-hover, #e5dfd7);
+                transform: scale(1.05);
+            }
+
+            .reading-control-btn.active {
+                background: #1e3a5f;
+                color: #fff;
+            }
+
+            .reading-control-divider {
+                width: 1px;
+                height: 28px;
+                background: var(--reading-border, #ddd);
+                margin: 0 6px;
+            }
+
+            .reading-close-btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: #fff;
+                font-size: 1.2rem;
+            }
+
+            .reading-close-btn:hover {
+                background: linear-gradient(135deg, #ff6b5b 0%, #e74c3c 100%);
+            }
+
+            /* Theme Variations */
+            .reading-overlay[data-theme="light"] {
+                --reading-bg: #ffffff;
+                --reading-text: #2c3e50;
+                --reading-title: #1e3a5f;
+                --reading-meta: #7f8c8d;
+                --reading-border: #e8e8e8;
+                --reading-control-bg: rgba(255,255,255,0.95);
+                --reading-btn-bg: #f5f5f5;
+                --reading-btn-text: #2c3e50;
+                --reading-btn-hover: #e8e8e8;
+            }
+
+            .reading-overlay[data-theme="sepia"] {
+                --reading-bg: #f5f1eb;
+                --reading-text: #5b4636;
+                --reading-title: #3d2914;
+                --reading-meta: #8b7355;
+                --reading-border: #e0dbd4;
+                --reading-control-bg: rgba(245,241,235,0.95);
+                --reading-btn-bg: #e8e2d9;
+                --reading-btn-text: #5b4636;
+                --reading-btn-hover: #ddd6cb;
+            }
+
+            .reading-overlay[data-theme="dark"] {
+                --reading-bg: #1a1a2e;
+                --reading-text: #e0e0e0;
+                --reading-title: #ffffff;
+                --reading-meta: #888;
+                --reading-border: #333;
+                --reading-control-bg: rgba(30,30,50,0.95);
+                --reading-btn-bg: #2a2a4a;
+                --reading-btn-text: #e0e0e0;
+                --reading-btn-hover: #3a3a5a;
+            }
+
+            /* Progress Bar */
+            .reading-progress {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #d4a574 0%, #e8b896 100%);
+                z-index: 50003;
+                width: 0%;
+                transition: width 0.1s ease;
+            }
+
+            @media (max-width: 768px) {
+                .reading-mode-btn {
+                    bottom: 20px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    font-size: 1.2rem;
+                }
+
+                .reading-overlay .reading-container {
+                    padding: 50px 20px 80px;
+                }
+
+                .reading-overlay .reading-title {
+                    font-size: 1.8rem;
+                }
+
+                .reading-controls {
+                    top: auto;
+                    bottom: 20px;
+                    right: 50%;
+                    transform: translateX(50%) translateY(20px);
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    max-width: calc(100% - 40px);
+                }
+
+                .reading-overlay.active .reading-controls {
+                    transform: translateX(50%) translateY(0);
+                }
+            }
         </style>
     </head>
     <body>
         <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Reading Mode Button -->
+        <button class="reading-mode-btn" id="readingModeBtn" aria-label="Enter reading mode">
+            📖
+            <span class="tooltip">Reading Mode</span>
+        </button>
+
+        <!-- Reading Mode Overlay -->
+        <div class="reading-overlay" id="readingOverlay" data-theme="sepia">
+            <div class="reading-progress" id="readingProgress"></div>
+            <div class="reading-controls">
+                <button class="reading-control-btn" id="fontDecrease" title="Decrease font size">A-</button>
+                <button class="reading-control-btn" id="fontIncrease" title="Increase font size">A+</button>
+                <div class="reading-control-divider"></div>
+                <button class="reading-control-btn" id="lineHeightDecrease" title="Decrease line spacing">≡</button>
+                <button class="reading-control-btn" id="lineHeightIncrease" title="Increase line spacing">☰</button>
+                <div class="reading-control-divider"></div>
+                <button class="reading-control-btn" id="themeLight" title="Light theme">☀</button>
+                <button class="reading-control-btn active" id="themeSepia" title="Sepia theme">📜</button>
+                <button class="reading-control-btn" id="themeDark" title="Dark theme">🌙</button>
+                <div class="reading-control-divider"></div>
+                <button class="reading-control-btn reading-close-btn" id="readingClose" title="Exit reading mode">✕</button>
+            </div>
+            <div class="reading-backdrop"></div>
+            <div class="reading-container" id="readingContainer">
+                <div class="reading-content" style="color: #5b4636;">
+                    <h1 class="reading-title" id="readingTitle" style="color: #3d2914;"></h1>
+                    <div class="reading-meta" id="readingMeta" style="color: #8b7355;"></div>
+                    <div class="reading-body" id="readingBody"></div>
+                </div>
+            </div>
+        </div>
 
         <div class="notification-panel" id="notificationPanel" aria-live="polite">
             <div class="notification-header">
@@ -1024,6 +1336,7 @@
             }
 
             let currentUser = null;
+            let CURRENT_POST = null;
             let currentUserReaction = null;
             let notifications = [];
             let notifPoll = null;
@@ -1477,6 +1790,10 @@
 
                 LOADING.style.display = 'none';
                 POST_WRAPPER.style.display = 'block';
+                CURRENT_POST = post;
+                if (READING_MODE_BTN) {
+                    READING_MODE_BTN.classList.add('ready');
+                }
                 // show admin controls if applicable
                 maybeShowAdminActions(post.id, post.author_id);
             }
@@ -2082,6 +2399,175 @@
                         commentLoginPrompt.style.display = 'block';
                     }
                 }
+            }
+
+            // ========== READING MODE ==========
+            const READING_MODE_BTN = document.getElementById('readingModeBtn');
+            const READING_OVERLAY = document.getElementById('readingOverlay');
+            const READING_CONTAINER = document.getElementById('readingContainer');
+            const READING_PROGRESS = document.getElementById('readingProgress');
+            const READING_TITLE = document.getElementById('readingTitle');
+            const READING_META = document.getElementById('readingMeta');
+            const READING_BODY = document.getElementById('readingBody');
+
+            let readingSettings = {
+                fontSize: 1.2,
+                lineHeight: 1.9,
+                theme: 'sepia'
+            };
+
+            // Load saved settings
+            function loadReadingSettings() {
+                try {
+                    const saved = localStorage.getItem('readingSettings');
+                    if (saved) {
+                        readingSettings = { ...readingSettings, ...JSON.parse(saved) };
+                    }
+                } catch (e) {}
+            }
+
+            // Save settings
+            function saveReadingSettings() {
+                try {
+                    localStorage.setItem('readingSettings', JSON.stringify(readingSettings));
+                } catch (e) {}
+            }
+
+            // Apply settings to overlay
+            function applyReadingSettings() {
+                if (!READING_OVERLAY) return;
+                READING_OVERLAY.style.setProperty('--reading-font-size', readingSettings.fontSize + 'rem');
+                READING_OVERLAY.style.setProperty('--reading-line-height', readingSettings.lineHeight);
+                READING_OVERLAY.setAttribute('data-theme', readingSettings.theme);
+
+                // Theme color mappings
+                const themeColors = {
+                    light: { bg: '#ffffff', text: '#2c3e50', title: '#1e3a5f', meta: '#7f8c8d' },
+                    sepia: { bg: '#f5f1eb', text: '#5b4636', title: '#3d2914', meta: '#8b7355' },
+                    dark: { bg: '#1a1a2e', text: '#e0e0e0', title: '#ffffff', meta: '#888888' }
+                };
+                const colors = themeColors[readingSettings.theme] || themeColors.sepia;
+
+                // Update inline styles for reliability
+                const backdrop = READING_OVERLAY.querySelector('.reading-backdrop');
+                const content = READING_OVERLAY.querySelector('.reading-content');
+                const title = READING_OVERLAY.querySelector('.reading-title');
+                const meta = READING_OVERLAY.querySelector('.reading-meta');
+
+                if (backdrop) backdrop.style.background = colors.bg;
+                if (content) content.style.color = colors.text;
+                if (title) title.style.color = colors.title;
+                if (meta) meta.style.color = colors.meta;
+
+                // Update active theme button
+                document.querySelectorAll('#themeLight, #themeSepia, #themeDark').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const activeThemeBtn = document.getElementById('theme' + readingSettings.theme.charAt(0).toUpperCase() + readingSettings.theme.slice(1));
+                if (activeThemeBtn) activeThemeBtn.classList.add('active');
+            }
+
+            // Open reading mode
+            function openReadingMode() {
+                const title = CURRENT_POST?.title || document.getElementById('postTitle')?.textContent || '';
+                const body = (CURRENT_POST?.body || document.getElementById('postBody')?.textContent || '').toString();
+                const date = document.getElementById('postDate')?.textContent || '';
+                const author = document.getElementById('authorName')?.textContent || '';
+                const wordCount = document.getElementById('wordCount')?.textContent || '';
+                const readTime = document.getElementById('readTime')?.textContent || '';
+
+                if (!body.trim()) {
+                    showToast('Post is still loading. Try again in a second.', 'warning');
+                    return;
+                }
+
+                READING_TITLE.textContent = title;
+                READING_META.innerHTML = `
+                    <span>📅 ${date}</span>
+                    <span>✍️ ${author}</span>
+                    <span>📝 ${wordCount} words</span>
+                    <span>⏱️ ${readTime} min read</span>
+                `;
+                READING_BODY.textContent = body;
+
+                loadReadingSettings();
+                applyReadingSettings();
+
+                READING_OVERLAY.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                // Reset scroll and progress
+                READING_CONTAINER.scrollTop = 0;
+                updateReadingProgress();
+            }
+
+            // Close reading mode
+            function closeReadingMode() {
+                READING_OVERLAY.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // Update progress bar
+            function updateReadingProgress() {
+                if (!READING_CONTAINER || !READING_PROGRESS) return;
+                const scrollTop = READING_CONTAINER.scrollTop;
+                const scrollHeight = READING_CONTAINER.scrollHeight - READING_CONTAINER.clientHeight;
+                const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                READING_PROGRESS.style.width = progress + '%';
+            }
+
+            // Font size controls
+            function changeFontSize(delta) {
+                readingSettings.fontSize = Math.max(0.9, Math.min(2, readingSettings.fontSize + delta));
+                applyReadingSettings();
+                saveReadingSettings();
+            }
+
+            // Line height controls
+            function changeLineHeight(delta) {
+                readingSettings.lineHeight = Math.max(1.4, Math.min(2.5, readingSettings.lineHeight + delta));
+                applyReadingSettings();
+                saveReadingSettings();
+            }
+
+            // Theme controls
+            function setReadingTheme(theme) {
+                readingSettings.theme = theme;
+                applyReadingSettings();
+                saveReadingSettings();
+            }
+
+            // Wire up reading mode controls
+            if (READING_MODE_BTN) {
+                READING_MODE_BTN.style.position = 'fixed';
+                READING_MODE_BTN.style.bottom = '30px';
+                READING_MODE_BTN.style.right = '30px';
+                READING_MODE_BTN.style.left = 'auto';
+                READING_MODE_BTN.style.top = 'auto';
+                READING_MODE_BTN.addEventListener('click', openReadingMode);
+            }
+
+            if (READING_OVERLAY) {
+                document.getElementById('readingClose')?.addEventListener('click', closeReadingMode);
+                document.getElementById('fontDecrease')?.addEventListener('click', () => changeFontSize(-0.1));
+                document.getElementById('fontIncrease')?.addEventListener('click', () => changeFontSize(0.1));
+                document.getElementById('lineHeightDecrease')?.addEventListener('click', () => changeLineHeight(-0.1));
+                document.getElementById('lineHeightIncrease')?.addEventListener('click', () => changeLineHeight(0.1));
+                document.getElementById('themeLight')?.addEventListener('click', () => setReadingTheme('light'));
+                document.getElementById('themeSepia')?.addEventListener('click', () => setReadingTheme('sepia'));
+                document.getElementById('themeDark')?.addEventListener('click', () => setReadingTheme('dark'));
+
+                READING_CONTAINER.addEventListener('scroll', updateReadingProgress);
+
+                // Close on Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && READING_OVERLAY.classList.contains('active')) {
+                        closeReadingMode();
+                    }
+                });
+
+                // Close on backdrop click
+                READING_OVERLAY.querySelector('.reading-backdrop')?.addEventListener('click', closeReadingMode);
             }
 
             window.addEventListener('load', initializePage);

@@ -1254,12 +1254,14 @@ app.delete('/api/notifications/:id', requireUserOnly, async (req, res, next) => 
   }
 });
 
-// Search endpoint: search by title/body/tags (case-insensitive LIKE)
+// Search endpoint: search by title/body/tags or author username (case-insensitive LIKE, tokenized AND logic, @username shortcut)
 app.get('/api/search', async (req, res, next) => {
   try {
-    const q = (req.query.q || '').toString().trim();
+    const qRaw = (req.query.q || '').toString().trim();
+    const q = qRaw.toLowerCase();
+
+    // If no query, return latest posts
     if (!q) {
-      // if no query, return all posts
       const rows = await dbAll(`
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
@@ -1275,7 +1277,43 @@ app.get('/api/search', async (req, res, next) => {
       return res.json(rows);
     }
 
-    const like = `%${q}%`;
+    // If query starts with @, prefer author-targeted search
+    if (qRaw.startsWith('@') && q.length > 1) {
+      const handle = q.replace(/^@+/, '');
+      const handleLike = `%${handle}%`;
+      const rows = await dbAll(
+        `
+          SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
+            CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+            COALESCE(u.avatar, '') as author_avatar,
+            CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
+            COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
+            COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
+            COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
+          FROM posts p
+          LEFT JOIN users u ON p.author_id = u.id
+          WHERE (p.author_id IS NULL AND '@admin' LIKE ?)
+             OR lower(u.username) LIKE ?
+          ORDER BY p.id DESC
+        `,
+        [handleLike, handleLike]
+      );
+      return res.json(rows);
+    }
+
+    // Tokenized AND search across title/body/tags/author
+    const tokens = q.split(/\s+/).filter(Boolean);
+    const clauses = [];
+    const params = [];
+
+    tokens.forEach((token) => {
+      const like = `%${token}%`;
+      clauses.push(`(lower(p.title) LIKE ? OR lower(p.body) LIKE ? OR lower(p.tags) LIKE ? OR lower(COALESCE(u.username, '@admin')) LIKE ?)`);
+      params.push(like, like, like, like);
+    });
+
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+
     const rows = await dbAll(
       `
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
@@ -1287,10 +1325,10 @@ app.get('/api/search', async (req, res, next) => {
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
-        WHERE p.title LIKE ? OR p.body LIKE ? OR p.tags LIKE ?
+        ${where}
         ORDER BY p.id DESC
       `,
-      [like, like, like]
+      params
     );
 
     res.json(rows);
