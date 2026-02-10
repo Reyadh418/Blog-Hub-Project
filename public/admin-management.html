@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Management | Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #fdfbf7 0%, #f5f0e8 100%);
+            min-height: 100vh;
+            color: #1e3a5f;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+            color: #fff;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #fff;
+            color: #1e3a5f;
+            border: 1px solid rgba(30, 58, 95, 0.15);
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #1e3a5f;
+            color: #fff;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid rgba(212, 165, 116, 0.15);
+        }
+
+        .search-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            color: #1e3a5f;
+        }
+
+        .search-section p {
+            color: #64748b;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px;
+            padding-left: 48px;
+            border: 2px solid rgba(30, 58, 95, 0.1);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #fdfbf7;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #d4a574;
+            background: #fff;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            opacity: 0.5;
+        }
+
+        .search-results {
+            margin-top: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #fdfbf7;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background: #f5f0e8;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .user-details h4 {
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 2px;
+        }
+
+        .user-details span {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .promote-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .promote-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .promote-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .promote-btn.super {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .promote-btn.super:hover {
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Admin List */
+        .admin-list-section {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid rgba(212, 165, 116, 0.15);
+        }
+
+        .admin-list-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            color: #1e3a5f;
+        }
+
+        .admin-list-section > p {
+            color: #64748b;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .admin-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #fdfbf7 0%, #f9f5ef 100%);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(212, 165, 116, 0.12);
+            transition: all 0.2s ease;
+        }
+
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        .admin-card.super-admin {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 20%, #fdfbf7 100%);
+            border-color: rgba(212, 165, 116, 0.3);
+        }
+
+        .admin-card.is-you {
+            border: 2px solid #d4a574;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .admin-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .admin-details h4 {
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.super {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: #fff;
+        }
+
+        .badge.primary {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #1e3a5f;
+            font-size: 0.75rem;
+        }
+
+        .badge.you {
+            background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+            color: #fff;
+        }
+
+        .admin-card.is-primary {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fdfbf7 100%);
+            border: 2px solid #fbbf24;
+            box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2);
+        }
+
+        .admin-details span {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.toggle-super {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .action-btn.toggle-super:hover {
+            background: #7c3aed;
+            color: #fff;
+        }
+
+        .action-btn.demote {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .action-btn.demote:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 165, 116, 0.3);
+            border-top-color: #d4a574;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: #1e3a5f;
+            color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            max-width: 360px;
+        }
+
+        .toast.success { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+        .toast.error { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .toast.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-close {
+            margin-left: auto;
+            cursor: pointer;
+            opacity: 0.8;
+            font-size: 1.2rem;
+        }
+
+        .toast-close:hover { opacity: 1; }
+
+        /* Confirm Dialog */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .confirm-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .confirm-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.25s ease;
+        }
+
+        .confirm-overlay.active .confirm-card {
+            transform: scale(1);
+        }
+
+        .confirm-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .confirm-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+            color: #1e3a5f;
+        }
+
+        .confirm-card p {
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .confirm-btn.cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .confirm-btn.cancel:hover {
+            background: #e2e8f0;
+        }
+
+        .confirm-btn.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+        }
+
+        .confirm-btn.danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 24px 16px; }
+            .header h1 { font-size: 1.6rem; }
+            .admin-card { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .admin-actions { width: 100%; justify-content: flex-end; }
+            .search-result-item { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .promote-options { width: 100%; }
+            .promote-btn { flex: 1; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>👑 Admin Management</h1>
+            </div>
+            <a href="/admin-profile.html" class="back-btn">← Back to Profile</a>
+        </div>
+
+        <!-- Add New Admin Section -->
+        <div class="search-section">
+            <h2>➕ Add New Admin</h2>
+            <p>Search for a user by username, email, or name to promote them to admin status.</p>
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="userSearch" class="search-input" placeholder="Search users..." autocomplete="off">
+            </div>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+
+        <!-- Current Admins List -->
+        <div class="admin-list-section">
+            <h2>🛡️ Current Admins</h2>
+            <p>Manage admin privileges for team members. Super Admins can manage other admins.</p>
+            <div id="adminList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading admins...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-card">
+            <div class="confirm-icon" id="confirmIcon">⚠️</div>
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage">Are you sure you want to proceed?</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" id="confirmCancel">Cancel</button>
+                <button class="confirm-btn danger" id="confirmConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/page-transitions.js"></script>
+    <script>
+        let CURRENT_ADMIN = null;
+        let searchTimeout = null;
+        let CSRF_TOKEN = '';
+
+        // Fetch CSRF token
+        async function fetchCsrfToken() {
+            try {
+                const resp = await fetch('/api/auth/csrf');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    CSRF_TOKEN = data.token || '';
+                }
+            } catch (err) {
+                console.error('Failed to fetch CSRF token', err);
+            }
+        }
+
+        // Check if user is a super admin
+        async function checkSuperAdminAccess() {
+            try {
+                const resp = await fetch('/api/admin/profile');
+                if (!resp.ok) {
+                    navigateWithTransition('/admin-login.html');
+                    return false;
+                }
+                const data = await resp.json();
+                if (!data.isSuperAdmin) {
+                    showToast('Only Super Admins can access this page', 'error');
+                    setTimeout(() => navigateWithTransition('/admin-profile.html'), 1500);
+                    return false;
+                }
+                CURRENT_ADMIN = data;
+                return true;
+            } catch (err) {
+                console.error('Auth check failed', err);
+                navigateWithTransition('/admin-login.html');
+                return false;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchCsrfToken();
+            const hasAccess = await checkSuperAdminAccess();
+            if (!hasAccess) return; // Stop if not authorized
+            
+            await loadAdmins();
+            setupSearch();
+        });
+
+        // Load all admins
+        async function loadAdmins() {
+            const container = document.getElementById('adminList');
+            
+            // Setup event delegation once
+            if (!container.dataset.delegated) {
+                container.dataset.delegated = 'true';
+                container.addEventListener('click', async (e) => {
+                    const transferBtn = e.target.closest('.transfer-super');
+                    const demoteBtn = e.target.closest('.demote');
+                    
+                    if (transferBtn) {
+                        const userId = parseInt(transferBtn.dataset.userId, 10);
+                        const username = transferBtn.dataset.username;
+                        if (userId && username) await transferSuperAdmin(userId, username);
+                    } else if (demoteBtn) {
+                        const userId = parseInt(demoteBtn.dataset.userId, 10);
+                        const username = demoteBtn.dataset.username;
+                        if (userId && username) await demoteAdmin(userId, username);
+                    }
+                });
+            }
+            
+            try {
+                const resp = await fetch('/api/admin/admins');
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to load admins');
+                }
+                const admins = await resp.json();
+
+                if (admins.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">👤</div>
+                            <p>No admins found</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = admins.map(admin => {
+                    const isYou = CURRENT_ADMIN && admin.id === CURRENT_ADMIN.id;
+                    const isSuperAdmin = admin.isSuperAdmin === true;
+                    const isPromotedAdmin = admin.isPromotedAdmin === true;
+                    // Super Admin is protected - cannot be demoted
+                    // Promoted Admins can be demoted by Super Admin
+                    const canModify = !isYou && !isSuperAdmin && isPromotedAdmin;
+                    const canTransfer = isYou && isSuperAdmin; // Only Super Admin can see transfer option on themselves
+                    const initial = (admin.username || 'A').charAt(0).toUpperCase();
+                    const avatarBg = getAvatarColor(admin.avatar || admin.username);
+                    const safeUsername = escapeHtml(admin.username);
+                    
+                    // Build action buttons
+                    let actionHtml = '';
+                    if (isSuperAdmin && isYou) {
+                        // Super Admin viewing themselves - show transfer option
+                        actionHtml = `<div class="admin-actions"><span style="color:#8b5cf6;font-size:0.85rem;">👑 You are the Super Admin</span></div>`;
+                    } else if (isSuperAdmin && !isYou) {
+                        // Someone else is Super Admin - shouldn't happen in current list
+                        actionHtml = `<div class="admin-actions"><span style="color:#f59e0b;font-size:0.85rem;">👑 Super Admin (Protected)</span></div>`;
+                    } else if (canModify) {
+                        // Promoted Admin - can be demoted or transferred to
+                        actionHtml = `
+                            <div class="admin-actions">
+                                <button class="action-btn transfer-super" data-user-id="${admin.id}" data-username="${safeUsername}">
+                                    👑 Transfer Super Admin
+                                </button>
+                                <button class="action-btn demote" data-user-id="${admin.id}" data-username="${safeUsername}">
+                                    🚫 Demote
+                                </button>
+                            </div>
+                        `;
+                    } else if (isYou && isPromotedAdmin) {
+                        actionHtml = `<div class="admin-actions"><span style="color:#64748b;font-size:0.85rem;">Cannot modify yourself here</span></div>`;
+                    } else {
+                        actionHtml = `<div class="admin-actions"><span style="color:#64748b;font-size:0.85rem;">—</span></div>`;
+                    }
+                    
+                    return `
+                        <div class="admin-card ${isSuperAdmin ? 'super-admin' : ''} ${isYou ? 'is-you' : ''}" data-id="${admin.id}">
+                            <div class="admin-info">
+                                <div class="admin-avatar" style="background: ${avatarBg}">${initial}</div>
+                                <div class="admin-details">
+                                    <h4>
+                                        ${safeUsername}
+                                        ${isSuperAdmin ? '<span class="badge primary">👑 Super Admin</span>' : ''}
+                                        ${isPromotedAdmin ? '<span class="badge super">Promoted Admin</span>' : ''}
+                                        ${isYou ? '<span class="badge you">You</span>' : ''}
+                                    </h4>
+                                    <span>${escapeHtml(admin.email)} ${admin.fullName ? '• ' + escapeHtml(admin.fullName) : ''}</span>
+                                </div>
+                            </div>
+                            ${actionHtml}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load admins', err);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">⚠️</div>
+                        <p>${escapeHtml(err.message) || 'Failed to load admins. Please refresh.'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Search for users
+        function setupSearch() {
+            const input = document.getElementById('userSearch');
+            const results = document.getElementById('searchResults');
+
+            // Event delegation for promote buttons
+            results.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.promote-btn');
+                if (!btn) return;
+                
+                const userId = parseInt(btn.dataset.userId, 10);
+                const username = btn.dataset.username;
+                
+                if (userId && username) {
+                    await promoteUser(userId, username);
+                }
+            });
+
+            input.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const q = e.target.value.trim();
+                
+                if (q.length < 2) {
+                    results.innerHTML = '';
+                    return;
+                }
+
+                // Show loading state
+                results.innerHTML = `
+                    <div class="empty-state">
+                        <div class="spinner" style="width:24px;height:24px;border-width:2px;"></div>
+                        <p>Searching...</p>
+                    </div>
+                `;
+
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        const resp = await fetch(`/api/admin/users/search?q=${encodeURIComponent(q)}`);
+                        if (!resp.ok) {
+                            const errData = await resp.json().catch(() => ({}));
+                            throw new Error(errData.error || 'Search failed');
+                        }
+                        const users = await resp.json();
+
+                        if (users.length === 0) {
+                            results.innerHTML = `
+                                <div class="empty-state">
+                                    <p>No users found matching "${escapeHtml(q)}"</p>
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        results.innerHTML = users.map(user => {
+                            const initial = (user.username || 'U').charAt(0).toUpperCase();
+                            const avatarBg = getAvatarColor(user.avatar || user.username);
+                            const safeUsername = escapeHtml(user.username);
+                            
+                            return `
+                                <div class="search-result-item">
+                                    <div class="user-info">
+                                        <div class="user-avatar" style="background: ${avatarBg}">${initial}</div>
+                                        <div class="user-details">
+                                            <h4>${safeUsername}</h4>
+                                            <span>${escapeHtml(user.email)} ${user.fullName ? '• ' + escapeHtml(user.fullName) : ''}</span>
+                                        </div>
+                                    </div>
+                                    <div class="promote-options">
+                                        <button class="promote-btn" data-user-id="${user.id}" data-username="${safeUsername}">
+                                            🛡️ Promote to Admin
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } catch (err) {
+                        console.error('Search failed', err);
+                        results.innerHTML = `
+                            <div class="empty-state">
+                                <p>${escapeHtml(err.message) || 'Search failed. Please try again.'}</p>
+                            </div>
+                        `;
+                    }
+                }, 300);
+            });
+        }
+
+        // Promote user to admin (always as Promoted Admin - only ONE Super Admin exists)
+        async function promoteUser(userId, username) {
+            const confirmed = await confirmAction(
+                `Make ${username} a Promoted Admin?`,
+                'Promoted Admins can manage content on the site. They cannot manage other admins.',
+                '🛡️',
+                'Promote'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const resp = await fetch('/api/admin/admins/promote', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ userId })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Failed to promote user');
+
+                showToast(data.message, 'success');
+                document.getElementById('userSearch').value = '';
+                document.getElementById('searchResults').innerHTML = '';
+                await loadAdmins();
+            } catch (err) {
+                console.error('Promote failed', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Transfer Super Admin status to another admin
+        async function transferSuperAdmin(userId, username) {
+            const confirmed = await confirmAction(
+                `Transfer Super Admin to ${username}?`,
+                'WARNING: You will become a Promoted Admin and lose the ability to manage other admins. This action cannot be undone by you.',
+                '👑',
+                'Transfer'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const resp = await fetch('/api/admin/admins/transfer-super', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ userId })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Failed to transfer Super Admin');
+
+                showToast(data.message, 'success');
+                
+                // Redirect to promoted admin profile since we're no longer super admin
+                if (data.transferred) {
+                    setTimeout(() => {
+                        navigateWithTransition('/promoted-admin-profile.html');
+                    }, 1500);
+                } else {
+                    await loadAdmins();
+                }
+            } catch (err) {
+                console.error('Transfer failed', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Demote admin
+        async function demoteAdmin(userId, username) {
+            const confirmed = await confirmAction(
+                `Demote ${username}?`,
+                'This will remove all admin privileges. They will become a regular user.',
+                '🚫',
+                'Demote'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const resp = await fetch('/api/admin/admins/demote', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ userId })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Failed to demote admin');
+
+                showToast(data.message, 'success');
+                await loadAdmins();
+            } catch (err) {
+                console.error('Demote failed', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Confirm dialog
+        function confirmAction(title, message, icon, confirmText) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirmOverlay');
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+                document.getElementById('confirmIcon').textContent = icon;
+                document.getElementById('confirmConfirm').textContent = confirmText;
+
+                overlay.classList.add('active');
+
+                const cleanup = () => {
+                    overlay.classList.remove('active');
+                    document.getElementById('confirmCancel').onclick = null;
+                    document.getElementById('confirmConfirm').onclick = null;
+                };
+
+                document.getElementById('confirmCancel').onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                document.getElementById('confirmConfirm').onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        cleanup();
+                        resolve(false);
+                    }
+                };
+            });
+        }
+
+        // Toast
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <span class="toast-close">&times;</span>
+            `;
+            container.appendChild(toast);
+            toast.querySelector('.toast-close').onclick = () => toast.remove();
+            if (duration > 0) setTimeout(() => toast.remove(), duration);
+        }
+
+        // Helpers
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function getAvatarColor(str) {
+            const colors = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                'linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)',
+                'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)'
+            ];
+            if (!str) return colors[0];
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function navigateWithTransition(url) {
+            if (typeof window.navigateWithTransition === 'function') {
+                window.navigateWithTransition(url);
+            } else {
+                window.location.href = url;
+            }
+        }
+    </script>
+</body>
+</html>

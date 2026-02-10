@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>User Profile - Blog Hub</title>
+        <title>Admin Profile - Blog Hub</title>
         <script src="/csrf.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
@@ -21,9 +21,9 @@
             }
 
             .navbar {
-                background: #1e3a5f;
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
                 padding: 16px 0;
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
                 margin-bottom: 40px;
             }
 
@@ -57,7 +57,7 @@
 
             .navbar-actions a,
             .navbar-actions button {
-                color: #d4a574;
+                color: #e9d5ff;
                 text-decoration: none;
                 font-weight: 600;
                 font-size: 0.95rem;
@@ -69,7 +69,7 @@
 
             .navbar-actions a:hover,
             .navbar-actions button:hover {
-                color: #e8b896;
+                color: #ffffff;
             }
 
             .container {
@@ -87,7 +87,7 @@
                 display: inline-block;
                 width: 40px;
                 height: 40px;
-                border: 4px solid #d4a574;
+                border: 4px solid #8b5cf6;
                 border-top-color: transparent;
                 border-radius: 50%;
                 animation: spin 0.8s linear infinite;
@@ -114,20 +114,35 @@
                 margin-bottom: 40px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                 text-align: center;
+                border-top: 4px solid #8b5cf6;
+            }
+
+            .admin-badge-header {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                color: #fff;
+                padding: 6px 16px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
             }
 
             .profile-avatar {
                 width: 120px;
                 height: 120px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 3rem;
                 margin: 0 auto 24px;
                 color: #ffffff;
-                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
                 cursor: pointer;
                 position: relative;
                 overflow: hidden;
@@ -186,7 +201,7 @@
 
             .avatar-modal h3 {
                 margin-bottom: 6px;
-                color: #1e3a5f;
+                color: #7c3aed;
             }
 
             .avatar-modal p {
@@ -218,17 +233,17 @@
             .avatar-option:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 10px 26px rgba(0,0,0,0.12);
-                border-color: #d4a574;
+                border-color: #8b5cf6;
             }
 
             .avatar-option.selected {
-                border-color: #1e3a5f;
-                box-shadow: 0 0 0 3px rgba(30,58,95,0.1), 0 12px 30px rgba(0,0,0,0.1);
+                border-color: #7c3aed;
+                box-shadow: 0 0 0 3px rgba(139,92,246,0.2), 0 12px 30px rgba(0,0,0,0.1);
             }
 
             .avatar-option span {
                 font-weight: 700;
-                color: #1e3a5f;
+                color: #7c3aed;
             }
 
             .avatar-modal-actions {
@@ -248,9 +263,9 @@
             }
 
             .avatar-primary {
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
                 color: #fff;
-                box-shadow: 0 10px 20px rgba(30,58,95,0.25);
+                box-shadow: 0 10px 20px rgba(139,92,246,0.25);
             }
 
             .avatar-secondary {
@@ -260,13 +275,13 @@
             }
 
             .avatar-toggle {
-                background: #fef8f1;
-                color: #d6813c;
-                border: 1px solid #f4d7b6;
+                background: #f3e8ff;
+                color: #7c3aed;
+                border: 1px solid #ddd6fe;
             }
 
             .profile-name {
-                color: #1e3a5f;
+                color: #7c3aed;
                 font-size: 2rem;
                 font-weight: 600;
                 margin-bottom: 8px;
@@ -274,7 +289,7 @@
             }
 
             .profile-username {
-                color: #d4a574;
+                color: #a78bfa;
                 font-size: 1.1rem;
                 font-weight: 500;
                 margin-bottom: 16px;
@@ -319,143 +334,110 @@
             }
 
             .edit-btn {
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            }
+
+            .edit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+            }
+
+            .create-btn {
                 background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
                 color: #ffffff;
                 box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
             }
 
-            .edit-btn:hover {
+            .create-btn:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 6px 16px rgba(212, 165, 116, 0.4);
             }
 
-            .delete-btn {
-                background: #f8d7da;
-                color: #721c24;
-                border: 1px solid #f5c6cb;
+            .home-btn {
+                background: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
             }
 
-            .delete-btn:hover {
-                background: #f5c6cb;
+            .home-btn:hover {
+                background: #dfe6e9;
                 transform: translateY(-2px);
             }
 
-            .admin-dashboard-btn {
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
-                color: #ffffff;
-                box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
-            }
-
-            .admin-dashboard-btn:hover {
-                transform: translateY(-2px) scale(1.02);
-                box-shadow: 0 6px 16px rgba(30, 58, 95, 0.45);
-                filter: brightness(1.1);
-            }
-
-            .admin-dashboard-btn:active {
-                transform: translateY(0) scale(0.98);
-            }
-
-            .edit-form {
+            /* Responsibilities Section */
+            .responsibilities-section {
                 background: #ffffff;
                 border-radius: 12px;
                 padding: 40px;
                 margin-bottom: 40px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                display: none;
             }
 
-            .edit-form.active {
-                display: block;
-            }
-
-            .form-group {
-                margin-bottom: 24px;
-            }
-
-            label {
-                display: block;
-                margin-bottom: 10px;
-                color: #2c3e50;
+            .responsibilities-title {
+                color: #7c3aed;
+                font-size: 1.5rem;
                 font-weight: 600;
-                font-size: 0.95rem;
-                letter-spacing: 0.4px;
-            }
-
-            input[type="text"],
-            textarea {
-                width: 100%;
-                padding: 14px 16px;
-                border: 2px solid #e8e8e8;
-                border-radius: 6px;
-                font-size: 1rem;
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                transition: all 0.3s ease;
-                background-color: #f8f9fa;
-                color: #2c3e50;
-            }
-
-            input[type="text"]:focus,
-            textarea:focus {
-                outline: none;
-                border-color: #d4a574;
-                background-color: #ffffff;
-                box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
-            }
-
-            textarea {
-                resize: vertical;
-                min-height: 120px;
-            }
-
-            .form-actions {
+                margin-bottom: 24px;
                 display: flex;
+                align-items: center;
                 gap: 12px;
             }
 
-            .form-actions button {
-                flex: 1;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 6px;
-                font-size: 0.95rem;
-                font-weight: 600;
-                cursor: pointer;
+            .responsibilities-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+            }
+
+            .responsibility-card {
+                background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+                border: 1px solid #e9d5ff;
+                border-radius: 12px;
+                padding: 24px;
                 transition: all 0.3s ease;
             }
 
-            .save-btn {
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
-                color: #ffffff;
+            .responsibility-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
             }
 
-            .save-btn:hover {
-                transform: translateY(-2px);
+            .responsibility-icon {
+                font-size: 2rem;
+                margin-bottom: 12px;
             }
 
-            .cancel-btn {
-                background: #e8e8e8;
-                color: #555;
+            .responsibility-title {
+                color: #7c3aed;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 8px;
             }
 
-            .cancel-btn:hover {
-                background: #d8d8d8;
+            .responsibility-description {
+                color: #666;
+                font-size: 0.9rem;
+                line-height: 1.5;
             }
 
+            /* Posts Section */
             .posts-section {
                 background: #ffffff;
                 border-radius: 12px;
                 padding: 40px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                margin-bottom: 40px;
             }
 
             .posts-title {
-                color: #1e3a5f;
-                font-size: 1.8rem;
+                color: #7c3aed;
+                font-size: 1.5rem;
                 font-weight: 600;
-                margin-bottom: 32px;
+                margin-bottom: 24px;
                 padding-bottom: 16px;
-                border-bottom: 2px solid #e8e8e8;
+                border-bottom: 2px solid #e9d5ff;
             }
 
             .post-card {
@@ -468,13 +450,13 @@
             }
 
             .post-card:hover {
-                border-color: #d4a574;
-                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.1);
+                border-color: #8b5cf6;
+                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
                 transform: translateX(4px);
             }
 
             .post-title {
-                color: #1e3a5f;
+                color: #7c3aed;
                 font-size: 1.3rem;
                 font-weight: 600;
                 margin-bottom: 12px;
@@ -505,58 +487,6 @@
                 margin-bottom: 16px;
             }
 
-            #message {
-                margin-bottom: 20px;
-                padding: 14px 16px;
-                border-radius: 6px;
-                font-weight: 600;
-                text-align: center;
-                font-size: 0.95rem;
-                display: none;
-                animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            }
-
-            #message.error {
-                background-color: #f8d7da;
-                color: #721c24;
-                border: 1px solid #f5c6cb;
-                display: block;
-            }
-
-            #message.success {
-                background-color: #d4edda;
-                color: #155724;
-                border: 1px solid #c3e6cb;
-                display: block;
-            }
-
-            @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @media (max-width: 768px) {
-                .profile-header,
-                .edit-form,
-                .posts-section {
-                    padding: 24px;
-                }
-
-                .profile-name {
-                    font-size: 1.5rem;
-                }
-
-                .form-actions {
-                    flex-direction: column;
-                }
-            }
-
             /* Toast Notifications */
             .toast-container {
                 position: fixed;
@@ -581,6 +511,7 @@
 
             .toast.success { border-left: 4px solid #4CAF50; }
             .toast.error { border-left: 4px solid #f44336; }
+            .toast.info { border-left: 4px solid #8b5cf6; }
 
             .toast-icon { font-size: 1.2rem; flex-shrink: 0; }
             .toast-message { flex: 1; font-size: 0.95rem; color: #333; font-weight: 500; }
@@ -589,7 +520,26 @@
 
             @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-            @media (max-width: 600px) { .toast-container { right: 10px; left: 10px; max-width: none; } }
+            @media (max-width: 768px) {
+                .profile-header,
+                .responsibilities-section,
+                .posts-section {
+                    padding: 24px;
+                }
+
+                .profile-name {
+                    font-size: 1.5rem;
+                }
+
+                .navbar-content {
+                    flex-wrap: wrap;
+                    gap: 12px;
+                }
+            }
+
+            @media (max-width: 600px) { 
+                .toast-container { right: 10px; left: 10px; max-width: none; } 
+            }
         </style>
     </head>
     <body>
@@ -606,8 +556,6 @@
         </div>
 
         <div class="container">
-            <div id="message" role="alert"></div>
-
             <div id="loadingContainer" class="loading">
                 <div class="spinner"></div>
                 <p>Loading profile...</p>
@@ -615,13 +563,55 @@
 
             <div id="profileContainer" style="display: none;">
                 <div class="profile-header">
+                    <div class="admin-badge-header">🛡️ Admin</div>
                     <div class="profile-avatar" id="profileAvatar">👤</div>
                     <h1 class="profile-name" id="profileName"></h1>
                     <p class="profile-username" id="profileUsername"></p>
                     <div class="profile-info" id="profileEmail"></div>
                     <p class="profile-bio" id="profileBio"></p>
                     <div class="profile-actions">
-                        <button class="action-btn edit-btn" onclick="location.href='/edit-profile.html'">Edit Profile</button>
+                        <button class="action-btn edit-btn" onclick="location.href='/edit-profile.html'">✎ Edit Profile</button>
+                        <button class="action-btn create-btn" onclick="location.href='/create-post.html'">📝 Create Post</button>
+                        <button class="action-btn home-btn" onclick="location.href='/'">🏠 Back to Blog</button>
+                    </div>
+                </div>
+
+                <div class="responsibilities-section">
+                    <h2 class="responsibilities-title">🎯 Your Admin Responsibilities</h2>
+                    <div class="responsibilities-grid">
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">📝</div>
+                            <div class="responsibility-title">Content Creation</div>
+                            <div class="responsibility-description">Create engaging blog posts to share knowledge and insights with the community.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">🔍</div>
+                            <div class="responsibility-title">Content Moderation</div>
+                            <div class="responsibility-description">Review and moderate user-generated content to maintain quality standards.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">💬</div>
+                            <div class="responsibility-title">Community Engagement</div>
+                            <div class="responsibility-description">Engage with users through comments and foster positive discussions.</div>
+                        </div>
+                        <div class="responsibility-card">
+                            <div class="responsibility-icon">🚩</div>
+                            <div class="responsibility-title">Flag Management</div>
+                            <div class="responsibility-description">Flag inappropriate content and help maintain a safe environment for all users.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Down Section -->
+                <div class="responsibilities-section" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #fca5a5;">
+                    <h2 class="responsibilities-title" style="color: #b91c1c;">⚠️ Step Down from Admin</h2>
+                    <p style="color: #7f1d1d; margin-bottom: 1rem; text-align: center;">
+                        If you no longer wish to be an admin, you can step down and become a regular user. This action cannot be undone by you.
+                    </p>
+                    <div style="text-align: center;">
+                        <button id="stepDownBtn" class="action-btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 0.75rem 1.5rem; font-size: 1rem;">
+                            🚪 Step Down from Admin Role
+                        </button>
                     </div>
                 </div>
 
@@ -648,7 +638,7 @@
             <div id="errorContainer" style="display: none;">
                 <div class="error" id="errorMessage"></div>
                 <div style="text-align: center;">
-                    <a href="/login.html" style="color: #d4a574; text-decoration: none; font-weight: 600;">← Back to Login</a>
+                    <a href="/login.html" style="color: #8b5cf6; text-decoration: none; font-weight: 600;">← Back to Login</a>
                 </div>
             </div>
         </div>
@@ -672,13 +662,23 @@
                     setTimeout(() => toast.remove(), 300);
                 });
                 if (duration > 0) {
-                    setTimeout(() => { if (toast.parentElement) { toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)'; setTimeout(() => toast.remove(), 300); } }, duration);
+                    setTimeout(() => { 
+                        if (toast.parentElement) { 
+                            toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)'; 
+                            setTimeout(() => toast.remove(), 300); 
+                        } 
+                    }, duration);
                 }
                 return toast;
             }
 
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text || '';
+                return div.innerHTML;
+            }
+
             let currentUser = null;
-            let profileUserId = null;
             let selectedAvatar = '';
 
             const AVATAR_PALETTE = {
@@ -694,25 +694,19 @@
             };
 
             function avatarStyle(key) {
-                return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)';
+                return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
             }
 
-            const messageDiv = document.getElementById('message');
             const loadingContainer = document.getElementById('loadingContainer');
             const profileContainer = document.getElementById('profileContainer');
             const errorContainer = document.getElementById('errorContainer');
             const postsContainer = document.getElementById('postsContainer');
-            const profileForm = document.getElementById('profileForm');
             const avatarModal = document.getElementById('avatarModal');
             const avatarOptionsEl = document.getElementById('avatarOptions');
             const avatarToggle = document.getElementById('avatarToggle');
             const avatarConfirm = document.getElementById('avatarConfirm');
             const avatarCancel = document.getElementById('avatarCancel');
             const profileAvatar = document.getElementById('profileAvatar');
-
-            // Get userId from URL params if viewing someone else's profile
-            const params = new URLSearchParams(window.location.search);
-            profileUserId = params.get('id');
 
             function setAvatarCircle(el, avatarKey, fallbackText) {
                 if (!el) return;
@@ -764,69 +758,53 @@
                     }
                     currentUser = await meResponse.json();
 
-                    // Admins should go to their respective profile pages
-                    if (currentUser.isAdmin && !profileUserId) {
-                        if (currentUser.isSuperAdmin) {
-                            window.location.href = '/admin-profile.html';
-                        } else {
-                            window.location.href = '/promoted-admin-profile.html';
-                        }
+                    // Must be an admin but NOT a super admin
+                    if (!currentUser.isAdmin) {
+                        window.location.href = '/profile.html';
+                        return;
+                    }
+                    
+                    // Super admins should go to admin-profile.html
+                    if (currentUser.isSuperAdmin) {
+                        window.location.href = '/admin-profile.html';
                         return;
                     }
 
-                    // Must be a user at this point (with valid id)
-                    if (!currentUser.id && !currentUser.userId) {
+                    const userId = currentUser.id || currentUser.userId;
+                    if (!userId) {
                         throw new Error('Invalid user');
                     }
-                    
-                    // Use the user's actual id
-                    const myUserId = currentUser.id || currentUser.userId;
 
-                    // Get profile user (current user or specified user)
-                    const targetUserId = profileUserId || myUserId;
-                    const profileResponse = await fetch(`/api/users/${targetUserId}`);
+                    // Get user profile data
+                    const profileResponse = await fetch(`/api/users/${userId}`);
                     if (!profileResponse.ok) {
-                        throw new Error('User not found');
+                        throw new Error('Could not load profile');
                     }
                     const profileData = await profileResponse.json();
 
-                    // Flatten the response data since API returns flat object, not nested
                     displayProfile(profileData);
-                    
                     loadingContainer.style.display = 'none';
                     profileContainer.style.display = 'block';
                 } catch (error) {
                     console.error('Load profile error:', error);
                     loadingContainer.style.display = 'none';
                     errorContainer.style.display = 'block';
-                    document.getElementById('errorMessage').textContent = 'Could not load profile. Please log in again.';
+                    document.getElementById('errorMessage').textContent = error.message || 'Could not load profile. Please log in again.';
                 }
             }
 
             function displayProfile(user) {
-                const myUserId = currentUser.id || currentUser.userId;
-                
                 document.getElementById('profileName').textContent = user.full_name || user.username;
                 document.getElementById('profileUsername').textContent = '@' + user.username;
                 document.getElementById('profileEmail').textContent = `Email: ${user.email}`;
                 document.getElementById('profileBio').textContent = user.bio || 'No bio added yet.';
 
-                selectedAvatar = user.avatar || 'aurora';
-                setAvatarCircle(profileAvatar, selectedAvatar, user.username ? user.username[0] : 'U');
-
-                // Show edit button only if viewing own profile
-                if (!profileUserId || profileUserId == myUserId) {
-                    profileAvatar.style.cursor = 'pointer';
-                } else {
-                    // Hide edit button for other users
-                    document.querySelector('.action-btn.edit-btn').style.display = 'none';
-                    profileAvatar.style.cursor = 'default';
-                    profileAvatar.removeEventListener('click', openAvatarModal);
-                }
+                selectedAvatar = user.avatar || 'plum';
+                setAvatarCircle(profileAvatar, selectedAvatar, user.username ? user.username[0] : 'A');
 
                 // Display posts
                 if (user.posts && user.posts.length > 0) {
-                    document.getElementById('postsCount').textContent = `${user.posts.length} ${user.posts.length === 1 ? 'Post' : 'Posts'}`;
+                    document.getElementById('postsCount').textContent = `Your Posts (${user.posts.length})`;
                     postsContainer.innerHTML = user.posts
                         .map(post => `
                             <div class="post-card" onclick="window.location.href='/post.html?id=${post.id}'">
@@ -834,60 +812,17 @@
                                 <p class="post-excerpt">${escapeHtml(post.body.substring(0, 150))}${post.body.length > 150 ? '...' : ''}</p>
                                 <div class="post-meta">
                                     <span>📅 ${new Date(post.created_at).toLocaleDateString()}</span>
-                                    <span style="display:flex; align-items:center; gap:8px; color:#d4a574; font-weight:600;">
-                                        <span class="avatar-chip" style="background:${avatarStyle(user.avatar)}">${escapeHtml(user.username[0] || 'U')}</span>
-                                        ${escapeHtml(user.username)}
-                                    </span>
                                 </div>
                             </div>
                         `)
                         .join('');
                 } else {
-                    document.getElementById('postsCount').textContent = 'No posts yet';
-                    postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No posts published yet.</p></div>';
+                    document.getElementById('postsCount').textContent = 'Your Posts (0)';
+                    postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No posts published yet. Create your first post!</p></div>';
                 }
-
-                renderCommentsSection(user.comments || []);
             }
 
-            function renderCommentsSection(comments) {
-                let section = document.getElementById('commentsSection');
-                if (!section) {
-                    section = document.createElement('div');
-                    section.id = 'commentsSection';
-                    section.className = 'posts-section';
-                    section.style.marginTop = '24px';
-                    section.innerHTML = `
-                        <h2 class="posts-title" id="commentsCount">Comments (0)</h2>
-                        <div id="commentsContainer"></div>
-                    `;
-                    profileContainer.appendChild(section);
-                }
-                const commentsContainer = document.getElementById('commentsContainer');
-                const countEl = document.getElementById('commentsCount');
-                countEl.textContent = `Comments (${comments.length})`;
-
-                if (!comments.length) {
-                    commentsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">💬</div><p>No comments yet.</p></div>';
-                    return;
-                }
-
-                commentsContainer.innerHTML = comments.map(c => `
-                    <div class="post-card" style="cursor:default;">
-                        <div class="post-title" style="margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-                            <span style="background:${avatarStyle(selectedAvatar)};" class="avatar-chip">${(currentUser?.username||'U')[0]?.toUpperCase?.()||'U'}</span>
-                            <span>${escapeHtml(c.post_title || 'Post')}</span>
-                        </div>
-                        <div class="post-excerpt" style="color:#2c3e50; margin-bottom:8px;">${escapeHtml(c.body.substring(0, 180))}${c.body.length>180?'...':''}</div>
-                        <div class="post-meta" style="border-top:none; padding-top:0;">
-                            <span style="color:#95a5a6;">${new Date(c.created_at).toLocaleString()}</span>
-                            ${c.updated_at !== c.created_at ? '<span style="color:#d4a574;">(edited)</span>' : ''}
-                            <a href="/post.html?id=${c.post_id}" style="color:#4a90e2; font-weight:700;">View post →</a>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
+            // Logout handler
             document.getElementById('logoutBtn').addEventListener('click', async function() {
                 try {
                     const response = await fetch('/api/auth/logout', {
@@ -904,29 +839,26 @@
                 }
             });
 
+            // Avatar modal handlers
             if (profileAvatar) {
-                profileAvatar.addEventListener('click', () => {
-                    openAvatarModal();
-                });
-            }
-
-            if (avatarCancel) {
-                avatarCancel.addEventListener('click', () => closeAvatarModal());
+                profileAvatar.addEventListener('click', openAvatarModal);
             }
 
             if (avatarToggle) {
                 avatarToggle.addEventListener('click', () => {
-                    if (!avatarOptionsEl) return;
-                    const visible = avatarOptionsEl.style.display === 'grid';
-                    avatarOptionsEl.style.display = visible ? 'none' : 'grid';
-                    if (!visible) renderAvatarOptions();
+                    const grid = document.querySelector('.avatar-options');
+                    if (grid) grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
                 });
+            }
+
+            if (avatarCancel) {
+                avatarCancel.addEventListener('click', closeAvatarModal);
             }
 
             if (avatarConfirm) {
                 avatarConfirm.addEventListener('click', async () => {
                     if (!selectedAvatar) {
-                        showToast('Pick an avatar', 'info');
+                        showToast('Please select an avatar', 'error');
                         return;
                     }
                     try {
@@ -935,35 +867,73 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ avatar: selectedAvatar })
                         });
-                        const data = await resp.json().catch(() => ({}));
-                        if (!resp.ok) {
-                            showToast(data.error || 'Failed to update avatar', 'error');
-                            return;
+                        if (resp.ok) {
+                            setAvatarCircle(profileAvatar, selectedAvatar, currentUser?.username?.[0] || 'A');
+                            closeAvatarModal();
+                            showToast('Avatar updated!', 'success');
+                        } else {
+                            const err = await resp.json();
+                            showToast(err.error || 'Failed to update avatar', 'error');
                         }
-                        setAvatarCircle(profileAvatar, selectedAvatar, data.username || currentUser?.username || 'U');
-                        showToast('Avatar updated', 'success', 1800);
-                        closeAvatarModal();
-                    } catch (err) {
-                        console.error('Avatar update failed', err);
-                        showToast('Unable to update avatar', 'error');
+                    } catch (e) {
+                        showToast('Failed to update avatar', 'error');
                     }
                 });
             }
 
-                function showMessage(text, type = 'error') {
-                    // Deprecated: use toasts for inline feedback, keep for backward compatibility
-                    messageDiv.textContent = text;
-                    messageDiv.className = type;
-                    messageDiv.style.display = 'block';
-                }
-
-            function escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
+            // Close modal on backdrop click
+            if (avatarModal) {
+                avatarModal.addEventListener('click', (e) => {
+                    if (e.target === avatarModal) closeAvatarModal();
+                });
             }
 
-            // Load profile on page load
+            // Step Down functionality
+            const stepDownBtn = document.getElementById('stepDownBtn');
+            if (stepDownBtn) {
+                stepDownBtn.addEventListener('click', async () => {
+                    const confirmed = confirm(
+                        '⚠️ Step Down from Admin Role?\n\n' +
+                        'This will remove all your admin privileges and you will become a regular user.\n\n' +
+                        'This action cannot be undone by you - only the Super Admin can restore your admin status.\n\n' +
+                        'Are you sure you want to continue?'
+                    );
+                    
+                    if (!confirmed) return;
+                    
+                    try {
+                        // Fetch CSRF token
+                        const csrfResp = await fetch('/api/auth/csrf');
+                        const csrfData = await csrfResp.json();
+                        const csrfToken = csrfData.token || '';
+                        
+                        const resp = await fetch('/api/admin/admins/demote', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-csrf-token': csrfToken
+                            },
+                            body: JSON.stringify({ userId: currentUser.id })
+                        });
+                        
+                        const data = await resp.json();
+                        
+                        if (resp.ok) {
+                            showToast('You have stepped down from your admin role', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/profile.html';
+                            }, 1500);
+                        } else {
+                            showToast(data.error || 'Failed to step down', 'error');
+                        }
+                    } catch (e) {
+                        console.error('Step down error:', e);
+                        showToast('Failed to step down. Please try again.', 'error');
+                    }
+                });
+            }
+
+            // Initialize
             loadProfile();
         </script>
     </body>

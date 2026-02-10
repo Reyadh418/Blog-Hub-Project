@@ -8,6 +8,64 @@ const bcrypt = require("bcryptjs");
 
 const db = require("./db");
 
+// Migration: Make notifications.post_id nullable for system notifications
+(async function migrateNotificationsTable() {
+  // Promisified helpers for migration only
+  const migrationAll = (sql, params = []) =>
+    new Promise((resolve, reject) =>
+      db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)))
+    );
+  const migrationRun = (sql, params = []) =>
+    new Promise((resolve, reject) =>
+      db.run(sql, params, function (err) {
+        if (err) reject(err);
+        else resolve({ lastID: this.lastID, changes: this.changes });
+      })
+    );
+  
+  try {
+    // Check if migration is needed by checking table schema
+    const tableInfo = await migrationAll("PRAGMA table_info(notifications)");
+    const postIdCol = tableInfo.find(col => col.name === 'post_id');
+    
+    // If post_id is NOT NULL (notnull = 1), we need to migrate
+    if (postIdCol && postIdCol.notnull === 1) {
+      console.log("[migration] Updating notifications table to allow NULL post_id...");
+      
+      // SQLite doesn't support ALTER COLUMN, so we recreate the table
+      await migrationRun(`CREATE TABLE IF NOT EXISTS notifications_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        post_id INTEGER,
+        type TEXT NOT NULL,
+        message TEXT NOT NULL,
+        is_read INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+      )`);
+      
+      // Copy existing data
+      await migrationRun(`INSERT INTO notifications_new (id, user_id, post_id, type, message, is_read, created_at)
+        SELECT id, user_id, post_id, type, message, is_read, created_at FROM notifications`);
+      
+      // Swap tables
+      await migrationRun(`DROP TABLE notifications`);
+      await migrationRun(`ALTER TABLE notifications_new RENAME TO notifications`);
+      
+      // Recreate index
+      await migrationRun(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON notifications(user_id, created_at DESC)`);
+      
+      console.log("[migration] Notifications table migration complete.");
+    }
+  } catch (err) {
+    // Table might not exist yet, that's fine - db.js will create it correctly
+    if (!err.message.includes("no such table")) {
+      console.error("[migration] Error migrating notifications table:", err.message);
+    }
+  }
+})();
+
 const app = express();
 
 // Parse JSON body (so POST requests work) with sensible limits
@@ -135,13 +193,31 @@ async function verifyPassword(password, storedHash, userId) {
 }
 
 async function getAdminUser() {
-  return dbGet("SELECT id, username, password_hash FROM users WHERE is_admin = 1 LIMIT 1");
+  return dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_admin = 1 LIMIT 1");
+}
+
+// Get the super admin (THE one protected admin - there can only be one)
+async function getSuperAdminId() {
+  const superAdmin = await dbGet("SELECT id FROM users WHERE is_super_admin = 1 LIMIT 1");
+  return superAdmin ? superAdmin.id : null;
+}
+
+// Check if user is the super admin
+async function isSuperAdmin(userId) {
+  const user = await dbGet("SELECT is_super_admin FROM users WHERE id = ?", [userId]);
+  return user && user.is_super_admin === 1;
 }
 
 // Ensure there's a concrete user row for the admin backed by the database (hashed credentials)
 async function ensureAdminUser() {
   const existing = await getAdminUser();
-  if (existing) return existing;
+  if (existing) {
+    // Ensure the first admin is always THE super admin
+    if (!existing.is_super_admin) {
+      await dbRun("UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?", [existing.id]);
+    }
+    return existing;
+  }
 
   const fallbackUsername = "@admin";
   const normalizedUsername = fallbackUsername;
@@ -158,7 +234,7 @@ async function ensureAdminUser() {
   const passwordHash = await hashPassword(adminPassword);
 
   const created = await dbRun(
-    "INSERT OR IGNORE INTO users (username, email, password_hash, is_admin, full_name) VALUES (?, ?, ?, 1, ?)",
+    "INSERT OR IGNORE INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?)",
     [normalizedUsername, email, passwordHash, "Site Admin"]
   );
 
@@ -172,6 +248,29 @@ async function ensureAdminUser() {
 function requireAdmin(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   return res.status(403).json({ error: "Admin only" });
+}
+
+async function requireSuperAdmin(req, res, next) {
+  if (!req.session || !req.session.isAdmin) {
+    return res.status(403).json({ error: "Super Admin only" });
+  }
+  
+  // If session has isSuperAdmin flag, use it
+  if (req.session.isSuperAdmin === true) return next();
+  
+  // Otherwise check the database (for sessions created before this feature)
+  try {
+    const user = await dbGet("SELECT is_super_admin FROM users WHERE id = ? AND is_admin = 1", [req.session.userId]);
+    if (user && user.is_super_admin === 1) {
+      // Update session for future requests
+      req.session.isSuperAdmin = true;
+      return next();
+    }
+  } catch (err) {
+    console.error("requireSuperAdmin check failed", err);
+  }
+  
+  return res.status(403).json({ error: "Super Admin only" });
 }
 
 function requireAuth(req, res, next) {
@@ -396,27 +495,42 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
 
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
 
-    const user = await dbGet("SELECT id, username, password_hash FROM users WHERE username = ?", [username]);
+    // Unified login: fetch all user data including admin status
+    const user = await dbGet(
+      "SELECT id, username, password_hash, is_admin, is_super_admin, is_promoted_admin FROM users WHERE username = ?",
+      [username]
+    );
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const valid = await verifyPassword(password, user.password_hash, user.id);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
+    // Set unified session variables based on database values
     req.session.userId = user.id;
     req.session.username = user.username;
-    req.session.userRole = "user";
+    req.session.isAdmin = user.is_admin === 1;
+    req.session.isSuperAdmin = user.is_super_admin === 1;
+    req.session.isPromotedAdmin = user.is_promoted_admin === 1;
+    req.session.userRole = user.is_admin === 1 ? "admin" : "user";
 
     // Save session before responding to preserve login
     req.session.save((err) => {
       if (err) return res.status(500).json({ error: "Failed to create session" });
-      res.json({ ok: true, userId: user.id, username: user.username });
+      res.json({ 
+        ok: true, 
+        userId: user.id, 
+        username: user.username,
+        isAdmin: user.is_admin === 1,
+        isSuperAdmin: user.is_super_admin === 1,
+        isPromotedAdmin: user.is_promoted_admin === 1
+      });
     });
   } catch (err) {
     next(err);
   }
 });
 
-// Admin Login (DB-backed, hashed)
+// Admin Login (uses same unified logic, but requires admin status)
 app.post("/api/admin/login", authLimiter, async (req, res, next) => {
   try {
     const username = (req.body.username || "").toString().trim().toLowerCase();
@@ -424,27 +538,48 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
 
     if (!username || !password) return res.status(400).json({ error: "username and password required" });
 
-    const adminUser = await ensureAdminUser();
-    if (!adminUser) return res.status(500).json({ error: "Admin user is not initialized" });
+    // Ensure at least one admin exists
+    await ensureAdminUser();
+    
+    // Find user by username and verify they are an admin
+    const user = await dbGet(
+      "SELECT id, username, password_hash, is_admin, is_super_admin, is_promoted_admin FROM users WHERE username = ?",
+      [username]
+    );
 
-    if (adminUser.username !== username) {
+    if (!user) {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
-    const valid = await verifyPassword(password, adminUser.password_hash, adminUser.id);
+    // Admin login requires admin status
+    if (user.is_admin !== 1) {
+      return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    }
+
+    const valid = await verifyPassword(password, user.password_hash, user.id);
     if (!valid) {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
+    // Set unified session variables
+    req.session.userId = user.id;
+    req.session.username = user.username;
     req.session.isAdmin = true;
+    req.session.isSuperAdmin = user.is_super_admin === 1;
+    req.session.isPromotedAdmin = user.is_promoted_admin === 1;
     req.session.userRole = "admin";
-    req.session.userId = adminUser.id; // so admin actions needing user_id work
-    req.session.username = adminUser.username;
 
     // Save session before responding to preserve login
     req.session.save((err) => {
       if (err) return res.status(500).json({ error: "Failed to create session" });
-      res.json({ ok: true, userId: adminUser.id, username: adminUser.username });
+      res.json({ 
+        ok: true, 
+        userId: user.id, 
+        username: user.username, 
+        isAdmin: true,
+        isSuperAdmin: user.is_super_admin === 1,
+        isPromotedAdmin: user.is_promoted_admin === 1
+      });
     });
   } catch (err) {
     next(err);
@@ -454,9 +589,9 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
 // Admin profile (fetch minimal data)
 app.get("/api/admin/profile", requireAdmin, async (req, res, next) => {
   try {
-    const admin = await getAdminUser();
+    const admin = await dbGet("SELECT id, username, is_super_admin FROM users WHERE id = ?", [req.session.userId]);
     if (!admin) return res.status(404).json({ error: "Admin user not found" });
-    res.json({ id: admin.id, username: admin.username });
+    res.json({ id: admin.id, username: admin.username, isSuperAdmin: admin.is_super_admin === 1 });
   } catch (err) {
     next(err);
   }
@@ -471,7 +606,11 @@ app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
 
     if (!currentPassword) return res.status(400).json({ error: "Current password is required" });
 
-    const admin = await getAdminUser();
+    // Get the currently logged in admin, not just any admin
+    const adminId = req.session.userId;
+    if (!adminId) return res.status(401).json({ error: "Not authenticated" });
+    
+    const admin = await dbGet("SELECT id, username, password_hash, is_super_admin FROM users WHERE id = ? AND is_admin = 1", [adminId]);
     if (!admin) return res.status(404).json({ error: "Admin user not found" });
 
     const valid = await verifyPassword(currentPassword, admin.password_hash, admin.id);
@@ -501,15 +640,214 @@ app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
     params.push(admin.id);
     await dbRun(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, params);
 
-    const updated = await getAdminUser();
+    // Refresh session with the updated admin data
+    const updated = await dbGet("SELECT id, username, is_super_admin FROM users WHERE id = ?", [admin.id]);
     req.session.username = updated.username;
     req.session.userId = updated.id;
     req.session.isAdmin = true;
+    req.session.isSuperAdmin = updated.is_super_admin === 1;
     req.session.userRole = "admin";
 
     req.session.save((err) => {
       if (err) return res.status(500).json({ error: "Failed to refresh session" });
       res.json({ ok: true, username: updated.username });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// =====================================================
+// ADMIN MANAGEMENT ENDPOINTS (Super Admin only for most actions)
+// =====================================================
+
+// Get all admins
+app.get("/api/admin/admins", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const admins = await dbAll(
+      `SELECT id, username, email, full_name, avatar, is_super_admin, is_promoted_admin, created_at 
+       FROM users WHERE is_admin = 1 ORDER BY is_super_admin DESC, created_at ASC`
+    );
+    res.json(admins.map(a => ({
+      id: a.id,
+      username: a.username,
+      email: a.email,
+      fullName: a.full_name || '',
+      avatar: a.avatar || '',
+      isSuperAdmin: a.is_super_admin === 1,
+      isPromotedAdmin: a.is_promoted_admin === 1,
+      createdAt: a.created_at
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Search users (for promoting to admin)
+app.get("/api/admin/users/search", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const q = (req.query.q || "").toString().trim().toLowerCase();
+    if (q.length < 2) return res.json([]);
+    
+    const users = await dbAll(
+      `SELECT id, username, email, full_name, avatar, is_admin 
+       FROM users 
+       WHERE is_admin = 0 AND (LOWER(username) LIKE ? OR LOWER(email) LIKE ? OR LOWER(full_name) LIKE ?)
+       LIMIT 20`,
+      [`%${q}%`, `%${q}%`, `%${q}%`]
+    );
+    res.json(users.map(u => ({
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      fullName: u.full_name || '',
+      avatar: u.avatar || ''
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Promote user to admin (Super Admin only - promotes to Promoted Admin)
+app.post("/api/admin/admins/promote", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.body.userId, 10);
+    
+    if (!userId || isNaN(userId)) return res.status(400).json({ error: "userId is required" });
+    
+    // Check user exists and is not already an admin
+    const user = await dbGet("SELECT id, username, is_admin FROM users WHERE id = ?", [userId]);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.is_admin === 1) return res.status(400).json({ error: "User is already an admin" });
+    
+    // Promote to Promoted Admin (not Super Admin - there can only be ONE super admin)
+    await dbRun(
+      "UPDATE users SET is_admin = 1, is_super_admin = 0, is_promoted_admin = 1 WHERE id = ?",
+      [userId]
+    );
+    
+    // Send notification to the promoted user
+    const notifMessage = '🎉 Congratulations! You have been promoted to Admin. You can now manage content on the site.';
+    await dbRun(
+      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'promotion', ?)",
+      [userId, notifMessage]
+    );
+    
+    res.json({ ok: true, message: `${user.username} is now a Promoted Admin` });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Demote admin to regular user
+// - Super Admin can demote any Promoted Admin (but NOT themselves)
+// - Promoted Admins can ONLY demote themselves (self-demote)
+app.post("/api/admin/admins/demote", requireAdmin, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.body.userId, 10);
+    const currentUserId = req.session.userId;
+    
+    if (!userId || isNaN(userId)) return res.status(400).json({ error: "userId is required" });
+    
+    // Get current user's admin status
+    const currentUser = await dbGet("SELECT is_super_admin, is_promoted_admin FROM users WHERE id = ?", [currentUserId]);
+    if (!currentUser) return res.status(401).json({ error: "Not authenticated" });
+    
+    // Get target user
+    const targetUser = await dbGet("SELECT id, username, is_admin, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [userId]);
+    if (!targetUser) return res.status(404).json({ error: "User not found" });
+    if (targetUser.is_admin !== 1) return res.status(400).json({ error: "User is not an admin" });
+    
+    // RULE: Super Admin CANNOT be demoted by anyone (including themselves via this endpoint)
+    if (targetUser.is_super_admin === 1) {
+      return res.status(403).json({ error: "The Super Admin cannot be demoted. Use 'Transfer Super Admin' to pass the role to someone else." });
+    }
+    
+    // RULE: Promoted Admins can ONLY demote themselves
+    if (currentUser.is_promoted_admin === 1 && !currentUser.is_super_admin) {
+      if (userId !== currentUserId) {
+        return res.status(403).json({ error: "Promoted Admins can only demote themselves" });
+      }
+    }
+    
+    // RULE: Super Admin cannot demote themselves (they must transfer first)
+    if (currentUser.is_super_admin === 1 && userId === currentUserId) {
+      return res.status(400).json({ error: "Super Admin cannot demote themselves. Transfer Super Admin status first." });
+    }
+    
+    // Perform demotion
+    await dbRun(
+      "UPDATE users SET is_admin = 0, is_super_admin = 0, is_promoted_admin = 0 WHERE id = ?",
+      [userId]
+    );
+    
+    // Send notification to the demoted user (if not self-demote)
+    if (userId !== currentUserId) {
+      await dbRun(
+        "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'demotion', ?)",
+        [userId, '📋 Your admin privileges have been removed. You are now a regular user.']
+      );
+    }
+    
+    const message = userId === currentUserId 
+      ? 'You have stepped down from your admin role'
+      : `${targetUser.username} is no longer an admin`;
+    
+    res.json({ ok: true, message, selfDemote: userId === currentUserId });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Transfer Super Admin status to another admin (Super Admin only)
+// This is the ONLY way to change Super Admin - they choose their successor
+app.post("/api/admin/admins/transfer-super", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const newSuperAdminId = parseInt(req.body.userId, 10);
+    const currentUserId = req.session.userId;
+    
+    if (!newSuperAdminId || isNaN(newSuperAdminId)) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+    
+    // Cannot transfer to yourself
+    if (newSuperAdminId === currentUserId) {
+      return res.status(400).json({ error: "You are already the Super Admin" });
+    }
+    
+    // Target must be an existing admin (promoted admin)
+    const targetUser = await dbGet(
+      "SELECT id, username, is_admin, is_promoted_admin FROM users WHERE id = ?", 
+      [newSuperAdminId]
+    );
+    if (!targetUser) return res.status(404).json({ error: "User not found" });
+    if (targetUser.is_admin !== 1) {
+      return res.status(400).json({ error: "Target user must be an admin first. Promote them to admin first." });
+    }
+    
+    // Transfer: Remove super admin from current, give to new
+    await dbRun(
+      "UPDATE users SET is_super_admin = 0, is_promoted_admin = 1 WHERE id = ?",
+      [currentUserId]
+    );
+    await dbRun(
+      "UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?",
+      [newSuperAdminId]
+    );
+    
+    // Update current session
+    req.session.isSuperAdmin = false;
+    
+    // Notify the new Super Admin
+    await dbRun(
+      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'promotion', ?)",
+      [newSuperAdminId, '👑 You are now the Super Admin! You have full control over the site and all admins.']
+    );
+    
+    res.json({ 
+      ok: true, 
+      message: `Super Admin status transferred to ${targetUser.username}. You are now a Promoted Admin.`,
+      transferred: true
     });
   } catch (err) {
     next(err);
@@ -529,24 +867,47 @@ app.get("/api/auth/csrf", (req, res) => {
   res.json({ token: req.session.csrfToken });
 });
 
-// Get current user (replaces /api/me)
+// Get current user - UNIFIED: Always use database as single source of truth
 app.get("/api/auth/me", async (req, res, next) => {
   try {
-    if (req.session.isAdmin) {
-      const admin = await getAdminUser();
-      return res.json({
-        isAdmin: true,
-        userRole: "admin",
-        userId: (admin && admin.id) || req.session.userId || null,
-        username: (admin && admin.username) || req.session.username || "@admin",
-        avatar: "", // Admin deliberately has no avatar
-      });
+    // No session userId = not logged in
+    if (!req.session.userId) {
+      return res.json({ isAdmin: false, isSuperAdmin: false, isPromotedAdmin: false, userId: null, userRole: null });
     }
-    if (req.session.userId) {
-      const user = await dbGet("SELECT id, username, full_name, email, bio, avatar FROM users WHERE id = ?", [req.session.userId]);
-      return res.json({ id: user.id, userId: user.id, username: user.username, full_name: user.full_name, fullName: user.full_name, email: user.email, bio: user.bio, avatar: user.avatar || "", userRole: "user", isAdmin: false });
+
+    // Always fetch current user data from database (single source of truth)
+    const user = await dbGet(
+      "SELECT id, username, full_name, email, bio, avatar, is_admin, is_super_admin, is_promoted_admin FROM users WHERE id = ?",
+      [req.session.userId]
+    );
+
+    if (!user) {
+      // User was deleted, clear session
+      req.session.destroy();
+      return res.json({ isAdmin: false, isSuperAdmin: false, isPromotedAdmin: false, userId: null, userRole: null });
     }
-    res.json({ isAdmin: false, userId: null, userRole: null });
+
+    // Update session to match database (keeps session in sync with DB changes like promotions/demotions)
+    req.session.isAdmin = user.is_admin === 1;
+    req.session.isSuperAdmin = user.is_super_admin === 1;
+    req.session.isPromotedAdmin = user.is_promoted_admin === 1;
+    req.session.userRole = user.is_admin === 1 ? "admin" : "user";
+
+    // Return unified response format
+    return res.json({
+      id: user.id,
+      userId: user.id,
+      username: user.username,
+      fullName: user.full_name || '',
+      full_name: user.full_name || '',
+      email: user.email || '',
+      bio: user.bio || '',
+      avatar: user.avatar || '',
+      isAdmin: user.is_admin === 1,
+      isSuperAdmin: user.is_super_admin === 1,
+      isPromotedAdmin: user.is_promoted_admin === 1,
+      userRole: user.is_admin === 1 ? "admin" : "user"
+    });
   } catch (err) {
     next(err);
   }
@@ -604,11 +965,7 @@ app.get("/api/users/:id", async (req, res, next) => {
     const user = await dbGet("SELECT id, username, email, full_name, bio, created_at, avatar, is_admin FROM users WHERE id = ?", [userId]);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (user.is_admin) {
-      return res.status(403).json({ error: "Admin profile is not viewable here" });
-    }
-
-    // Get user's posts
+    // Get user's posts (include posts by this user, even if they're an admin)
     const posts = await dbAll("SELECT id, title, body, created_at FROM posts WHERE author_id = ? ORDER BY created_at DESC", [userId]);
 
     // Get user's comments with post context
@@ -621,7 +978,18 @@ app.get("/api/users/:id", async (req, res, next) => {
       [userId]
     );
 
-    res.json({ id: user.id, username: user.username, email: user.email, full_name: user.full_name, bio: user.bio, avatar: user.avatar || "", created_at: user.created_at, posts, comments });
+    res.json({ 
+      id: user.id, 
+      username: user.username, 
+      email: user.email, 
+      full_name: user.full_name, 
+      bio: user.bio, 
+      avatar: user.avatar || "", 
+      created_at: user.created_at, 
+      is_admin: user.is_admin === 1,
+      posts, 
+      comments 
+    });
   } catch (err) {
     next(err);
   }
@@ -686,6 +1054,13 @@ app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
 
 app.get("/api/posts", async (req, res, next) => {
   try {
+    const userId = req.session.userId || null;
+    const params = [];
+    const bookmarkSelect = userId
+      ? "EXISTS(SELECT 1 FROM bookmarks b WHERE b.post_id = p.id AND b.user_id = ?) as is_bookmarked"
+      : "0 as is_bookmarked";
+    if (userId) params.push(userId);
+
     const rows = await dbAll(`
       SELECT 
         p.id, 
@@ -702,15 +1077,20 @@ app.get("/api/posts", async (req, res, next) => {
         COALESCE(u.avatar, '') as author_avatar,
         CASE 
           WHEN p.author_id IS NULL THEN 1
+          ELSE COALESCE(u.is_admin, 0)
+        END as author_is_admin,
+        CASE 
+          WHEN p.author_id IS NULL THEN 1
           ELSE 0
         END as is_admin_post,
         COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
         COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count,
+        ${bookmarkSelect}
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
       ORDER BY p.id DESC
-    `);
+    `, params);
     res.json(rows);
   } catch (err) {
     next(err);
@@ -724,6 +1104,13 @@ app.get("/api/posts/:id", async (req, res, next) => {
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "Invalid post id" });
     }
+
+    const userId = req.session.userId || null;
+    const params = [];
+    const bookmarkSelect = userId
+      ? "EXISTS(SELECT 1 FROM bookmarks b WHERE b.post_id = p.id AND b.user_id = ?) as is_bookmarked"
+      : "0 as is_bookmarked";
+    if (userId) params.push(userId);
 
     const rows = await dbAll(`
       SELECT 
@@ -741,15 +1128,20 @@ app.get("/api/posts/:id", async (req, res, next) => {
         COALESCE(u.avatar, '') as author_avatar,
         CASE 
           WHEN p.author_id IS NULL THEN 1
+          ELSE COALESCE(u.is_admin, 0)
+        END as author_is_admin,
+        CASE 
+          WHEN p.author_id IS NULL THEN 1
           ELSE 0
         END as is_admin_post,
         COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
         COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count,
+        ${bookmarkSelect}
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
       WHERE p.id = ?
-    `, [id]);
+    `, [...params, id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ error: "Post not found" });
@@ -906,8 +1298,9 @@ app.post("/api/posts", async (req, res, next) => {
     // Allow both admin and authenticated users to create posts
     if (!req.session.isAdmin && !req.session.userId) return res.status(401).json({ error: "Authentication required" });
 
-    // For admins, store NULL in author_id so admin posts are distinct
-    const authorId = req.session.isAdmin ? null : req.session.userId;
+    // All users (including admins) use their userId as author_id
+    // Admins are identified by the is_admin flag on the user, not by NULL author_id
+    const authorId = req.session.userId || null;
 
     const title = (req.body.title || "").toString().trim();
     const body = (req.body.body || "").toString().trim();
@@ -1254,14 +1647,93 @@ app.delete('/api/notifications/:id', requireUserOnly, async (req, res, next) => 
   }
 });
 
+// --------- BOOKMARKS ENDPOINTS ---------
+// Toggle bookmark for a post (user only)
+app.post('/api/posts/:postId/bookmark', requireUserOnly, async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const post = await dbGet("SELECT id FROM posts WHERE id = ?", [postId]);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    const existing = await dbGet(
+      "SELECT id FROM bookmarks WHERE post_id = ? AND user_id = ?",
+      [postId, req.session.userId]
+    );
+
+    if (existing) {
+      await dbRun("DELETE FROM bookmarks WHERE id = ?", [existing.id]);
+      return res.json({ ok: true, bookmarked: false });
+    }
+
+    await dbRun(
+      "INSERT INTO bookmarks (post_id, user_id) VALUES (?, ?)",
+      [postId, req.session.userId]
+    );
+    return res.json({ ok: true, bookmarked: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get bookmark status for a post (user only)
+app.get('/api/posts/:postId/bookmark', requireUserOnly, async (req, res, next) => {
+  try {
+    const postId = Number(req.params.postId);
+    if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+
+    const existing = await dbGet(
+      "SELECT id FROM bookmarks WHERE post_id = ? AND user_id = ?",
+      [postId, req.session.userId]
+    );
+
+    res.json({ bookmarked: !!existing });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get all bookmarks for current user
+app.get('/api/bookmarks', requireUserOnly, async (req, res, next) => {
+  try {
+    const rows = await dbAll(`
+      SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
+        CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
+        COALESCE(u.avatar, '') as author_avatar,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
+        COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count,
+        1 as is_bookmarked,
+        b.created_at as bookmarked_at
+      FROM bookmarks b
+      JOIN posts p ON b.post_id = p.id
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE b.user_id = ?
+      ORDER BY b.created_at DESC
+    `, [req.session.userId]);
+
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Search endpoint: search by title/body/tags or author username (case-insensitive LIKE, tokenized AND logic, @username shortcut)
 app.get('/api/search', async (req, res, next) => {
   try {
     const qRaw = (req.query.q || '').toString().trim();
     const q = qRaw.toLowerCase();
+    const userId = req.session.userId || null;
+    const bookmarkSelect = userId
+      ? "EXISTS(SELECT 1 FROM bookmarks b WHERE b.post_id = p.id AND b.user_id = ?) as is_bookmarked"
+      : "0 as is_bookmarked";
 
     // If no query, return latest posts
     if (!q) {
+      const params = [];
+      if (userId) params.push(userId);
       const rows = await dbAll(`
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
@@ -1269,11 +1741,12 @@ app.get('/api/search', async (req, res, next) => {
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
           COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
-          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
+          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count,
+          ${bookmarkSelect}
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
         ORDER BY p.id DESC
-      `);
+      `, params);
       return res.json(rows);
     }
 
@@ -1281,6 +1754,8 @@ app.get('/api/search', async (req, res, next) => {
     if (qRaw.startsWith('@') && q.length > 1) {
       const handle = q.replace(/^@+/, '');
       const handleLike = `%${handle}%`;
+      const params = [];
+      if (userId) params.push(userId);
       const rows = await dbAll(
         `
           SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
@@ -1289,14 +1764,15 @@ app.get('/api/search', async (req, res, next) => {
             CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
             COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
             COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
-            COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
+            COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count,
+            ${bookmarkSelect}
           FROM posts p
           LEFT JOIN users u ON p.author_id = u.id
           WHERE (p.author_id IS NULL AND '@admin' LIKE ?)
              OR lower(u.username) LIKE ?
           ORDER BY p.id DESC
         `,
-        [handleLike, handleLike]
+        [...params, handleLike, handleLike]
       );
       return res.json(rows);
     }
@@ -1305,6 +1781,7 @@ app.get('/api/search', async (req, res, next) => {
     const tokens = q.split(/\s+/).filter(Boolean);
     const clauses = [];
     const params = [];
+    if (userId) params.push(userId);
 
     tokens.forEach((token) => {
       const like = `%${token}%`;
@@ -1322,7 +1799,8 @@ app.get('/api/search', async (req, res, next) => {
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
           COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
-          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count
+          COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'notuseful'), 0) as notuseful_count,
+          ${bookmarkSelect}
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
         ${where}

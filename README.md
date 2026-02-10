@@ -1,4 +1,4 @@
-# Dynamic Blog
+# Dynamic Blogs
 
 A small Express + SQLite blog/playground with basic accounts, admin moderation, comments, reactions, and notifications. Ideal for students, indie hackers, and developers who want a simple, framework-free Node.js app to extend and customize.
 

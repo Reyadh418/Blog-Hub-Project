@@ -411,13 +411,13 @@
                     <button type="submit" id="submitBtn">
                         <span id="btnText">Save Changes</span>
                     </button>
-                    <button type="button" class="cancel-btn" onclick="window.location.href='/profile.html'">
+                    <button type="button" class="cancel-btn" id="cancelBtn">
                         Cancel
                     </button>
                 </form>
 
                 <div class="back-link">
-                    <a href="/profile.html">← Back to Profile</a>
+                    <a href="#" id="backLink">← Back to Profile</a>
                 </div>
             </div>
         </div>
@@ -545,15 +545,28 @@
 
                     const user = await response.json();
 
-                    // Check if admin
-                    if (user.isAdmin) {
+                    // Super admins have their own profile management
+                    if (user.isSuperAdmin) {
                         window.location.href = '/admin-profile.html';
                         return;
                     }
 
+                    // Promoted admins can edit their profile here
+                    // Regular users also use this page
+
+                    // Determine correct profile page for navigation
+                    const profilePage = user.isAdmin ? '/promoted-admin-profile.html' : '/profile.html';
+                    
+                    // Update navigation links
+                    document.getElementById('cancelBtn').onclick = () => window.location.href = profilePage;
+                    document.getElementById('backLink').href = profilePage;
+                    
+                    // Store for later use
+                    window.currentProfilePage = profilePage;
+
                     // Populate form with user data
                     document.getElementById('username').value = user.username || '';
-                    document.getElementById('accountName').value = user.full_name || '';
+                    document.getElementById('accountName').value = user.full_name || user.fullName || '';
                     document.getElementById('email').value = user.email || '';
                     document.getElementById('bio').value = user.bio || '';
 
@@ -598,7 +611,7 @@
                     if (response.ok) {
                         showToast('Profile updated successfully!', 'success', 1500);
                         setTimeout(() => {
-                            window.location.href = '/profile.html';
+                            window.location.href = window.currentProfilePage || '/profile.html';
                         }, 800);
                     } else {
                         showToast(result.error || 'Update failed. Please try again.', 'error');

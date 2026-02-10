@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Bookmarks - Blog Hub</title>
+        <script src="/csrf.js"></script>
+        <script src="/page-transitions.js"></script>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
+            body {
+                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
+                color: #fff;
+            }
+
+            .header {
+                max-width: 900px;
+                margin: 0 auto 30px;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 2.6rem;
+                font-weight: 300;
+                letter-spacing: 1.5px;
+                margin-bottom: 8px;
+            }
+
+            .header-subtitle {
+                color: #e8d4a5;
+                font-size: 1rem;
+                letter-spacing: 0.5px;
+            }
+
+            .toolbar {
+                max-width: 900px;
+                margin: 0 auto 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .toolbar .left {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .pill {
+                background: rgba(255,255,255,0.16);
+                border: 1px solid rgba(255,255,255,0.22);
+                border-radius: 999px;
+                padding: 8px 14px;
+                font-weight: 600;
+                letter-spacing: 0.3px;
+                backdrop-filter: blur(6px);
+            }
+
+            .toolbar button {
+                padding: 10px 18px;
+                border-radius: 10px;
+                border: none;
+                cursor: pointer;
+                font-weight: 600;
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #fff;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .toolbar button:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            }
+
+            .cards {
+                max-width: 900px;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                gap: 18px;
+            }
+
+            .card {
+                background: #ffffff;
+                color: #1e3a5f;
+                border-radius: 14px;
+                padding: 22px 24px;
+                box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 20px 50px rgba(0,0,0,0.24);
+            }
+
+            .card-title {
+                font-size: 1.4rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .card-meta {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                color: #7f8c8d;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+
+            .card-body {
+                color: #2c3e50;
+                font-size: 0.98rem;
+                line-height: 1.6;
+            }
+
+            .card-actions {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 14px;
+            }
+
+            .remove-btn {
+                background: #fff3f3;
+                color: #c0392b;
+                border: 1px solid rgba(192,57,43,0.3);
+                padding: 6px 12px;
+                border-radius: 999px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .remove-btn:hover {
+                background: #ffe1e1;
+            }
+
+            .empty {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 40px 24px;
+                background: rgba(255,255,255,0.12);
+                border-radius: 16px;
+                text-align: center;
+                color: #fff;
+            }
+
+            .empty p {
+                margin-top: 10px;
+                color: #e8d4a5;
+            }
+
+            @media (max-width: 700px) {
+                h1 { font-size: 2rem; }
+                .card { padding: 18px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🔖 Bookmarks</h1>
+            <p class="header-subtitle">Your curated reading list</p>
+        </div>
+
+        <div class="toolbar">
+            <div class="left">
+                <span class="pill" id="bookmarkCount">0 saved</span>
+                <button onclick="navigateWithTransition('/')">← Back to Home</button>
+            </div>
+        </div>
+
+        <div id="cards" class="cards"></div>
+        <div id="emptyState" class="empty" style="display:none;">
+            <div style="font-size:2.2rem;">📚</div>
+            <h3>No bookmarks yet</h3>
+            <p>Save posts to build your premium reading list.</p>
+        </div>
+
+        <script>
+            const CARDS = document.getElementById('cards');
+            const EMPTY = document.getElementById('emptyState');
+            const COUNT = document.getElementById('bookmarkCount');
+
+            function escapeHtml(text) {
+                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+
+            function truncateText(text, limit = 220) {
+                if (!text) return '';
+                if (text.length <= limit) return text;
+                return text.substring(0, limit).trim() + '...';
+            }
+
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+
+            async function ensureLoggedIn() {
+                try {
+                    const resp = await fetch('/api/auth/me');
+                    if (!resp.ok) return false;
+                    const data = await resp.json();
+                    if (data.isAdmin) {
+                        navigateWithTransition('/admin-profile.html');
+                        return false;
+                    }
+                    return !!data.userId;
+                } catch {
+                    return false;
+                }
+            }
+
+            async function loadBookmarks() {
+                const ok = await ensureLoggedIn();
+                if (!ok) {
+                    navigateWithTransition('/login.html');
+                    return;
+                }
+
+                try {
+                    const resp = await fetch('/api/bookmarks');
+                    if (!resp.ok) throw new Error('Failed to load bookmarks');
+                    const rows = await resp.json();
+
+                    COUNT.textContent = `${rows.length} saved`;
+                    if (!rows.length) {
+                        EMPTY.style.display = 'block';
+                        CARDS.innerHTML = '';
+                        return;
+                    }
+
+                    EMPTY.style.display = 'none';
+                    CARDS.innerHTML = rows.map(row => {
+                        const excerpt = truncateText((row.body || '').replace(/\n/g, ' '));
+                        return `
+                            <div class="card" data-id="${row.id}">
+                                <div class="card-title">${escapeHtml(row.title || '')}</div>
+                                <div class="card-meta">
+                                    <span>📅 ${formatDate(row.created_at)}</span>
+                                    <span>👤 ${escapeHtml(row.author_name || 'Unknown')}</span>
+                                    <span>💬 ${row.comment_count || 0}</span>
+                                    <span>👍 ${row.useful_count || 0}</span>
+                                </div>
+                                <div class="card-body">${escapeHtml(excerpt)}</div>
+                                <div class="card-actions">
+                                    <button class="remove-btn" data-id="${row.id}">Remove</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    CARDS.querySelectorAll('.card').forEach(card => {
+                        card.addEventListener('click', (e) => {
+                            if (e.target.closest('.remove-btn')) return;
+                            const id = card.getAttribute('data-id');
+                            navigateWithTransition(`/post.html?id=${id}`);
+                        });
+                    });
+
+                    CARDS.querySelectorAll('.remove-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            const id = btn.getAttribute('data-id');
+                            const resp = await fetch(`/api/posts/${id}/bookmark`, { method: 'POST' });
+                            if (resp.ok) {
+                                btn.closest('.card').remove();
+                                const remaining = CARDS.querySelectorAll('.card').length;
+                                COUNT.textContent = `${remaining} saved`;
+                                if (!remaining) EMPTY.style.display = 'block';
+                            }
+                        });
+                    });
+                } catch (err) {
+                    console.error(err);
+                    CARDS.innerHTML = '<div class="empty">Failed to load bookmarks.</div>';
+                }
+            }
+
+            window.addEventListener('load', loadBookmarks);
+        </script>
+    </body>
+</html>

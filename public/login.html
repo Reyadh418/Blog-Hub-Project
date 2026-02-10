@@ -543,6 +543,12 @@
                 const originalText = btnText.textContent;
                 btnText.innerHTML = '<span class="spinner"></span>Signing in...';
 
+                // Helper function to determine redirect URL based on user type
+                // Everyone goes to homepage after login - they can navigate to profile from there
+                function getRedirectUrl(result) {
+                    return '/';
+                }
+
                 try {
                     if (currentMode === 'user') {
                         const username = document.getElementById('username').value.trim().toLowerCase();
@@ -561,7 +567,7 @@
                         if (response.ok) {
                             showMessage('✓ Login successful! Redirecting...', 'success');
                             setTimeout(() => {
-                                window.location.href = '/';
+                                window.location.href = getRedirectUrl(result);
                             }, 1500);
                         } else {
                             showMessage(result.error || 'Login failed. Please try again.', 'error');
@@ -587,7 +593,7 @@
                         if (response.ok) {
                             showMessage('✓ Admin login successful! Redirecting...', 'success');
                             setTimeout(() => {
-                                window.location.href = '/';
+                                window.location.href = getRedirectUrl(result);
                             }, 1500);
                         } else {
                             showMessage(result.error || 'Login failed. Please try again.', 'error');

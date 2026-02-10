@@ -84,6 +84,21 @@
                 flex-shrink: 0;
             }
 
+            .admin-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 2px 8px;
+                border-radius: 999px;
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                color: #fff;
+                font-size: 0.65rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-left: 6px;
+                box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+            }
+
             .loading {
                 text-align: center;
                 color: #ffffff;
@@ -781,6 +796,24 @@
                 border-color: #27ae60;
             }
 
+            .btn-bookmark {
+                background: #fff8ef;
+                color: #b9834a;
+                border: 1px solid rgba(212, 165, 116, 0.35);
+            }
+
+            .btn-bookmark:hover {
+                background: linear-gradient(135deg, #f4e3c1 0%, #d4a574 100%);
+                color: #1e3a5f;
+                border-color: transparent;
+            }
+
+            .btn-bookmark.active {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+                border-color: transparent;
+            }
+
             .error-container {
                 max-width: 900px;
                 margin: 0 auto;
@@ -1238,6 +1271,7 @@
                     </div>
                     <div class="post-actions">
                         <button class="btn-copy" onclick="copyPostLink()" id="copyBtn">📋 Copy Link</button>
+                        <button id="bookmarkBtn" class="btn-bookmark" style="display:none;">🔖 Save</button>
                         <button id="flagBtn" class="btn-home" style="display:none;">🚩 Flag</button>
                         <button id="editPostBtn" class="btn-home" style="display:none;">✎ Edit</button>
                         <button id="deletePostBtn" class="btn-home" style="display:none;">🗑 Delete</button>
@@ -1318,6 +1352,7 @@
             const NOTIF_EMPTY = document.getElementById('notificationEmpty');
             const NOTIF_REFRESH = document.getElementById('notifRefresh');
             const NOTIF_CLOSE = document.getElementById('notifClose');
+            const BOOKMARK_BTN = document.getElementById('bookmarkBtn');
 
             const AVATAR_PALETTE = {
                 aurora: 'linear-gradient(135deg, #5efce8 0%, #736efe 100%)',
@@ -1751,14 +1786,16 @@
                 const formattedDate = formatDate(post.created_at);
                 const authorDisplay = post.author_name || 'Unknown';
                 const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
+                const authorIsAdmin = post.author_is_admin === 1;
                 const authorInitial = authorDisplay.charAt(0).toUpperCase();
-                const authorAvatarBg = avatarStyle(post.author_avatar || '');
+                const authorAvatarBg = authorIsAdmin ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : avatarStyle(post.author_avatar || '');
                 const canViewProfiles = viewer && viewer.isAdmin;
                 const shouldLinkAuthor = canViewProfiles && !isAdminPost && post.author_id;
                 const authorLabel = escapeHtml(authorDisplay);
-                const authorChip = `<span class="avatar-chip" style="background:${authorAvatarBg}">${escapeHtml(authorInitial)}</span><span>${authorLabel}</span>`;
+                const adminBadge = authorIsAdmin ? '<span class="admin-badge">Admin</span>' : '';
+                const authorChip = `<span class="avatar-chip" style="background:${authorAvatarBg}">${escapeHtml(authorInitial)}</span><span style="color:${authorIsAdmin ? '#7c3aed' : 'inherit'}">${authorLabel}${adminBadge}</span>`;
                 const authorMarkup = shouldLinkAuthor
-                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" style="display:flex; align-items:center; gap:8px; color:#1e3a5f; font-weight:700; text-decoration:none;">${authorChip}</a>`
+                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" style="display:flex; align-items:center; gap:8px; color:${authorIsAdmin ? '#7c3aed' : '#1e3a5f'}; font-weight:700; text-decoration:none;">${authorChip}</a>`
                     : authorChip;
 
                 // Update title
@@ -1787,6 +1824,37 @@
                 // Update stats
                 document.getElementById('statWordCount').textContent = wordCount;
                 document.getElementById('statDate').textContent = formattedDate;
+
+                // Bookmark button (user only)
+                if (BOOKMARK_BTN) {
+                    const canBookmark = viewer && viewer.userId && !viewer.isAdmin;
+                    if (canBookmark) {
+                        BOOKMARK_BTN.style.display = 'inline-block';
+                        const isBookmarked = post.is_bookmarked === 1 || post.is_bookmarked === true;
+                        BOOKMARK_BTN.classList.toggle('active', isBookmarked);
+                        BOOKMARK_BTN.textContent = isBookmarked ? '🔖 Saved' : '🔖 Save';
+                        BOOKMARK_BTN.onclick = async () => {
+                            try {
+                                const resp = await fetch(`/api/posts/${post.id}/bookmark`, { method: 'POST' });
+                                if (resp.ok) {
+                                    const data = await resp.json();
+                                    const saved = data.bookmarked === true;
+                                    BOOKMARK_BTN.classList.toggle('active', saved);
+                                    BOOKMARK_BTN.textContent = saved ? '🔖 Saved' : '🔖 Save';
+                                    showToast(saved ? 'Saved to bookmarks' : 'Removed from bookmarks', 'success', 1400);
+                                } else {
+                                    const err = await resp.json().catch(() => ({}));
+                                    showToast(err.error || 'Failed to update bookmark', 'error');
+                                }
+                            } catch (error) {
+                                console.error('Bookmark failed', error);
+                                showToast('Failed to update bookmark', 'error');
+                            }
+                        };
+                    } else {
+                        BOOKMARK_BTN.style.display = 'none';
+                    }
+                }
 
                 LOADING.style.display = 'none';
                 POST_WRAPPER.style.display = 'block';
@@ -2136,13 +2204,14 @@
                     const canEdit = currentUser && currentUser.userId === comment.user_id;
                     const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
                     const isAdminComment = comment.is_admin === 1 || comment.is_admin === true;
-                    const nameDisplay = isAdminComment ? 'Admin' : comment.username;
-                    const safeName = escapeHtml(nameDisplay || '');
-                    const nameMarkup = (!isAdminComment && isAdminViewer)
-                        ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" style="color:#1e3a5f; font-weight:700; text-decoration:none;">${safeName}</a>`
-                        : safeName;
+                    const nameDisplay = comment.username || 'Unknown';
+                    const safeName = escapeHtml(nameDisplay);
+                    const nameMarkup = isAdminViewer
+                        ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" style="color:${isAdminComment ? '#7c3aed' : '#1e3a5f'}; font-weight:700; text-decoration:none;">${safeName}</a>`
+                        : `<span style="color:${isAdminComment ? '#7c3aed' : '#1e3a5f'}">${safeName}</span>`;
+                    const adminBadgeMarkup = isAdminComment ? `<span class="admin-badge">Admin</span>` : '';
                     const avatarMarkup = isAdminComment
-                        ? `<span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span>`
+                        ? `<span class="avatar-chip" style="background:linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)">${escapeHtml((comment.username || 'A').charAt(0).toUpperCase())}</span>`
                         : `<span class="avatar-chip" style="background:${avatarStyle(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
                     return `
                     <div class="comment-card comment-item" style="animation-delay: ${index * 0.05}s;">
@@ -2150,7 +2219,7 @@
                             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                                 ${avatarMarkup}
                                 <div>
-                                    <strong style="color: #1e3a5f; font-size: 1rem;">${nameMarkup}</strong>
+                                    <strong style="color: #1e3a5f; font-size: 1rem;">${nameMarkup}</strong>${adminBadgeMarkup}
                                     <span class="rel-time" data-timestamp="${comment.created_at}" style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatRelative(comment.created_at)}</span>
                                     ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
                                 </div>

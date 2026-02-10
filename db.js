@@ -33,8 +33,44 @@ db.run(`
 
 // Add is_admin column for existing databases (safe if already present)
 db.run(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`, () => {});
+// Add is_super_admin column (THE super admin - only ONE person, fully protected)
+db.run(`ALTER TABLE users ADD COLUMN is_super_admin INTEGER DEFAULT 0`, () => {});
+// Add is_promoted_admin column (promoted admins - can be multiple, limited permissions)
+db.run(`ALTER TABLE users ADD COLUMN is_promoted_admin INTEGER DEFAULT 0`, () => {});
 // Add avatar column for existing databases (safe if already present)
 db.run(`ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''`, () => {});
+
+// Migration: Ensure only ONE super admin exists
+// Priority: 1) Keep existing super admin if set, 2) Use 'admin' username, 3) First admin by ID
+db.serialize(() => {
+  // Check if there's already a super admin
+  db.get(`SELECT id, username FROM users WHERE is_super_admin = 1 LIMIT 1`, (err, existingSuperAdmin) => {
+    if (existingSuperAdmin) {
+      // Super admin already exists, just ensure others are promoted admins
+      db.run(`UPDATE users SET is_promoted_admin = 1 WHERE is_admin = 1 AND is_super_admin = 0`);
+      console.log('[db] Super Admin already set:', existingSuperAdmin.username);
+      return;
+    }
+    
+    // No super admin set - prefer username 'admin' if exists
+    db.get(`SELECT id FROM users WHERE is_admin = 1 AND username = 'admin'`, (err, adminUser) => {
+      if (adminUser) {
+        // Make 'admin' the super admin
+        db.run(`UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?`, [adminUser.id]);
+        db.run(`UPDATE users SET is_super_admin = 0, is_promoted_admin = 1 WHERE is_admin = 1 AND id != ?`, [adminUser.id]);
+        console.log('[db] Admin hierarchy migration complete. Super Admin: admin (ID:', adminUser.id + ')');
+      } else {
+        // Fallback to first admin by ID
+        db.get(`SELECT id FROM users WHERE is_admin = 1 ORDER BY id ASC LIMIT 1`, (err, firstAdmin) => {
+          if (!firstAdmin) return;
+          db.run(`UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?`, [firstAdmin.id]);
+          db.run(`UPDATE users SET is_super_admin = 0, is_promoted_admin = 1 WHERE is_admin = 1 AND id != ?`, [firstAdmin.id]);
+          console.log('[db] Admin hierarchy migration complete. Super Admin ID:', firstAdmin.id);
+        });
+      }
+    });
+  });
+});
 
 // Create posts table with author_id
 db.run(`
@@ -92,12 +128,25 @@ db.run(`
   )
 `);
 
-// Notifications (user-only, tied to posts)
+// Create bookmarks table (user saved posts)
+db.run(`
+  CREATE TABLE IF NOT EXISTS bookmarks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    UNIQUE(user_id, post_id)
+  )
+`);
+
+// Notifications (user-only, can be tied to posts or system notifications)
 db.run(`
   CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    post_id INTEGER NOT NULL,
+    post_id INTEGER,
     type TEXT NOT NULL,
     message TEXT NOT NULL,
     is_read INTEGER DEFAULT 0,
@@ -119,6 +168,8 @@ db.run(`CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_reactions_user_id ON reactions(user_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_bookmarks_post_id ON bookmarks(post_id)`);
 db.run(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON notifications(user_id, created_at DESC)`);
 
 module.exports = db;

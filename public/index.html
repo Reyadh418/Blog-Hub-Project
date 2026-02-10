@@ -527,6 +527,35 @@
                 border: none;
             }
 
+            .admin-btn.flag {
+                color: #e67e22;
+                border-color: #e67e22;
+                transition: all 0.25s ease;
+            }
+
+            .admin-btn.flag:hover {
+                background: rgba(230, 126, 34, 0.1);
+                transform: scale(1.05);
+            }
+
+            .admin-btn.flag:active {
+                transform: scale(0.95);
+            }
+
+            .admin-btn.flag.flagged {
+                color: #27ae60;
+                border-color: #27ae60;
+            }
+
+            .admin-btn.flag.flagged:hover {
+                background: rgba(39, 174, 96, 0.1);
+            }
+
+            .admin-btn.flag.loading {
+                pointer-events: none;
+                opacity: 0.7;
+            }
+
             .post-word-count {
                 color: #d4a574;
                 font-weight: 500;
@@ -585,6 +614,63 @@
                 color: inherit;
             }
 
+            .bookmark-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 6px 14px;
+                min-width: 90px;
+                border-radius: 999px;
+                background: #fff8ef;
+                color: #b9834a;
+                border: 1px solid rgba(212, 165, 116, 0.35);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+                            background 0.25s ease,
+                            color 0.2s ease,
+                            box-shadow 0.2s ease,
+                            border-color 0.2s ease;
+                cursor: pointer;
+                user-select: none;
+                font-weight: 600;
+                will-change: transform;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .bookmark-btn:hover {
+                transform: translateY(-1px) scale(1.02);
+                box-shadow: 0 4px 14px rgba(0,0,0,0.13);
+            }
+
+            .bookmark-btn:active {
+                transform: scale(0.95);
+                transition: transform 0.08s ease;
+            }
+
+            .bookmark-btn.active {
+                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                color: #ffffff;
+                border-color: transparent;
+                box-shadow: 0 3px 12px rgba(212, 165, 116, 0.35);
+            }
+
+            .bookmark-btn.saving {
+                pointer-events: none;
+                opacity: 0.85;
+            }
+
+            .bookmark-btn.pulse {
+                animation: bookmarkPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            @keyframes bookmarkPulse {
+                0% { transform: scale(0.92); }
+                40% { transform: scale(1.12); }
+                70% { transform: scale(0.98); }
+                100% { transform: scale(1); }
+            }
+
             .avatar-chip {
                 width: 34px;
                 height: 34px;
@@ -597,6 +683,21 @@
                 box-shadow: 0 3px 8px rgba(0,0,0,0.12);
                 text-transform: uppercase;
                 flex-shrink: 0;
+            }
+
+            .admin-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 2px 8px;
+                border-radius: 999px;
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                color: #fff;
+                font-size: 0.65rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-left: 4px;
+                box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
             }
 
             .error-message {
@@ -1055,6 +1156,9 @@
             <button id="register-btn" onclick="navigateWithTransition('register.html')" style="display: none; background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%); color: #ffffff;">
                 ✨ Register
             </button>
+            <button id="bookmarks-btn" onclick="navigateWithTransition('bookmarks.html')" style="display: none; background: linear-gradient(135deg, #f4e3c1 0%, #d4a574 100%); color: #1e3a5f;">
+                🔖 Bookmarks
+            </button>
             <button id="profile-btn" onclick="goToProfile()" style="display: none;">
                 👤 My Profile
             </button>
@@ -1090,6 +1194,7 @@
             const SORT_MENU = document.getElementById('sort-menu');
             const SORT_LABEL = document.getElementById('sort-label');
             const REGISTER_BTN = document.getElementById('register-btn');
+            const BOOKMARKS_BTN = document.getElementById('bookmarks-btn');
             const NOTIF_BTN = document.getElementById('notifications-btn');
             const NOTIF_BADGE = document.getElementById('notifBadge');
             const NOTIF_PANEL = document.getElementById('notificationPanel');
@@ -1376,12 +1481,17 @@
                     const response = await fetch('/api/auth/me');
                     if (response.ok) {
                         const data = await response.json();
-                        return { isAdmin: data.isAdmin === true, userId: data.id || data.userId || null, username: data.username };
+                        return { 
+                            isAdmin: data.isAdmin === true, 
+                            isSuperAdmin: data.isSuperAdmin === true,
+                            userId: data.id || data.userId || null, 
+                            username: data.username 
+                        };
                     }
-                    return { isAdmin: false, userId: null };
+                    return { isAdmin: false, isSuperAdmin: false, userId: null };
                 } catch (error) {
                     console.error('Error fetching user:', error);
-                    return { isAdmin: false, userId: null };
+                    return { isAdmin: false, isSuperAdmin: false, userId: null };
                 }
             }
 
@@ -1462,8 +1572,11 @@
                     const postUrl = `/post.html?id=${post.id}`;
                     const authorDisplay = post.author_name || 'Unknown';
                     const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
+                    const authorIsAdmin = post.author_is_admin === 1;
                     const authorInitial = (authorDisplay || 'U').toString().charAt(0).toUpperCase();
                     const avatarBg = avatarStyle(post.author_avatar || '');
+                    const isBookmarked = post.is_bookmarked === 1 || post.is_bookmarked === true;
+                    const canBookmark = !!CURRENT_USER.userId && !CURRENT_USER.isAdmin;
 
                     // Determine if current user can edit/delete this post
                     let canEdit = false;
@@ -1501,14 +1614,16 @@
                                         Admin
                                     </span>
                                 ` : `
-                                    <span style="display:flex; align-items:center; gap:8px; color:#d4a574; font-weight:600;">
-                                        <span class="avatar-chip" style="background:${avatarBg}">${escapeHtml(authorInitial)}</span>
+                                    <span style="display:flex; align-items:center; gap:8px; color:${authorIsAdmin ? '#7c3aed' : '#d4a574'}; font-weight:600;">
+                                        <span class="avatar-chip" style="background:${authorIsAdmin ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : avatarBg}">${escapeHtml(authorInitial)}</span>
                                         ${escapeHtml(authorDisplay)}
+                                        ${authorIsAdmin ? '<span class="admin-badge">Admin</span>' : ''}
                                     </span>
                                 `}
                                 <span style="color:#d4a574;">💬 ${post.comment_count || 0}</span>
                                 <span class="reaction-chip useful reaction-useful-btn" data-id="${post.id}">👍 <span class="reaction-count">${post.useful_count || 0}</span></span>
                                 <span class="reaction-chip notuseful reaction-notuseful-btn" data-id="${post.id}">👎 <span class="reaction-count">${post.notuseful_count || 0}</span></span>
+                                ${canBookmark ? `<span class="bookmark-btn ${isBookmarked ? 'active' : ''}" data-id="${post.id}" aria-pressed="${isBookmarked ? 'true' : 'false'}">${isBookmarked ? '✅ Saved' : '🔖 Save'}</span>` : ''}
                                 <span>→ Read More</span>
                             </div>
                             ${canEdit || canDelete || canFlag ? `<div class="admin-controls">
@@ -1522,7 +1637,7 @@
                     // Click anywhere on post to view
                     postElement.addEventListener('click', (e) => {
                         // if clicked an admin button, don't navigate
-                        if (e.target.closest('.admin-btn')) return;
+                        if (e.target.closest('.admin-btn') || e.target.closest('.bookmark-btn')) return;
                         navigateWithTransition(postUrl);
                     });
 
@@ -1566,11 +1681,22 @@
                     // Flag button
                     const flagBtn = postElement.querySelector('.admin-btn.flag');
                     if (flagBtn) {
+                        // Set initial flagged class
+                        const initialFlagged = parseInt(flagBtn.getAttribute('data-flagged'));
+                        if (initialFlagged === 1) flagBtn.classList.add('flagged');
+                        
                         flagBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
-                            const id = ev.currentTarget.getAttribute('data-id');
-                            const currentFlagged = parseInt(ev.currentTarget.getAttribute('data-flagged'));
+                            const btn = ev.currentTarget;
+                            const id = btn.getAttribute('data-id');
+                            const currentFlagged = parseInt(btn.getAttribute('data-flagged'));
                             const newFlagged = currentFlagged === 1 ? false : true;
+                            
+                            // Add loading state
+                            btn.classList.add('loading');
+                            const originalText = btn.textContent;
+                            btn.textContent = '...';
+                            
                             try {
                                 const resp = await fetch(`/api/posts/${id}/flag`, {
                                     method: 'PATCH',
@@ -1578,24 +1704,35 @@
                                     body: JSON.stringify({ flag: newFlagged })
                                 });
                                 if (resp.ok) {
-                                    // Update button and post styling
-                                    ev.currentTarget.textContent = newFlagged ? '✓ Unflag' : '🚩 Flag';
-                                    ev.currentTarget.setAttribute('data-flagged', newFlagged ? 1 : 0);
+                                    // Update button text and state
+                                    btn.textContent = newFlagged ? '✓ Unflag' : '🚩 Flag';
+                                    btn.setAttribute('data-flagged', newFlagged ? 1 : 0);
+                                    btn.classList.toggle('flagged', newFlagged);
+                                    
+                                    // Update post styling
                                     const titleElem = postElement.querySelector('h2');
                                     if (newFlagged) {
                                         postElement.style.borderLeft = '5px solid #e74c3c';
-                                        titleElem.textContent += ' 🚩 FLAGGED';
+                                        if (!titleElem.textContent.includes('🚩 FLAGGED')) {
+                                            titleElem.textContent += ' 🚩 FLAGGED';
+                                        }
+                                        showToast('🚩 Post flagged successfully', 'success', 2000);
                                     } else {
                                         postElement.style.borderLeft = '';
                                         titleElem.textContent = titleElem.textContent.replace(' 🚩 FLAGGED', '');
+                                        showToast('✓ Post unflagged', 'success', 2000);
                                     }
                                 } else {
                                     const err = await resp.json();
-                                    showError(err.error || 'Failed to flag post');
+                                    btn.textContent = originalText;
+                                    showToast(err.error || 'Failed to flag post', 'error');
                                 }
                             } catch (error) {
                                 console.error('Flag failed', error);
-                                showError('Flag failed. Try again.');
+                                btn.textContent = originalText;
+                                showToast('Flag failed. Try again.', 'error');
+                            } finally {
+                                btn.classList.remove('loading');
                             }
                         });
                     }
@@ -1698,6 +1835,80 @@
                                 showError('Reaction failed. Try again.');
                             } finally {
                                 ev.currentTarget.disabled = false;
+                            }
+                        });
+                    }
+
+                    const bookmarkBtn = postElement.querySelector('.bookmark-btn');
+                    if (bookmarkBtn) {
+                        bookmarkBtn.addEventListener('click', async function(ev) {
+                            ev.stopPropagation();
+                            ev.preventDefault();
+                            const btn = this;
+                            const id = btn.getAttribute('data-id');
+                            
+                            if (!CURRENT_USER.userId || CURRENT_USER.isAdmin) {
+                                showToast('Log in to save bookmarks', 'warning', 1800);
+                                setTimeout(() => navigateWithTransition('/login.html'), 400);
+                                return;
+                            }
+                            
+                            // Optimistic UI - update immediately for instant feel
+                            const wasActive = btn.classList.contains('active');
+                            const willBeSaved = !wasActive;
+                            
+                            // Instant visual update
+                            btn.classList.add('saving');
+                            btn.classList.toggle('active', willBeSaved);
+                            btn.setAttribute('aria-pressed', willBeSaved ? 'true' : 'false');
+                            btn.textContent = willBeSaved ? '✅ Saved' : '🔖 Save';
+                            
+                            // Trigger pulse animation immediately
+                            btn.classList.remove('pulse');
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    btn.classList.add('pulse');
+                                });
+                            });
+                            
+                            try {
+                                const resp = await fetch(`/api/posts/${id}/bookmark`, { method: 'POST' });
+                                btn.classList.remove('saving');
+                                
+                                if (resp.ok) {
+                                    const data = await resp.json();
+                                    const isSaved = data.bookmarked === true;
+                                    
+                                    // Confirm or correct the optimistic update
+                                    if (isSaved !== willBeSaved) {
+                                        btn.classList.toggle('active', isSaved);
+                                        btn.setAttribute('aria-pressed', isSaved ? 'true' : 'false');
+                                        btn.textContent = isSaved ? '✅ Saved' : '🔖 Save';
+                                    }
+                                    
+                                    const targetPost = LAST_POSTS.find((p) => String(p.id) === String(id));
+                                    if (targetPost) targetPost.is_bookmarked = isSaved ? 1 : 0;
+                                    
+                                    // Subtle delayed toast so it doesn't compete with animation
+                                    setTimeout(() => {
+                                        showToast(isSaved ? 'Saved to bookmarks' : 'Removed from bookmarks', 'success', 1200);
+                                    }, 150);
+                                } else {
+                                    // Revert optimistic update on error
+                                    btn.classList.toggle('active', wasActive);
+                                    btn.setAttribute('aria-pressed', wasActive ? 'true' : 'false');
+                                    btn.textContent = wasActive ? '✅ Saved' : '🔖 Save';
+                                    const err = await resp.json().catch(() => ({}));
+                                    showToast(err.error || 'Failed to update bookmark', 'error');
+                                }
+                            } catch (error) {
+                                // Revert optimistic update on error
+                                btn.classList.remove('saving');
+                                btn.classList.toggle('active', wasActive);
+                                btn.setAttribute('aria-pressed', wasActive ? 'true' : 'false');
+                                btn.textContent = wasActive ? '✅ Saved' : '🔖 Save';
+                                console.error('Bookmark failed', error);
+                                showToast('Failed to update bookmark', 'error');
                             }
                         });
                     }
@@ -1906,6 +2117,7 @@
                     REGISTER_BTN.style.display = 'none';
                     PROFILE_BTN.style.display = 'inline-block';
                     LOGOUT_BTN.style.display = 'inline-block';
+                    if (BOOKMARKS_BTN) BOOKMARKS_BTN.style.display = 'none';
                 } else if (user.userId) {
                     // Regular user logged in
                     CREATE_POST_BTN.style.display = 'inline-block';
@@ -1913,6 +2125,7 @@
                     REGISTER_BTN.style.display = 'none';
                     PROFILE_BTN.style.display = 'inline-block';
                     LOGOUT_BTN.style.display = 'inline-block';
+                    if (BOOKMARKS_BTN) BOOKMARKS_BTN.style.display = 'inline-block';
                 } else {
                     // Not logged in
                     CREATE_POST_BTN.style.display = 'none';
@@ -1920,6 +2133,7 @@
                     REGISTER_BTN.style.display = 'inline-block';
                     PROFILE_BTN.style.display = 'none';
                     LOGOUT_BTN.style.display = 'none';
+                    if (BOOKMARKS_BTN) BOOKMARKS_BTN.style.display = 'none';
                 }
             }
 
@@ -1944,7 +2158,11 @@
             // Go to profile with admin check
             function goToProfile() {
                 if (CURRENT_USER.isAdmin) {
-                    navigateWithTransition('/admin-profile.html');
+                    if (CURRENT_USER.isSuperAdmin) {
+                        navigateWithTransition('/admin-profile.html');
+                    } else {
+                        navigateWithTransition('/promoted-admin-profile.html');
+                    }
                 } else {
                     navigateWithTransition('/profile.html');
                 }

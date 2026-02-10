@@ -338,10 +338,18 @@
             }
             wireShowPassword(toggleAdminPwd, passwordInput);
 
-            // Get return URL from query parameters
-            function getReturnUrl() {
+            // Get return URL from query parameters, or go to homepage
+            function getReturnUrl(result) {
                 const params = new URLSearchParams(window.location.search);
-                return params.get('return') || '/';
+                const returnParam = params.get('return');
+                
+                // If there's a specific return URL, use it
+                if (returnParam && returnParam !== '/') {
+                    return returnParam;
+                }
+                
+                // Everyone goes to homepage after login
+                return '/';
             }
 
             // Toast system
@@ -424,10 +432,9 @@
                             localStorage.setItem('adminRemember', 'true');
                         }
 
-                        // Redirect after short delay
+                        // Redirect after short delay - route based on admin type
                         setTimeout(() => {
-                            const returnUrl = getReturnUrl();
-                            window.location.href = returnUrl;
+                            window.location.href = getReturnUrl(result);
                         }, 1500);
                     } else {
                         showMessage(result.error || 'Invalid credentials. Please try again.', 'error');

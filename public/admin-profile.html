@@ -285,6 +285,34 @@
                 transform: translateY(-2px);
             }
 
+            .manage-btn {
+                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            }
+
+            .manage-btn:hover {
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+                filter: brightness(1.08);
+            }
+
+            .manage-btn:active {
+                transform: translateY(0) scale(0.98);
+            }
+
+            .user-profile-btn {
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            }
+
+            .user-profile-btn:hover {
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+                filter: brightness(1.08);
+            }
+
+            .user-profile-btn:active {
+                transform: translateY(0) scale(0.98);
+            }
+
             .stats-section {
                 background: #ffffff;
                 border-radius: 12px;
@@ -578,6 +606,7 @@
 
                 <div class="action-buttons">
                     <button class="action-btn create-btn" onclick="location.href='/create-post.html'">✎ Create New Post</button>
+                    <button class="action-btn manage-btn" id="manageAdminsBtn" onclick="location.href='/admin-management.html'" style="display:none; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">👑 Manage Admins</button>
                     <button class="action-btn home-btn" onclick="location.href='/'">🏠 Back to Blog</button>
                 </div>
             </div>
@@ -625,6 +654,12 @@
                         window.location.href = '/profile.html';
                         return;
                     }
+                    
+                    // Promoted admins (non-super) should go to their own profile page
+                    if (!currentUser.isSuperAdmin) {
+                        window.location.href = '/promoted-admin-profile.html';
+                        return;
+                    }
 
                     const adminProfileResponse = await fetch('/api/admin/profile');
                     if (adminProfileResponse.ok) {
@@ -632,6 +667,12 @@
                         cachedAdminUsername = profile.username;
                         document.getElementById('currentAdminUsername').textContent = profile.username;
                         if (newUsernameInput) newUsernameInput.value = profile.username;
+                        
+                        // Show Manage Admins button for super admins
+                        if (profile.isSuperAdmin) {
+                            const manageBtn = document.getElementById('manageAdminsBtn');
+                            if (manageBtn) manageBtn.style.display = 'inline-flex';
+                        }
                     }
 
                     // Load stats
