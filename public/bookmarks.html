@@ -212,7 +212,8 @@
                     const resp = await fetch('/api/auth/me');
                     if (!resp.ok) return false;
                     const data = await resp.json();
-                    if (data.isAdmin) {
+                    // Allow promoted admins; only redirect Super Admins to admin home
+                    if (data.isSuperAdmin) {
                         navigateWithTransition('/admin-profile.html');
                         return false;
                     }

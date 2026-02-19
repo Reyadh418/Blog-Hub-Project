@@ -1582,7 +1582,7 @@
             }
 
             function notificationsAllowed() {
-                return currentUser && currentUser.userId && !currentUser.isAdmin;
+                return currentUser && currentUser.userId && !currentUser.isSuperAdmin;
             }
 
             function stopNotificationPolling() {
@@ -1731,7 +1731,7 @@
 
             function setNotificationAccess(user) {
                 if (!NOTIF_BTN) return;
-                if (user && user.userId && !user.isAdmin) {
+                if (user && user.userId && !user.isSuperAdmin) {
                     NOTIF_BTN.style.display = 'inline-block';
                     startNotificationPolling();
                     fetchNotifications(true);
@@ -1825,9 +1825,9 @@
                 document.getElementById('statWordCount').textContent = wordCount;
                 document.getElementById('statDate').textContent = formattedDate;
 
-                // Bookmark button (user only)
+                // Bookmark button (everyone except super admin)
                 if (BOOKMARK_BTN) {
-                    const canBookmark = viewer && viewer.userId && !viewer.isAdmin;
+                    const canBookmark = viewer && viewer.userId && !viewer.isSuperAdmin;
                     if (canBookmark) {
                         BOOKMARK_BTN.style.display = 'inline-block';
                         const isBookmarked = post.is_bookmarked === 1 || post.is_bookmarked === true;

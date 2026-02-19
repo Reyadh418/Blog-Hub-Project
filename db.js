@@ -40,35 +40,28 @@ db.run(`ALTER TABLE users ADD COLUMN is_promoted_admin INTEGER DEFAULT 0`, () =>
 // Add avatar column for existing databases (safe if already present)
 db.run(`ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''`, () => {});
 
-// Migration: Ensure only ONE super admin exists
-// Priority: 1) Keep existing super admin if set, 2) Use 'admin' username, 3) First admin by ID
+// Email verification columns
+db.run(`ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0`, () => {});
+db.run(`ALTER TABLE users ADD COLUMN verification_code TEXT DEFAULT ''`, () => {});
+db.run(`ALTER TABLE users ADD COLUMN verification_code_expires TEXT DEFAULT ''`, () => {});
+
+// Enforce admin hierarchy on every startup:
+// - "admin" is the one and only Super Admin
+// - "reyadhasan" is a Promoted Admin (not Super Admin)
+// - Any other accidental super admins are demoted
 db.serialize(() => {
-  // Check if there's already a super admin
-  db.get(`SELECT id, username FROM users WHERE is_super_admin = 1 LIMIT 1`, (err, existingSuperAdmin) => {
-    if (existingSuperAdmin) {
-      // Super admin already exists, just ensure others are promoted admins
-      db.run(`UPDATE users SET is_promoted_admin = 1 WHERE is_admin = 1 AND is_super_admin = 0`);
-      console.log('[db] Super Admin already set:', existingSuperAdmin.username);
-      return;
-    }
-    
-    // No super admin set - prefer username 'admin' if exists
-    db.get(`SELECT id FROM users WHERE is_admin = 1 AND username = 'admin'`, (err, adminUser) => {
-      if (adminUser) {
-        // Make 'admin' the super admin
-        db.run(`UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?`, [adminUser.id]);
-        db.run(`UPDATE users SET is_super_admin = 0, is_promoted_admin = 1 WHERE is_admin = 1 AND id != ?`, [adminUser.id]);
-        console.log('[db] Admin hierarchy migration complete. Super Admin: admin (ID:', adminUser.id + ')');
-      } else {
-        // Fallback to first admin by ID
-        db.get(`SELECT id FROM users WHERE is_admin = 1 ORDER BY id ASC LIMIT 1`, (err, firstAdmin) => {
-          if (!firstAdmin) return;
-          db.run(`UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?`, [firstAdmin.id]);
-          db.run(`UPDATE users SET is_super_admin = 0, is_promoted_admin = 1 WHERE is_admin = 1 AND id != ?`, [firstAdmin.id]);
-          console.log('[db] Admin hierarchy migration complete. Super Admin ID:', firstAdmin.id);
-        });
-      }
-    });
+  // Demote any super admins that are not 'admin'
+  db.run("UPDATE users SET is_super_admin = 0, is_promoted_admin = CASE WHEN is_admin = 1 THEN 1 ELSE 0 END WHERE username != 'admin' AND is_super_admin = 1", () => {});
+
+  // Ensure 'admin' is the single Super Admin
+  db.run("UPDATE users SET is_admin = 1, is_super_admin = 1, is_promoted_admin = 0 WHERE username = 'admin'", () => {});
+
+  // Ensure 'reyadhasan' is a Promoted Admin (not Super Admin)
+  db.run("UPDATE users SET is_admin = 1, is_super_admin = 0, is_promoted_admin = 1 WHERE username = 'reyadhasan'", () => {});
+
+  // Log the result
+  db.get("SELECT username FROM users WHERE is_super_admin = 1 LIMIT 1", (err, row) => {
+    if (row) console.log('[db] Super Admin:', row.username);
   });
 });
 

@@ -16,6 +16,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-session": "^1.18.2",
+    "nodemailer": "^8.0.1",
     "sqlite3": "^5.1.7"
   }
 }

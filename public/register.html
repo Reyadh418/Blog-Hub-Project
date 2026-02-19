@@ -549,7 +549,7 @@
                     if (response.ok) {
                         showMessage('✓ Account created successfully! Redirecting...', 'success');
                         setTimeout(() => {
-                            window.location.href = '/profile.html';
+                            window.location.href = '/verify-email.html';
                         }, 1500);
                     } else {
                         showMessage(result.error || 'Registration failed. Please try again.', 'error');

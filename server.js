@@ -1,4 +1,5 @@
-// dotenv removed; admin credentials are DB-backed now.
+// Load environment variables
+require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
@@ -7,6 +8,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 
 const db = require("./db");
+const { sendVerificationCode } = require("./email");
 
 // Migration: Make notifications.post_id nullable for system notifications
 (async function migrateNotificationsTable() {
@@ -193,7 +195,7 @@ async function verifyPassword(password, storedHash, userId) {
 }
 
 async function getAdminUser() {
-  return dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_admin = 1 LIMIT 1");
+  return dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_admin = 1 ORDER BY is_super_admin DESC LIMIT 1");
 }
 
 // Get the super admin (THE one protected admin - there can only be one)
@@ -210,14 +212,21 @@ async function isSuperAdmin(userId) {
 
 // Ensure there's a concrete user row for the admin backed by the database (hashed credentials)
 async function ensureAdminUser() {
-  const existing = await getAdminUser();
-  if (existing) {
-    // Ensure the first admin is always THE super admin
-    if (!existing.is_super_admin) {
-      await dbRun("UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?", [existing.id]);
-    }
-    return existing;
+  // Check if a super admin already exists
+  const superAdmin = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_super_admin = 1 LIMIT 1");
+  if (superAdmin) return superAdmin;
+
+  // Check if there's an admin user named 'admin' to promote
+  const adminByName = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_admin = 1 AND username = 'admin' LIMIT 1");
+  if (adminByName) {
+    await dbRun("UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?", [adminByName.id]);
+    adminByName.is_super_admin = 1;
+    return adminByName;
   }
+
+  // No admin user exists at all — create a fallback
+  const anyAdmin = await getAdminUser();
+  if (anyAdmin) return anyAdmin;
 
   const fallbackUsername = "@admin";
   const normalizedUsername = fallbackUsername;
@@ -282,10 +291,31 @@ function requireUserOnly(req, res, next) {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ error: "Authentication required" });
   }
-  if (req.session.isAdmin) {
-    return res.status(403).json({ error: "Not available for admin" });
+  if (req.session.isSuperAdmin) {
+    return res.status(403).json({ error: "Not available for Super Admin" });
   }
   return next();
+}
+
+// Require email verification for write operations
+function requireVerified(req, res, next) {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  // Admins bypass email verification
+  if (req.session.isAdmin) return next();
+  if (req.session.emailVerified) return next();
+  return res.status(403).json({ error: "Please verify your email address before performing this action.", emailVerificationRequired: true });
+}
+
+// Generate a random 6-digit verification code
+function generateVerificationCode() {
+  return crypto.randomInt(100000, 999999).toString();
+}
+
+// Hash a verification code for secure storage
+function hashVerificationCode(code) {
+  return crypto.createHash("sha256").update(code).digest("hex");
 }
 
 // Simple in-memory rate limiter (per IP)
@@ -356,9 +386,9 @@ const dbGet = (sql, params = []) =>
 async function createNotification({ userId, postId, type, message, allowAdmin = false }) {
   try {
     if (!userId || !postId || !type || !message) return null;
-    const user = await dbGet("SELECT id, is_admin FROM users WHERE id = ?", [userId]);
+    const user = await dbGet("SELECT id, is_admin, is_super_admin FROM users WHERE id = ?", [userId]);
     if (!user) return null;
-    if (user.is_admin && !allowAdmin) return null;
+    if (user.is_super_admin === 1) return null; // Super Admins do not receive notifications
     const result = await dbRun(
       "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, ?, ?, ?)",
       [userId, postId, type, message]
@@ -472,15 +502,31 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
     const result = await dbRun("INSERT INTO users (username, email, password_hash, full_name, avatar) VALUES (?, ?, ?, ?, ?)", 
       [username, email, passwordHash, fullName, avatar]);
 
-    // Auto-login after registration
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    const hashedCode = hashVerificationCode(verificationCode);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    await dbRun(
+      "UPDATE users SET verification_code = ?, verification_code_expires = ? WHERE id = ?",
+      [hashedCode, expiresAt, result.lastID]
+    );
+
+    // Send verification email (async, don't block response)
+    sendVerificationCode(email, verificationCode, username).catch(err => {
+      console.error("[email] Failed to send code on register:", err.message);
+    });
+
+    // Auto-login after registration (but unverified)
     req.session.userId = result.lastID;
     req.session.username = username;
     req.session.userRole = "user";
+    req.session.emailVerified = false;
 
     // Save session before responding to preserve login
     req.session.save((err) => {
       if (err) return res.status(500).json({ error: "Failed to create session" });
-      res.status(201).json({ ok: true, userId: result.lastID, username });
+      res.status(201).json({ ok: true, userId: result.lastID, username, emailVerified: false });
     });
   } catch (err) {
     next(err);
@@ -505,6 +551,10 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
     const valid = await verifyPassword(password, user.password_hash, user.id);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
+    // Check email verification status from DB
+    const fullUser = await dbGet("SELECT email_verified FROM users WHERE id = ?", [user.id]);
+    const emailVerified = fullUser && fullUser.email_verified === 1;
+
     // Set unified session variables based on database values
     req.session.userId = user.id;
     req.session.username = user.username;
@@ -512,6 +562,7 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
     req.session.isSuperAdmin = user.is_super_admin === 1;
     req.session.isPromotedAdmin = user.is_promoted_admin === 1;
     req.session.userRole = user.is_admin === 1 ? "admin" : "user";
+    req.session.emailVerified = emailVerified;
 
     // Save session before responding to preserve login
     req.session.save((err) => {
@@ -522,7 +573,8 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
         username: user.username,
         isAdmin: user.is_admin === 1,
         isSuperAdmin: user.is_super_admin === 1,
-        isPromotedAdmin: user.is_promoted_admin === 1
+        isPromotedAdmin: user.is_promoted_admin === 1,
+        emailVerified
       });
     });
   } catch (err) {
@@ -568,6 +620,7 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
     req.session.isSuperAdmin = user.is_super_admin === 1;
     req.session.isPromotedAdmin = user.is_promoted_admin === 1;
     req.session.userRole = "admin";
+    req.session.emailVerified = true; // Admins are auto-verified
 
     // Save session before responding to preserve login
     req.session.save((err) => {
@@ -578,7 +631,8 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
         username: user.username, 
         isAdmin: true,
         isSuperAdmin: user.is_super_admin === 1,
-        isPromotedAdmin: user.is_promoted_admin === 1
+        isPromotedAdmin: user.is_promoted_admin === 1,
+        emailVerified: true
       });
     });
   } catch (err) {
@@ -805,14 +859,26 @@ app.post("/api/admin/admins/transfer-super", requireSuperAdmin, async (req, res,
   try {
     const newSuperAdminId = parseInt(req.body.userId, 10);
     const currentUserId = req.session.userId;
+    const password = (req.body.password || "").toString();
     
     if (!newSuperAdminId || isNaN(newSuperAdminId)) {
       return res.status(400).json({ error: "userId is required" });
+    }
+    if (!password) {
+      return res.status(400).json({ error: "Password is required to transfer Super Admin" });
     }
     
     // Cannot transfer to yourself
     if (newSuperAdminId === currentUserId) {
       return res.status(400).json({ error: "You are already the Super Admin" });
+    }
+
+    // Verify current super admin password
+    const currentUser = await dbGet("SELECT id, username, password_hash FROM users WHERE id = ?", [currentUserId]);
+    if (!currentUser) return res.status(401).json({ error: "Authentication required" });
+    const validPassword = await verifyPassword(password, currentUser.password_hash, currentUser.id);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Incorrect password. Transfer aborted." });
     }
     
     // Target must be an existing admin (promoted admin)
@@ -825,7 +891,8 @@ app.post("/api/admin/admins/transfer-super", requireSuperAdmin, async (req, res,
       return res.status(400).json({ error: "Target user must be an admin first. Promote them to admin first." });
     }
     
-    // Transfer: Remove super admin from current, give to new
+    // Transfer: Remove super admin from current, give to new (atomic transaction)
+    await dbRun("BEGIN TRANSACTION");
     await dbRun(
       "UPDATE users SET is_super_admin = 0, is_promoted_admin = 1 WHERE id = ?",
       [currentUserId]
@@ -834,6 +901,7 @@ app.post("/api/admin/admins/transfer-super", requireSuperAdmin, async (req, res,
       "UPDATE users SET is_super_admin = 1, is_promoted_admin = 0 WHERE id = ?",
       [newSuperAdminId]
     );
+    await dbRun("COMMIT");
     
     // Update current session
     req.session.isSuperAdmin = false;
@@ -877,7 +945,7 @@ app.get("/api/auth/me", async (req, res, next) => {
 
     // Always fetch current user data from database (single source of truth)
     const user = await dbGet(
-      "SELECT id, username, full_name, email, bio, avatar, is_admin, is_super_admin, is_promoted_admin FROM users WHERE id = ?",
+      "SELECT id, username, full_name, email, bio, avatar, is_admin, is_super_admin, is_promoted_admin, email_verified FROM users WHERE id = ?",
       [req.session.userId]
     );
 
@@ -892,6 +960,7 @@ app.get("/api/auth/me", async (req, res, next) => {
     req.session.isSuperAdmin = user.is_super_admin === 1;
     req.session.isPromotedAdmin = user.is_promoted_admin === 1;
     req.session.userRole = user.is_admin === 1 ? "admin" : "user";
+    req.session.emailVerified = user.email_verified === 1;
 
     // Return unified response format
     return res.json({
@@ -906,7 +975,8 @@ app.get("/api/auth/me", async (req, res, next) => {
       isAdmin: user.is_admin === 1,
       isSuperAdmin: user.is_super_admin === 1,
       isPromotedAdmin: user.is_promoted_admin === 1,
-      userRole: user.is_admin === 1 ? "admin" : "user"
+      userRole: user.is_admin === 1 ? "admin" : "user",
+      emailVerified: user.email_verified === 1
     });
   } catch (err) {
     next(err);
@@ -1298,6 +1368,11 @@ app.post("/api/posts", async (req, res, next) => {
     // Allow both admin and authenticated users to create posts
     if (!req.session.isAdmin && !req.session.userId) return res.status(401).json({ error: "Authentication required" });
 
+    // Require email verification for non-admin users
+    if (!req.session.isAdmin && !req.session.emailVerified) {
+      return res.status(403).json({ error: "Please verify your email address before creating a post.", emailVerificationRequired: true });
+    }
+
     // All users (including admins) use their userId as author_id
     // Admins are identified by the is_admin flag on the user, not by NULL author_id
     const authorId = req.session.userId || null;
@@ -1354,7 +1429,7 @@ app.get('/api/posts/:postId/comments', async (req, res, next) => {
 });
 
 // Create a comment (requires auth)
-app.post('/api/posts/:postId/comments', requireAuth, async (req, res, next) => {
+app.post('/api/posts/:postId/comments', requireAuth, requireVerified, async (req, res, next) => {
   try {
     const postId = Number(req.params.postId);
     if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
@@ -1502,7 +1577,7 @@ app.get('/api/posts/:postId/reactions', async (req, res, next) => {
 });
 
 // Add or update a reaction (requires auth)
-app.post('/api/posts/:postId/reactions', requireAuth, async (req, res, next) => {
+app.post('/api/posts/:postId/reactions', requireAuth, requireVerified, async (req, res, next) => {
   try {
     const postId = Number(req.params.postId);
     if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
@@ -1818,6 +1893,92 @@ app.get('/api/search', async (req, res, next) => {
 // Basic homepage route (optional)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// --------- EMAIL VERIFICATION ENDPOINTS ---------
+const verifyLimiter = createRateLimiter({ limit: 5, windowMs: 15 * 60 * 1000 });
+const resendLimiter = createRateLimiter({ limit: 3, windowMs: 5 * 60 * 1000 });
+
+// Verify email with 6-digit code
+app.post("/api/auth/verify-email", requireAuth, verifyLimiter, async (req, res, next) => {
+  try {
+    const code = (req.body.code || "").toString().trim();
+    if (!code || code.length !== 6) {
+      return res.status(400).json({ error: "Please enter a valid 6-digit code" });
+    }
+
+    const user = await dbGet(
+      "SELECT id, email_verified, verification_code, verification_code_expires FROM users WHERE id = ?",
+      [req.session.userId]
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.email_verified === 1) {
+      req.session.emailVerified = true;
+      return res.json({ ok: true, message: "Email is already verified" });
+    }
+
+    if (!user.verification_code || !user.verification_code_expires) {
+      return res.status(400).json({ error: "No verification code found. Please request a new one." });
+    }
+
+    // Check expiry
+    if (new Date(user.verification_code_expires) < new Date()) {
+      return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+    }
+
+    // Compare hashed code
+    const hashedInput = hashVerificationCode(code);
+    if (hashedInput !== user.verification_code) {
+      return res.status(400).json({ error: "Invalid verification code" });
+    }
+
+    // Mark email as verified and clear code
+    await dbRun(
+      "UPDATE users SET email_verified = 1, verification_code = '', verification_code_expires = '' WHERE id = ?",
+      [user.id]
+    );
+
+    req.session.emailVerified = true;
+    req.session.save((err) => {
+      if (err) console.error("[session] save error after verification:", err);
+      res.json({ ok: true, message: "Email verified successfully!" });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Resend verification code
+app.post("/api/auth/resend-verification", requireAuth, resendLimiter, async (req, res, next) => {
+  try {
+    const user = await dbGet(
+      "SELECT id, email, username, email_verified FROM users WHERE id = ?",
+      [req.session.userId]
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.email_verified === 1) {
+      req.session.emailVerified = true;
+      return res.json({ ok: true, message: "Email is already verified" });
+    }
+
+    // Generate new code
+    const verificationCode = generateVerificationCode();
+    const hashedCode = hashVerificationCode(verificationCode);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    await dbRun(
+      "UPDATE users SET verification_code = ?, verification_code_expires = ? WHERE id = ?",
+      [hashedCode, expiresAt, user.id]
+    );
+
+    await sendVerificationCode(user.email, verificationCode, user.username);
+
+    res.json({ ok: true, message: "Verification code sent! Check your email." });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Centralized error handler

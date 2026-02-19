@@ -1124,6 +1124,14 @@
             <p class="header-subtitle">Discover inspiring stories and insights</p>
         </div>
 
+        <!-- Email verification banner -->
+        <div id="verifyBanner" style="display:none; max-width:900px; margin: -20px auto 24px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #f0c36d; border-radius: 10px; padding: 14px 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <span style="font-size: 1.1rem;">📧</span>
+            <span style="color: #856404; font-weight: 600; font-size: 0.95rem;">Your email is not verified.</span>
+            <span style="color: #856404; font-size: 0.9rem;">Some features are limited until you verify.</span>
+            <a href="/verify-email.html" style="color: #1e3a5f; font-weight: 700; text-decoration: underline; margin-left: 8px; font-size: 0.9rem;">Verify Now</a>
+        </div>
+
         <div class="controls" role="toolbar">
             <div class="search-toolbar" aria-label="Search and sort posts">
                 <div class="sort-dropdown">
@@ -1485,13 +1493,14 @@
                             isAdmin: data.isAdmin === true, 
                             isSuperAdmin: data.isSuperAdmin === true,
                             userId: data.id || data.userId || null, 
-                            username: data.username 
+                            username: data.username,
+                            emailVerified: data.emailVerified === true
                         };
                     }
-                    return { isAdmin: false, isSuperAdmin: false, userId: null };
+                    return { isAdmin: false, isSuperAdmin: false, userId: null, emailVerified: false };
                 } catch (error) {
                     console.error('Error fetching user:', error);
-                    return { isAdmin: false, isSuperAdmin: false, userId: null };
+                    return { isAdmin: false, isSuperAdmin: false, userId: null, emailVerified: false };
                 }
             }
 
@@ -1576,7 +1585,7 @@
                     const authorInitial = (authorDisplay || 'U').toString().charAt(0).toUpperCase();
                     const avatarBg = avatarStyle(post.author_avatar || '');
                     const isBookmarked = post.is_bookmarked === 1 || post.is_bookmarked === true;
-                    const canBookmark = !!CURRENT_USER.userId && !CURRENT_USER.isAdmin;
+                    const canBookmark = !!CURRENT_USER.userId && !CURRENT_USER.isSuperAdmin;
 
                     // Determine if current user can edit/delete this post
                     let canEdit = false;
@@ -1930,7 +1939,7 @@
             }
 
             function notificationsAllowed() {
-                return CURRENT_USER && CURRENT_USER.userId && !CURRENT_USER.isAdmin;
+                return CURRENT_USER && CURRENT_USER.userId && !CURRENT_USER.isSuperAdmin;
             }
 
             function stopNotificationPolling() {
@@ -2083,7 +2092,7 @@
 
             function setNotificationAccess(user) {
                 if (!NOTIF_BTN) return;
-                if (user && user.userId && !user.isAdmin) {
+                if (user && user.userId && !user.isSuperAdmin) {
                     NOTIF_BTN.style.display = 'inline-block';
                     startNotificationPolling();
                     fetchNotifications(true);
@@ -2111,15 +2120,16 @@
 
             // Update auth buttons display
             function updateAuthButtons(user) {
+                const isSuperAdmin = !!user.isSuperAdmin;
+                const loggedIn = !!user.userId;
                 if (user.isAdmin) {
                     CREATE_POST_BTN.style.display = 'inline-block';
                     ADMIN_LOGIN_BTN.style.display = 'none';
                     REGISTER_BTN.style.display = 'none';
                     PROFILE_BTN.style.display = 'inline-block';
                     LOGOUT_BTN.style.display = 'inline-block';
-                    if (BOOKMARKS_BTN) BOOKMARKS_BTN.style.display = 'none';
-                } else if (user.userId) {
-                    // Regular user logged in
+                    if (BOOKMARKS_BTN) BOOKMARKS_BTN.style.display = isSuperAdmin ? 'none' : 'inline-block';
+                } else if (loggedIn) {
                     CREATE_POST_BTN.style.display = 'inline-block';
                     ADMIN_LOGIN_BTN.style.display = 'none';
                     REGISTER_BTN.style.display = 'none';
@@ -2127,7 +2137,6 @@
                     LOGOUT_BTN.style.display = 'inline-block';
                     if (BOOKMARKS_BTN) BOOKMARKS_BTN.style.display = 'inline-block';
                 } else {
-                    // Not logged in
                     CREATE_POST_BTN.style.display = 'none';
                     ADMIN_LOGIN_BTN.style.display = 'inline-block';
                     REGISTER_BTN.style.display = 'inline-block';
@@ -2175,6 +2184,12 @@
                     CURRENT_USER = user || { isAdmin: false, userId: null };
                     updateAuthButtons(CURRENT_USER);
                     setNotificationAccess(CURRENT_USER);
+
+                    // Show verification banner for unverified non-admin users
+                    const verifyBanner = document.getElementById('verifyBanner');
+                    if (verifyBanner && CURRENT_USER.userId && !CURRENT_USER.isAdmin && !CURRENT_USER.emailVerified) {
+                        verifyBanner.style.display = 'block';
+                    }
 
                     const q = getQueryParam('q');
                     if (q) {

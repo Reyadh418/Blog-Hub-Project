@@ -344,7 +344,28 @@
             font-weight: 600;
             font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s ease, transform 0.18s ease, box-shadow 0.18s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.32), transparent 45%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+        }
+
+        .action-btn:hover::after {
+            opacity: 1;
         }
 
         .action-btn.toggle-super {
@@ -367,9 +388,36 @@
             color: #fff;
         }
 
+        .action-btn.view-profile {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: #0f172a;
+        }
+
+        .action-btn.view-profile:hover {
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            color: #fff;
+        }
+
+        .action-btn.transfer-super {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            animation: pulseGlow 1.8s ease-in-out infinite;
+        }
+
+        .action-btn.transfer-super:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #fff;
+        }
+
         .action-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25); }
+            50% { box-shadow: 0 10px 24px rgba(251, 191, 36, 0.35); }
+            100% { box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25); }
         }
 
         /* Empty States */
@@ -495,6 +543,119 @@
             color: #1e3a5f;
         }
 
+        /* Password Modal */
+        .password-card {
+            max-width: 480px;
+            width: 92%;
+            text-align: left;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+            border: 1px solid rgba(212, 165, 116, 0.18);
+            background: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(250,247,241,0.96));
+        }
+
+        .password-card .confirm-icon {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+        }
+
+        .password-card h3 {
+            margin-bottom: 6px;
+        }
+
+        .password-card p {
+            margin-bottom: 16px;
+            color: #475569;
+        }
+
+        .password-input-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .password-label {
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-input-row input {
+            width: 100%;
+            padding: 15px 52px 15px 52px;
+            border-radius: 14px;
+            border: 1.5px solid #cbd5e1;
+            background: linear-gradient(135deg, #fdfcfb 0%, #f3f4f6 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 12px 30px rgba(15, 23, 42, 0.08);
+            font-size: 1.02rem;
+            letter-spacing: 0.01em;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+        }
+
+        .password-input-row input::placeholder {
+            color: #9aa5b1;
+        }
+
+        .password-input-row input:focus {
+            outline: none;
+            border-color: #d97706;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 14px 36px rgba(217, 119, 6, 0.26);
+            background: #fff;
+            transform: translateY(-1px);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.05rem;
+            color: #c08457;
+            pointer-events: none;
+            filter: drop-shadow(0 1px 0 rgba(255,255,255,0.7));
+        }
+
+        .input-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #334155;
+            border-radius: 10px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+
+        .input-toggle:hover {
+            transform: translateY(-52%);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        }
+
+        .input-toggle:active {
+            transform: translateY(-48%);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .password-hint {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
         .confirm-card p {
             color: #64748b;
             margin-bottom: 24px;
@@ -593,6 +754,27 @@
         </div>
     </div>
 
+    <div class="confirm-overlay" id="passwordOverlay">
+        <div class="confirm-card password-card">
+            <div class="confirm-icon">🔒</div>
+            <h3 id="passwordTitle">Confirm Transfer</h3>
+            <p id="passwordDesc">Enter your Super Admin password to continue.</p>
+            <div class="password-input-row">
+                <label class="password-label" for="passwordInput">Password <span style="font-weight:400;color:#94a3b8;">(kept local, sent securely)</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🛡</span>
+                    <input type="password" id="passwordInput" placeholder="Super Admin password" autocomplete="current-password" />
+                    <button type="button" class="input-toggle" id="passwordToggle" aria-label="Show password">👁</button>
+                </div>
+                <div class="password-hint">This confirms you are the current Super Admin before transferring ownership.</div>
+            </div>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" id="passwordCancel">Cancel</button>
+                <button class="confirm-btn danger" id="passwordSubmit">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/page-transitions.js"></script>
     <script>
         let CURRENT_ADMIN = null;
@@ -655,6 +837,7 @@
                 container.addEventListener('click', async (e) => {
                     const transferBtn = e.target.closest('.transfer-super');
                     const demoteBtn = e.target.closest('.demote');
+                    const viewBtn = e.target.closest('.view-profile');
                     
                     if (transferBtn) {
                         const userId = parseInt(transferBtn.dataset.userId, 10);
@@ -664,6 +847,9 @@
                         const userId = parseInt(demoteBtn.dataset.userId, 10);
                         const username = demoteBtn.dataset.username;
                         if (userId && username) await demoteAdmin(userId, username);
+                    } else if (viewBtn) {
+                        const userId = parseInt(viewBtn.dataset.userId, 10);
+                        if (userId) navigateWithTransition(`/view-profile.html?id=${userId}`);
                     }
                 });
             }
@@ -707,9 +893,12 @@
                         // Someone else is Super Admin - shouldn't happen in current list
                         actionHtml = `<div class="admin-actions"><span style="color:#f59e0b;font-size:0.85rem;">👑 Super Admin (Protected)</span></div>`;
                     } else if (canModify) {
-                        // Promoted Admin - can be demoted or transferred to
+                        // Promoted Admin - can be demoted or transferred to; Super Admin can view profile
                         actionHtml = `
                             <div class="admin-actions">
+                                <button class="action-btn view-profile" data-user-id="${admin.id}">
+                                    👁 View Profile
+                                </button>
                                 <button class="action-btn transfer-super" data-user-id="${admin.id}" data-username="${safeUsername}">
                                     👑 Transfer Super Admin
                                 </button>
@@ -885,6 +1074,12 @@
 
             if (!confirmed) return;
 
+            const password = await promptPassword(username);
+            if (!password) {
+                showToast('Transfer cancelled (no password provided).', 'info', 2500);
+                return;
+            }
+
             try {
                 const resp = await fetch('/api/admin/admins/transfer-super', {
                     method: 'POST',
@@ -892,7 +1087,7 @@
                         'Content-Type': 'application/json',
                         'x-csrf-token': CSRF_TOKEN
                     },
-                    body: JSON.stringify({ userId })
+                    body: JSON.stringify({ userId, password })
                 });
 
                 const data = await resp.json();
@@ -912,6 +1107,67 @@
                 console.error('Transfer failed', err);
                 showToast(err.message, 'error');
             }
+        }
+
+        // Premium password prompt
+        function promptPassword(username) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('passwordOverlay');
+                const input = document.getElementById('passwordInput');
+                const title = document.getElementById('passwordTitle');
+                const desc = document.getElementById('passwordDesc');
+                const cancelBtn = document.getElementById('passwordCancel');
+                const submitBtn = document.getElementById('passwordSubmit');
+                const toggleBtn = document.getElementById('passwordToggle');
+                let visible = false;
+
+                title.textContent = `Enter password to transfer to ${username}`;
+                desc.textContent = 'For security, confirm with your current Super Admin password.';
+                input.value = '';
+                overlay.classList.add('active');
+                setTimeout(() => input.focus(), 20);
+
+                const cleanup = () => {
+                    overlay.classList.remove('active');
+                    cancelBtn.onclick = null;
+                    submitBtn.onclick = null;
+                    toggleBtn.onclick = null;
+                    overlay.onclick = null;
+                    input.onkeydown = null;
+                };
+
+                cancelBtn.onclick = () => { cleanup(); resolve(null); };
+                submitBtn.onclick = () => {
+                    const val = input.value.trim();
+                    if (!val) {
+                        input.focus();
+                        return;
+                    }
+                    cleanup();
+                    resolve(val);
+                };
+                toggleBtn.onclick = () => {
+                    visible = !visible;
+                    input.type = visible ? 'text' : 'password';
+                    toggleBtn.textContent = visible ? '🙈' : '👁';
+                    toggleBtn.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+                    input.focus();
+                };
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        cleanup();
+                        resolve(null);
+                    }
+                };
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        submitBtn.click();
+                    } else if (e.key === 'Escape') {
+                        cleanup();
+                        resolve(null);
+                    }
+                };
+            });
         }
 
         // Demote admin

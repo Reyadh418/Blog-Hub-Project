@@ -608,6 +608,14 @@
         <div class="container">
             <div id="message" role="alert"></div>
 
+            <!-- Email verification banner -->
+            <div id="verifyBanner" style="display:none; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #f0c36d; border-radius: 10px; padding: 14px 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                <span style="font-size: 1.1rem;">📧</span>
+                <span style="color: #856404; font-weight: 600; font-size: 0.95rem;">Your email is not verified.</span>
+                <span style="color: #856404; font-size: 0.9rem;">Some features are limited until you verify.</span>
+                <a href="/verify-email.html" style="color: #1e3a5f; font-weight: 700; text-decoration: underline; margin-left: 8px; font-size: 0.9rem;">Verify Now</a>
+            </div>
+
             <div id="loadingContainer" class="loading">
                 <div class="spinner"></div>
                 <p>Loading profile...</p>
@@ -795,6 +803,12 @@
                     
                     loadingContainer.style.display = 'none';
                     profileContainer.style.display = 'block';
+
+                    // Show verification banner for unverified users
+                    if (currentUser.emailVerified === false && !currentUser.isAdmin) {
+                        const banner = document.getElementById('verifyBanner');
+                        if (banner) banner.style.display = 'block';
+                    }
                 } catch (error) {
                     console.error('Load profile error:', error);
                     loadingContainer.style.display = 'none';

@@ -546,6 +546,7 @@
                 // Helper function to determine redirect URL based on user type
                 // Everyone goes to homepage after login - they can navigate to profile from there
                 function getRedirectUrl(result) {
+                    if (result.emailVerified === false) return '/verify-email.html';
                     return '/';
                 }
 
