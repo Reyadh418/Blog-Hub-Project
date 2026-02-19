@@ -58,7 +58,7 @@ Environment variables you can set:
 Admin bootstrap behavior:
 - On first startup, if no admin exists, the app creates one.
 - If `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set, those are used.
-- If `ADMIN_PASSWORD` is missing, a random password is generated. In production the value is hidden in logs, so set `ADMIN_PASSWORD` explicitly on Render.
+- If `ADMIN_PASSWORD` is missing, a random password is generated. In production, the value is hidden in logs, so set `ADMIN_PASSWORD` explicitly on Render.
 - Recovery for existing deployments: set `ADMIN_RESET_ON_BOOT=1` + `ADMIN_PASSWORD` (and optionally `ADMIN_USERNAME`/`ADMIN_EMAIL`), deploy once, log in, then set `ADMIN_RESET_ON_BOOT=0` and deploy again.
 
 ## Data & storage
@@ -82,7 +82,7 @@ Admin bootstrap behavior:
 - No search indexing beyond simple SQL LIKE.
 - No horizontal scaling; single-instance with in-memory rate limits.
 
-## Deploying / selling on Gumroad
+## Deploying/selling on Gumroad
 - Ship the full source; buyer runs `npm install && SESSION_SECRET=... node server.js`.
 - Provide a strong `SESSION_SECRET` per deployment and run behind HTTPS; set `TRUST_PROXY=1` if fronted by a proxy.
 - Bundle a short setup note about the generated admin temp password on first run and the need to rotate it.
@@ -90,3 +90,28 @@ Admin bootstrap behavior:
 
 ## Support
 This is offered as-is. For production use, add backups, logging, HTTPS termination, and stronger monitoring/rate-limiting as needed.
+
+## Visuals
+
+<img width="1919" height="893" alt="Screenshot 2026-02-19 210944" src="https://github.com/user-attachments/assets/eecccafc-3fa9-4732-a492-c53ff318c762" />
+
+<img width="1919" height="892" alt="Screenshot 2026-02-19 211005" src="https://github.com/user-attachments/assets/e1b7746c-9e34-44e2-a63d-3f8f28ef7420" />
+
+<img width="1919" height="882" alt="Screenshot 2026-02-19 211055" src="https://github.com/user-attachments/assets/740509e9-5124-4614-9b4f-eb70ac288a00" />
+
+<img width="1919" height="885" alt="Screenshot 2026-02-19 211120" src="https://github.com/user-attachments/assets/86dab6ed-20f6-4af1-a300-d4a82f86d280" />
+
+<img width="1920" height="1549" alt="screencapture-localhost-3000-create-post-html-2026-02-19-21_13_02" src="https://github.com/user-attachments/assets/a27e72c5-ca11-416b-8aa5-3e3575712f2f" />
+
+<img width="1920" height="1080" alt="Screenshot 2026-02-19 211157" src="https://github.com/user-attachments/assets/f1e77e3d-c55c-4a61-a406-77197db63a7b" />
+
+<img width="1919" height="874" alt="Screenshot 2026-02-19 211336" src="https://github.com/user-attachments/assets/8be88931-8239-4f7e-b3bf-9c49c6c39d52" />
+
+<img width="1919" height="875" alt="Screenshot 2026-02-19 211402" src="https://github.com/user-attachments/assets/fc4b8d72-202e-4886-9131-c8fefb1defbb" />
+
+<img width="1919" height="872" alt="Screenshot 2026-02-19 211452" src="https://github.com/user-attachments/assets/104eb85e-d372-4d42-8c37-92486446072b" />
+
+<img width="1919" height="876" alt="Screenshot 2026-02-19 211512" src="https://github.com/user-attachments/assets/acbf51de-cb70-4838-a457-ac526d9b3d07" />
+
+<img width="1919" height="874" alt="Screenshot 2026-02-19 211539" src="https://github.com/user-attachments/assets/7b54633c-95f3-4956-a35f-7bd8c795e8d7" />
+
