@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+admin.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
