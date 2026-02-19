@@ -212,9 +212,36 @@ async function isSuperAdmin(userId) {
 
 // Ensure there's a concrete user row for the admin backed by the database (hashed credentials)
 async function ensureAdminUser() {
+  const resetOnBoot = (process.env.ADMIN_RESET_ON_BOOT || "0").toString() === "1";
+  const resetPassword = (process.env.ADMIN_PASSWORD || "").toString();
+  const resetUsername = (process.env.ADMIN_USERNAME || "").toString().trim().toLowerCase();
+  const resetEmail = (process.env.ADMIN_EMAIL || "").toString().trim().toLowerCase();
+
   // Check if a super admin already exists
   const superAdmin = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_super_admin = 1 LIMIT 1");
-  if (superAdmin) return superAdmin;
+  if (superAdmin) {
+    if (resetOnBoot && resetPassword.length >= 8) {
+      const newHash = await hashPassword(resetPassword);
+      const updateFields = ["password_hash = ?"];
+      const updateParams = [newHash];
+
+      if (resetUsername) {
+        updateFields.push("username = ?");
+        updateParams.push(resetUsername);
+      }
+      if (resetEmail) {
+        updateFields.push("email = ?");
+        updateParams.push(resetEmail);
+      }
+
+      updateParams.push(superAdmin.id);
+      await dbRun(`UPDATE users SET ${updateFields.join(", ")} WHERE id = ?`, updateParams);
+      console.warn("[admin] Super admin credentials were reset from env on boot. Turn off ADMIN_RESET_ON_BOOT after successful login.");
+      const refreshed = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [superAdmin.id]);
+      if (refreshed) return refreshed;
+    }
+    return superAdmin;
+  }
 
   // Check if there's an admin user named 'admin' to promote
   const adminByName = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_admin = 1 AND username = 'admin' LIMIT 1");
@@ -228,18 +255,28 @@ async function ensureAdminUser() {
   const anyAdmin = await getAdminUser();
   if (anyAdmin) return anyAdmin;
 
-  const fallbackUsername = "@admin";
-  const normalizedUsername = fallbackUsername;
+  // Seed from env when provided (recommended for production)
+  const envAdminUsername = (process.env.ADMIN_USERNAME || "@admin").toString().trim().toLowerCase();
+  const envAdminPassword = (process.env.ADMIN_PASSWORD || "").toString();
+  const email = (process.env.ADMIN_EMAIL || "admin@example.local").toString().trim().toLowerCase();
 
-  // Generate a strong temporary password; admin should rotate it immediately
-  let adminPassword = crypto.randomBytes(12).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
-  if (process.env.NODE_ENV !== "production") {
-    console.warn("[admin] Generated temporary admin password:", adminPassword);
+  let adminPassword = envAdminPassword;
+  if (!adminPassword || adminPassword.length < 8) {
+    adminPassword = crypto.randomBytes(12).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[admin] Generated temporary admin password:", adminPassword);
+    } else {
+      console.warn("[admin] Generated temporary admin password; set ADMIN_PASSWORD and rotate immediately (value hidden in production logs)");
+    }
   } else {
-    console.warn("[admin] Generated temporary admin password; rotate immediately (value hidden in production logs)");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[admin] Using ADMIN_PASSWORD from env; rotate regularly.");
+    } else {
+      console.warn("[admin] Using ADMIN_PASSWORD from env (value hidden); rotate regularly.");
+    }
   }
 
-  const email = "admin@example.local";
+  const normalizedUsername = envAdminUsername || "@admin";
   const passwordHash = await hashPassword(adminPassword);
 
   const created = await dbRun(

@@ -50,6 +50,16 @@ Environment variables you can set:
 - `NODE_ENV` (`production` enables secure cookies + HSTS header)
 - `TRUST_PROXY=1` when running behind a reverse proxy to honor secure cookies
 - `BCRYPT_ROUNDS` (8-14; default 12)
+- `ADMIN_USERNAME` (optional; default `@admin` for first-time bootstrap)
+- `ADMIN_PASSWORD` (strongly recommended in production; used only when no admin exists yet)
+- `ADMIN_EMAIL` (optional; default `admin@example.local`)
+- `ADMIN_RESET_ON_BOOT=1` (optional recovery mode: if a super admin already exists, reset its credentials from `ADMIN_*` on startup)
+
+Admin bootstrap behavior:
+- On first startup, if no admin exists, the app creates one.
+- If `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set, those are used.
+- If `ADMIN_PASSWORD` is missing, a random password is generated. In production the value is hidden in logs, so set `ADMIN_PASSWORD` explicitly on Render.
+- Recovery for existing deployments: set `ADMIN_RESET_ON_BOOT=1` + `ADMIN_PASSWORD` (and optionally `ADMIN_USERNAME`/`ADMIN_EMAIL`), deploy once, log in, then set `ADMIN_RESET_ON_BOOT=0` and deploy again.
 
 ## Data & storage
 - SQLite file: `blog.db` in the project root
