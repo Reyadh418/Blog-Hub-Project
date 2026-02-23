@@ -479,6 +479,12 @@
             wireShowPassword(toggleUserPwd, userPwdInput);
             wireShowPassword(toggleAdminPwd, adminPwdInput);
 
+            // Support deep-linking to admin login mode
+            const initialMode = (new URLSearchParams(window.location.search).get('mode') || '').toLowerCase();
+            if (initialMode === 'admin') {
+                switchMode('admin');
+            }
+
             // Toast system
             function showToast(message, type='info', duration=3000) {
                 const container = document.getElementById('toastContainer');

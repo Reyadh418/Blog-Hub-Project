@@ -39,7 +39,7 @@ The app starts on http://localhost:3000. In production, set a strong SESSION_SEC
 
 ## Usage highlights
 - Users: register, log in, create/edit/delete their own posts; comment and react; view notifications.
-- Admin: log in at `/admin-login.html`, create admin posts, flag/unflag or delete any post, list users.
+- Admin: log in from `/login.html` (switch to Admin mode), create admin posts, flag/unflag or delete any post, list users.
 - Profiles: edit name, email, bio, avatar from `/profile.html` or `/edit-profile.html`.
 
 ## Configuration

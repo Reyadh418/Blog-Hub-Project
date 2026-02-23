@@ -799,7 +799,7 @@
             try {
                 const resp = await fetch('/api/admin/profile');
                 if (!resp.ok) {
-                    navigateWithTransition('/admin-login.html');
+                    navigateWithTransition('/login.html?mode=admin&return=/admin-management.html');
                     return false;
                 }
                 const data = await resp.json();
@@ -812,7 +812,7 @@
                 return true;
             } catch (err) {
                 console.error('Auth check failed', err);
-                navigateWithTransition('/admin-login.html');
+                navigateWithTransition('/login.html?mode=admin&return=/admin-management.html');
                 return false;
             }
         }

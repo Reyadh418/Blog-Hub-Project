@@ -1920,6 +1920,10 @@ app.get('/api/search', async (req, res, next) => {
 });
 
 // Basic homepage route (optional)
+app.get("/admin-login.html", (req, res) => {
+  res.redirect("/login.html?mode=admin");
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
