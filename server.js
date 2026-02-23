@@ -225,7 +225,7 @@ async function ensureAdminUser() {
   const passwordHash = await hashPassword(adminPassword);
 
   const created = await dbRun(
-    "INSERT OR IGNORE INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?)",
+    "INSERT INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?) ON CONFLICT (username) DO NOTHING",
     [normalizedUsername, email, passwordHash, "Site Admin"]
   );
 
@@ -1664,7 +1664,7 @@ app.get('/api/notifications', requireUserOnly, async (req, res, next) => {
       FROM notifications n
       LEFT JOIN posts p ON n.post_id = p.id
       WHERE n.user_id = ?
-      ORDER BY datetime(n.created_at) DESC
+      ORDER BY n.created_at DESC
       LIMIT 100
     `, [req.session.userId]);
     res.json(rows);
