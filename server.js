@@ -339,10 +339,7 @@ function requireVerified(req, res, next) {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ error: "Authentication required" });
   }
-  // Admins bypass email verification
-  if (req.session.isAdmin) return next();
-  if (req.session.emailVerified) return next();
-  return res.status(403).json({ error: "Please verify your email address before performing this action.", emailVerificationRequired: true });
+  return next();
 }
 
 // Generate a random 6-digit verification code
@@ -1404,11 +1401,6 @@ app.post("/api/posts", async (req, res, next) => {
   try {
     // Allow both admin and authenticated users to create posts
     if (!req.session.isAdmin && !req.session.userId) return res.status(401).json({ error: "Authentication required" });
-
-    // Require email verification for non-admin users
-    if (!req.session.isAdmin && !req.session.emailVerified) {
-      return res.status(403).json({ error: "Please verify your email address before creating a post.", emailVerificationRequired: true });
-    }
 
     // All users (including admins) use their userId as author_id
     // Admins are identified by the is_admin flag on the user, not by NULL author_id

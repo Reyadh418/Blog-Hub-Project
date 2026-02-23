@@ -282,11 +282,11 @@
             <p class="form-subtitle">Share your thoughts with the world</p>
         </div>
 
-        <!-- Email verification gate -->
+        <!-- Email verification reminder -->
         <div id="verifyGate" style="display:none; max-width:700px; margin: 0 auto 24px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #f0c36d; border-radius: 10px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
             <p style="font-size: 1.2rem; margin-bottom: 8px;">📧</p>
-            <p style="color: #856404; font-weight: 600; font-size: 1rem; margin-bottom: 8px;">Email Verification Required</p>
-            <p style="color: #856404; font-size: 0.9rem; margin-bottom: 16px;">You need to verify your email before you can create posts.</p>
+            <p style="color: #856404; font-weight: 600; font-size: 1rem; margin-bottom: 8px;">Verify Your Email (Optional for now)</p>
+            <p style="color: #856404; font-size: 0.9rem; margin-bottom: 16px;">You can verify now, or skip and continue posting.</p>
             <a href="/verify-email.html" style="display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%); color: #fff; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Verify Email</a>
         </div>
 
@@ -394,12 +394,10 @@
                         const user = await response.json();
                         // Allow both admins and users
                         if (user.isAdmin || user.userId) {
-                            // Check email verification for non-admin users
+                            // Show email verification reminder for non-admin users (non-blocking)
                             if (!user.isAdmin && user.emailVerified === false) {
                                 const gate = document.getElementById('verifyGate');
-                                const form = document.getElementById('postForm');
                                 if (gate) gate.style.display = 'block';
-                                if (form) form.style.display = 'none';
                             }
                             return true;
                         }
