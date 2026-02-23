@@ -10,63 +10,8 @@ const bcrypt = require("bcryptjs");
 const db = require("./db");
 const { sendVerificationCode } = require("./email");
 
-// Migration: Make notifications.post_id nullable for system notifications
-(async function migrateNotificationsTable() {
-  // Promisified helpers for migration only
-  const migrationAll = (sql, params = []) =>
-    new Promise((resolve, reject) =>
-      db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)))
-    );
-  const migrationRun = (sql, params = []) =>
-    new Promise((resolve, reject) =>
-      db.run(sql, params, function (err) {
-        if (err) reject(err);
-        else resolve({ lastID: this.lastID, changes: this.changes });
-      })
-    );
-  
-  try {
-    // Check if migration is needed by checking table schema
-    const tableInfo = await migrationAll("PRAGMA table_info(notifications)");
-    const postIdCol = tableInfo.find(col => col.name === 'post_id');
-    
-    // If post_id is NOT NULL (notnull = 1), we need to migrate
-    if (postIdCol && postIdCol.notnull === 1) {
-      console.log("[migration] Updating notifications table to allow NULL post_id...");
-      
-      // SQLite doesn't support ALTER COLUMN, so we recreate the table
-      await migrationRun(`CREATE TABLE IF NOT EXISTS notifications_new (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        post_id INTEGER,
-        type TEXT NOT NULL,
-        message TEXT NOT NULL,
-        is_read INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-      )`);
-      
-      // Copy existing data
-      await migrationRun(`INSERT INTO notifications_new (id, user_id, post_id, type, message, is_read, created_at)
-        SELECT id, user_id, post_id, type, message, is_read, created_at FROM notifications`);
-      
-      // Swap tables
-      await migrationRun(`DROP TABLE notifications`);
-      await migrationRun(`ALTER TABLE notifications_new RENAME TO notifications`);
-      
-      // Recreate index
-      await migrationRun(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON notifications(user_id, created_at DESC)`);
-      
-      console.log("[migration] Notifications table migration complete.");
-    }
-  } catch (err) {
-    // Table might not exist yet, that's fine - db.js will create it correctly
-    if (!err.message.includes("no such table")) {
-      console.error("[migration] Error migrating notifications table:", err.message);
-    }
-  }
-})();
+// Note: PostgreSQL schema is initialized in db.js with correct defaults
+// No additional migrations needed on startup
 
 const app = express();
 
@@ -382,40 +327,41 @@ function csrfGuard(req, res, next) {
   return res.status(403).json({ error: "CSRF token invalid or missing" });
 }
 
-const dbAll = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) return reject(err);
-      // normalize tags into arrays
-      const normalized = rows.map(r => {
-        if (r.tags == null) r.tags = '';
-        try {
-          r.tags = JSON.parse(r.tags);
-        } catch (e) {
-          // fallback: comma-separated
-          r.tags = (r.tags || '').toString().split(',').map(s => s.trim()).filter(Boolean);
-        }
-        return r;
-      });
-      resolve(normalized);
-    });
-  });
+// Helper to convert SQLite ? placeholders to PostgreSQL $1, $2 syntax
+function convertPlaceholders(sql, params = []) {
+  let paramIndex = 1;
+  const converted = sql.replace(/\?/g, () => `$${paramIndex++}`);
+  return { sql: converted, params };
+}
 
-const dbRun = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) return reject(err);
-      resolve({ lastID: this.lastID, changes: this.changes });
-    });
-  });
+const dbRun = async (sql, params = []) => {
+  const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
+  const result = await db.run(convertedSql, convertedParams);
+  return result;
+};
 
-const dbGet = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) return reject(err);
-      resolve(row || null);
-    });
+const dbGet = async (sql, params = []) => {
+  const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
+  const row = await db.get(convertedSql, convertedParams);
+  return row || null;
+};
+
+const dbAll = async (sql, params = []) => {
+  const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
+  const rows = await db.all(convertedSql, convertedParams);
+  // normalize tags into arrays
+  const normalized = rows.map(r => {
+    if (r.tags == null) r.tags = '';
+    try {
+      r.tags = JSON.parse(r.tags);
+    } catch (e) {
+      // fallback: comma-separated
+      r.tags = (r.tags || '').toString().split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return r;
   });
+  return normalized;
+};
 
 async function createNotification({ userId, postId, type, message, allowAdmin = false }) {
   try {

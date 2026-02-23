@@ -21,21 +21,23 @@ A small Express + SQLite blog/playground with basic accounts, admin moderation, 
 
 ## Stack
 - Node.js, Express 5, express-session
-- SQLite (file: `blog.db`) via `sqlite3`
+- PostgreSQL (Supabase free tier recommended; data persists across deploys) via `pg`
 - bcryptjs for password hashing
 - Plain HTML/CSS/JS frontend served from `public/`
 
 ## Requirements
 - Node.js 18+ recommended
 - npm (for dependency install)
-- Disk write access for `blog.db`
+- PostgreSQL database (free Supabase account recommended)
 
 ## Quick start (local)
 ```
 npm install
-npm start
+DATABASE_URL="postgresql://..." npm start
 ```
-The app starts on http://localhost:3000. In production, set a strong SESSION_SECRET and run behind HTTPS.
+The app starts on http://localhost:3000. You must provide a `DATABASE_URL` pointing to a PostgreSQL database.
+
+In production, set a strong SESSION_SECRET and run behind HTTPS.
 
 ## Usage highlights
 - Users: register, log in, create/edit/delete their own posts; comment and react; view notifications.
@@ -62,10 +64,11 @@ Admin bootstrap behavior:
 - Recovery for existing deployments: set `ADMIN_RESET_ON_BOOT=1` + `ADMIN_PASSWORD` (and optionally `ADMIN_USERNAME`/`ADMIN_EMAIL`), deploy once, log in, then set `ADMIN_RESET_ON_BOOT=0` and deploy again.
 
 ## Data & storage
-- SQLite file: `blog.db` in the project root
+- PostgreSQL database (data persists across deploys)
 - Tables: users, posts, comments, reactions, notifications
-- Admin posts store `author_id` as NULL to distinguish them
+- Admin posts store `author_id` to identify them as admin posts
 - No email delivery or file uploads
+- Setup: Use free Supabase PostgreSQL, set `DATABASE_URL` env var in production
 
 ## Security notes
 - Passwords hashed with bcrypt; legacy SHA-256 hashes auto-migrate on successful login.
@@ -84,9 +87,9 @@ Admin bootstrap behavior:
 
 ## Deploying/selling on Gumroad
 - Ship the full source; buyer runs `npm install && SESSION_SECRET=... node server.js`.
-- Provide a strong `SESSION_SECRET` per deployment and run behind HTTPS; set `TRUST_PROXY=1` if fronted by a proxy.
-- Bundle a short setup note about the generated admin temp password on first run and the need to rotate it.
-- If you need persistence across restarts/backups, keep `blog.db` and stdout logs.
+- Provide a strong `SESSION_SECRET` and set `DATABASE_URL` to a PostgreSQL connection string.
+- Run behind HTTPS; set `TRUST_PROXY=1` if fronted by a proxy.
+- Data automatically persists in the PostgreSQL database across restarts.
 
 ## Support
 This is offered as-is. For production use, add backups, logging, HTTPS termination, and stronger monitoring/rate-limiting as needed.
