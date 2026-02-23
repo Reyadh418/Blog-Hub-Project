@@ -225,7 +225,7 @@ async function ensureAdminUser() {
   const passwordHash = await hashPassword(adminPassword);
 
   const created = await dbRun(
-    "INSERT INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?) ON CONFLICT (username) DO NOTHING",
+    "INSERT INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, email = EXCLUDED.email, is_admin = 1, is_super_admin = 1",
     [normalizedUsername, email, passwordHash, "Site Admin"]
   );
 
