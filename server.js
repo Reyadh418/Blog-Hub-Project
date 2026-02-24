@@ -152,14 +152,14 @@ async function getSuperAdminId() {
 // Check if user is the super admin
 async function isSuperAdmin(userId) {
   const user = await dbGet("SELECT is_super_admin FROM users WHERE id = ?", [userId]);
-  return user && user.is_super_admin === 1;
+  return user && Number(user.is_super_admin) === 1;
 }
 
 // Ensure there's a concrete user row for the admin backed by the database (hashed credentials)
 async function ensureAdminUser() {
   const resetOnBoot = (process.env.ADMIN_RESET_ON_BOOT || "0").toString() === "1";
   const resetPassword = (process.env.ADMIN_PASSWORD || "").toString();
-  const resetUsername = (process.env.ADMIN_USERNAME || "").toString().trim().toLowerCase();
+  const resetUsername = (process.env.ADMIN_USERNAME || "admin").toString().trim().toLowerCase();
   const resetEmail = (process.env.ADMIN_EMAIL || "").toString().trim().toLowerCase();
 
   // Check if a super admin already exists
@@ -196,12 +196,41 @@ async function ensureAdminUser() {
     return adminByName;
   }
 
-  // No admin user exists at all — create a fallback
+  // No super admin exists. If any admin exists, promote the env/legacy admin username when present.
   const anyAdmin = await getAdminUser();
-  if (anyAdmin) return anyAdmin;
+  if (anyAdmin) {
+    const targetUsername = resetUsername || "admin";
+    const targetAdmin = await dbGet(
+      "SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_admin = 1 AND username = ? LIMIT 1",
+      [targetUsername]
+    );
+
+    if (targetAdmin) {
+      const updates = ["is_super_admin = 1", "is_promoted_admin = 0"];
+      const updateParams = [];
+
+      if (resetPassword.length >= 8) {
+        const targetHash = await hashPassword(resetPassword);
+        updates.push("password_hash = ?");
+        updateParams.push(targetHash);
+      }
+      if (resetEmail) {
+        updates.push("email = ?");
+        updateParams.push(resetEmail);
+      }
+
+      updateParams.push(targetAdmin.id);
+      await dbRun(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, updateParams);
+
+      const refreshed = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [targetAdmin.id]);
+      if (refreshed) return refreshed;
+    }
+
+    return anyAdmin;
+  }
 
   // Seed from env when provided (recommended for production)
-  const envAdminUsername = (process.env.ADMIN_USERNAME || "@admin").toString().trim().toLowerCase();
+  const envAdminUsername = (process.env.ADMIN_USERNAME || "admin").toString().trim().toLowerCase();
   const envAdminPassword = (process.env.ADMIN_PASSWORD || "").toString();
   const email = (process.env.ADMIN_EMAIL || "admin@example.local").toString().trim().toLowerCase();
 
@@ -221,7 +250,7 @@ async function ensureAdminUser() {
     }
   }
 
-  const normalizedUsername = envAdminUsername || "@admin";
+  const normalizedUsername = envAdminUsername || "admin";
   const passwordHash = await hashPassword(adminPassword);
 
   const created = await dbRun(
@@ -252,7 +281,7 @@ async function requireSuperAdmin(req, res, next) {
   // Otherwise check the database (for sessions created before this feature)
   try {
     const user = await dbGet("SELECT is_super_admin FROM users WHERE id = ? AND is_admin = 1", [req.session.userId]);
-    if (user && user.is_super_admin === 1) {
+    if (user && Number(user.is_super_admin) === 1) {
       // Update session for future requests
       req.session.isSuperAdmin = true;
       return next();
@@ -368,9 +397,9 @@ async function createNotification({ userId, postId, type, message, allowAdmin = 
     if (!userId || !postId || !type || !message) return null;
     const user = await dbGet("SELECT id, is_admin, is_super_admin FROM users WHERE id = ?", [userId]);
     if (!user) return null;
-    if (user.is_super_admin === 1) return null; // Super Admins do not receive notifications
+    if (Number(user.is_super_admin) === 1) return null; // Super Admins do not receive notifications
     const result = await dbRun(
-      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, ?, ?, ?)",
+      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, ?, ?, ?) RETURNING id",
       [userId, postId, type, message]
     );
     return result.lastID;
@@ -479,7 +508,7 @@ app.post("/api/auth/register", authLimiter, async (req, res, next) => {
     // Hash password and create user
     const passwordHash = await hashPassword(password);
     const avatar = defaultAvatar();
-    const result = await dbRun("INSERT INTO users (username, email, password_hash, full_name, avatar) VALUES (?, ?, ?, ?, ?)", 
+    const result = await dbRun("INSERT INTO users (username, email, password_hash, full_name, avatar) VALUES (?, ?, ?, ?, ?) RETURNING id", 
       [username, email, passwordHash, fullName, avatar]);
 
     // Generate verification code
@@ -533,15 +562,15 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
 
     // Check email verification status from DB
     const fullUser = await dbGet("SELECT email_verified FROM users WHERE id = ?", [user.id]);
-    const emailVerified = fullUser && fullUser.email_verified === 1;
+    const emailVerified = fullUser && Number(fullUser.email_verified) === 1;
 
     // Set unified session variables based on database values
     req.session.userId = user.id;
     req.session.username = user.username;
-    req.session.isAdmin = user.is_admin === 1;
-    req.session.isSuperAdmin = user.is_super_admin === 1;
-    req.session.isPromotedAdmin = user.is_promoted_admin === 1;
-    req.session.userRole = user.is_admin === 1 ? "admin" : "user";
+    req.session.isAdmin = Number(user.is_admin) === 1;
+    req.session.isSuperAdmin = Number(user.is_super_admin) === 1;
+    req.session.isPromotedAdmin = Number(user.is_promoted_admin) === 1;
+    req.session.userRole = Number(user.is_admin) === 1 ? "admin" : "user";
     req.session.emailVerified = emailVerified;
 
     // Save session before responding to preserve login
@@ -551,9 +580,9 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
         ok: true, 
         userId: user.id, 
         username: user.username,
-        isAdmin: user.is_admin === 1,
-        isSuperAdmin: user.is_super_admin === 1,
-        isPromotedAdmin: user.is_promoted_admin === 1,
+        isAdmin: Number(user.is_admin) === 1,
+        isSuperAdmin: Number(user.is_super_admin) === 1,
+        isPromotedAdmin: Number(user.is_promoted_admin) === 1,
         emailVerified
       });
     });
@@ -584,7 +613,7 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
     }
 
     // Admin login requires admin status
-    if (user.is_admin !== 1) {
+    if (Number(user.is_admin) !== 1) {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
@@ -597,8 +626,8 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.isAdmin = true;
-    req.session.isSuperAdmin = user.is_super_admin === 1;
-    req.session.isPromotedAdmin = user.is_promoted_admin === 1;
+    req.session.isSuperAdmin = Number(user.is_super_admin) === 1;
+    req.session.isPromotedAdmin = Number(user.is_promoted_admin) === 1;
     req.session.userRole = "admin";
     req.session.emailVerified = true; // Admins are auto-verified
 
@@ -610,8 +639,8 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
         userId: user.id, 
         username: user.username, 
         isAdmin: true,
-        isSuperAdmin: user.is_super_admin === 1,
-        isPromotedAdmin: user.is_promoted_admin === 1,
+        isSuperAdmin: Number(user.is_super_admin) === 1,
+        isPromotedAdmin: Number(user.is_promoted_admin) === 1,
         emailVerified: true
       });
     });
@@ -625,7 +654,7 @@ app.get("/api/admin/profile", requireAdmin, async (req, res, next) => {
   try {
     const admin = await dbGet("SELECT id, username, is_super_admin FROM users WHERE id = ?", [req.session.userId]);
     if (!admin) return res.status(404).json({ error: "Admin user not found" });
-    res.json({ id: admin.id, username: admin.username, isSuperAdmin: admin.is_super_admin === 1 });
+    res.json({ id: admin.id, username: admin.username, isSuperAdmin: Number(admin.is_super_admin) === 1 });
   } catch (err) {
     next(err);
   }
@@ -679,7 +708,7 @@ app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
     req.session.username = updated.username;
     req.session.userId = updated.id;
     req.session.isAdmin = true;
-    req.session.isSuperAdmin = updated.is_super_admin === 1;
+    req.session.isSuperAdmin = Number(updated.is_super_admin) === 1;
     req.session.userRole = "admin";
 
     req.session.save((err) => {
@@ -708,8 +737,8 @@ app.get("/api/admin/admins", requireSuperAdmin, async (req, res, next) => {
       email: a.email,
       fullName: a.full_name || '',
       avatar: a.avatar || '',
-      isSuperAdmin: a.is_super_admin === 1,
-      isPromotedAdmin: a.is_promoted_admin === 1,
+      isSuperAdmin: Number(a.is_super_admin) === 1,
+      isPromotedAdmin: Number(a.is_promoted_admin) === 1,
       createdAt: a.created_at
     })));
   } catch (err) {
@@ -752,7 +781,7 @@ app.post("/api/admin/admins/promote", requireSuperAdmin, async (req, res, next) 
     // Check user exists and is not already an admin
     const user = await dbGet("SELECT id, username, is_admin FROM users WHERE id = ?", [userId]);
     if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.is_admin === 1) return res.status(400).json({ error: "User is already an admin" });
+    if (Number(user.is_admin) === 1) return res.status(400).json({ error: "User is already an admin" });
     
     // Promote to Promoted Admin (not Super Admin - there can only be ONE super admin)
     await dbRun(
@@ -1361,7 +1390,7 @@ app.post("/api/posts", async (req, res, next) => {
 
     if (!title || !body) return res.status(400).json({ error: "Title and body are required" });
 
-    const result = await dbRun("INSERT INTO posts (author_id, title, body, tags) VALUES (?, ?, ?, ?)", 
+    const result = await dbRun("INSERT INTO posts (author_id, title, body, tags) VALUES (?, ?, ?, ?) RETURNING id", 
       [authorId, title, body, JSON.stringify(tags)]);
 
     // Return created resource including author info
@@ -1417,7 +1446,7 @@ app.post('/api/posts/:postId/comments', requireAuth, requireVerified, async (req
     if (!post) return res.status(404).json({ error: "Post not found" });
 
     const result = await dbRun(
-      "INSERT INTO comments (post_id, user_id, body) VALUES (?, ?, ?)",
+      "INSERT INTO comments (post_id, user_id, body) VALUES (?, ?, ?) RETURNING id",
       [postId, req.session.userId, body]
     );
 
