@@ -129,24 +129,8 @@ const initPromise = (async () => {
       await pool.query(idx);
     }
 
-    // Enforce admin hierarchy on startup
-    await pool.query(
-      `UPDATE users SET is_super_admin = 0, is_promoted_admin = CASE WHEN is_admin = 1 THEN 1 ELSE 0 END WHERE username != $1 AND is_super_admin = 1`,
-      ['admin']
-    );
-    await pool.query(
-      `UPDATE users SET is_admin = 1, is_super_admin = 1, is_promoted_admin = 0 WHERE username = $1`,
-      ['admin']
-    );
-    await pool.query(
-      `UPDATE users SET is_admin = 1, is_super_admin = 0, is_promoted_admin = 1 WHERE username = $1`,
-      ['reyadhasan']
-    );
-
-    const superAdminResult = await pool.query('SELECT username FROM users WHERE is_super_admin = 1 LIMIT 1');
-    if (superAdminResult.rows.length > 0) {
-      console.log('[db] Super Admin:', superAdminResult.rows[0].username);
-    }
+    // Note: Admin hierarchy is now managed entirely by ensureAdminUser() in server.js
+    // No hardcoded usernames here — admin bootstrap reads from env vars
 
     console.log('[db] Schema initialization complete');
   } catch (err) {

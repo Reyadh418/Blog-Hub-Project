@@ -230,7 +230,8 @@ async function ensureAdminUser() {
       if (refreshed) return refreshed;
     }
 
-    return anyAdmin;
+    // Target admin username doesn't exist yet — fall through to create it below
+    console.log("[ensureAdminUser] Target admin '%s' not found among existing admins, will create it", targetUsername);
   }
 
   // Seed from env when provided (recommended for production)
