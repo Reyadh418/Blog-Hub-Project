@@ -19,8 +19,8 @@ pool.on('connect', () => {
   console.log('[db] PostgreSQL connected');
 });
 
-// Initialize schema on startup
-(async () => {
+// Initialize schema on startup (exported as promise so server can await it)
+const initPromise = (async () => {
   try {
     // Create tables with PostgreSQL syntax
     await pool.query(`
@@ -151,11 +151,13 @@ pool.on('connect', () => {
     console.log('[db] Schema initialization complete');
   } catch (err) {
     console.error('[db] Schema initialization error:', err.message);
+    throw err; // Let the caller know init failed
   }
 })();
 
 // Export wrapper functions to match sqlite3 interface used in server.js
 module.exports = {
+  initPromise, // await this before starting the server
   all: async (sql, params = []) => {
     const result = await pool.query(sql, params);
     return result.rows;
@@ -166,7 +168,11 @@ module.exports = {
   },
   run: async (sql, params = []) => {
     const result = await pool.query(sql, params);
-    return { lastID: result.rows[0]?.id || null, changes: result.rowCount };
+    // Support RETURNING id for inserts
+    const lastID = result.rows && result.rows.length > 0 && result.rows[0].id != null
+      ? result.rows[0].id
+      : null;
+    return { lastID, changes: result.rowCount };
   },
   pool, // Export pool for direct access if needed
 };

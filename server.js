@@ -157,13 +157,16 @@ async function isSuperAdmin(userId) {
 
 // Ensure there's a concrete user row for the admin backed by the database (hashed credentials)
 async function ensureAdminUser() {
+  console.log("[ensureAdminUser] Starting admin bootstrap...");
   const resetOnBoot = (process.env.ADMIN_RESET_ON_BOOT || "0").toString() === "1";
   const resetPassword = (process.env.ADMIN_PASSWORD || "").toString();
   const resetUsername = (process.env.ADMIN_USERNAME || "admin").toString().trim().toLowerCase();
   const resetEmail = (process.env.ADMIN_EMAIL || "").toString().trim().toLowerCase();
+  console.log("[ensureAdminUser] Env: username=%s, passwordLen=%d, resetOnBoot=%s", resetUsername, resetPassword.length, resetOnBoot);
 
   // Check if a super admin already exists
   const superAdmin = await dbGet("SELECT id, username, password_hash, is_super_admin, is_promoted_admin FROM users WHERE is_super_admin = 1 LIMIT 1");
+  console.log("[ensureAdminUser] Existing super admin:", superAdmin ? superAdmin.username : "NONE");
   if (superAdmin) {
     if (resetOnBoot && resetPassword.length >= 8) {
       const newHash = await hashPassword(resetPassword);
@@ -198,6 +201,7 @@ async function ensureAdminUser() {
 
   // No super admin exists. If any admin exists, promote the env/legacy admin username when present.
   const anyAdmin = await getAdminUser();
+  console.log("[ensureAdminUser] Any admin found:", anyAdmin ? anyAdmin.username : "NONE");
   if (anyAdmin) {
     const targetUsername = resetUsername || "admin";
     const targetAdmin = await dbGet(
@@ -253,12 +257,27 @@ async function ensureAdminUser() {
   const normalizedUsername = envAdminUsername || "admin";
   const passwordHash = await hashPassword(adminPassword);
 
-  const created = await dbRun(
-    "INSERT INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?) ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, email = EXCLUDED.email, is_admin = 1, is_super_admin = 1",
-    [normalizedUsername, email, passwordHash, "Site Admin"]
-  );
+  console.log("[ensureAdminUser] Creating admin user: username=%s, email=%s", normalizedUsername, email);
+  
+  try {
+    const created = await dbRun(
+      "INSERT INTO users (username, email, password_hash, is_admin, is_super_admin, is_promoted_admin, full_name) VALUES (?, ?, ?, 1, 1, 0, ?) RETURNING id",
+      [normalizedUsername, email, passwordHash, "Site Admin"]
+    );
+    console.log("[ensureAdminUser] INSERT result: lastID=%s, changes=%s", created.lastID, created.changes);
+  } catch (insertErr) {
+    console.error("[ensureAdminUser] INSERT failed:", insertErr.message);
+    // If insert failed due to conflict, try updating instead
+    console.log("[ensureAdminUser] Attempting UPDATE fallback...");
+    await dbRun(
+      "UPDATE users SET password_hash = ?, email = ?, is_admin = 1, is_super_admin = 1, is_promoted_admin = 0, full_name = ? WHERE username = ?",
+      [passwordHash, email, "Site Admin", normalizedUsername]
+    );
+    console.log("[ensureAdminUser] UPDATE fallback completed");
+  }
 
   const admin = await getAdminUser();
+  console.log("[ensureAdminUser] Final admin check:", admin ? admin.username : "STILL NONE");
   if (admin) return admin;
 
   // If somehow still missing (e.g., username/email conflict), surface a clear error
@@ -1996,6 +2015,22 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-});
+
+// Wait for database schema to be ready, then bootstrap admin, then start listening
+db.initPromise
+  .then(async () => {
+    console.log("[startup] Database schema ready");
+    try {
+      const admin = await ensureAdminUser();
+      console.log("[startup] Admin user ready:", admin ? admin.username : "(none)");
+    } catch (err) {
+      console.error("[startup] Failed to bootstrap admin user:", err.message);
+    }
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("[startup] Database initialization failed:", err.message);
+    process.exit(1);
+  });
