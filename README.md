@@ -1,98 +1,91 @@
 # Dynamic Blogs
 
-A small Express + SQLite blog/playground with basic accounts, admin moderation, comments, reactions, and notifications. Ideal for students, indie hackers, and developers who want a simple, framework-free Node.js app to extend and customize.
+Lightweight Express + PostgreSQL blog playground with session auth, admin moderation, comments, reactions, notifications, and basic hardening. Built to be hacked on: no frontend frameworks, plain HTML/CSS/JS, and a single Node server you can read end to end.
 
+## Highlights
+- Self-hosted blog with registration/login and session-based auth.
+- Create, edit, and delete posts; users manage their own content, admin can manage all and post as `@admin`.
+- Comment threads, useful/not useful reactions, and per-user notifications.
+- Admin dashboard for user list, flag/unflag, and delete actions; audit logs to stdout.
+- Profile editing (name, email, bio, avatar) via `/profile.html` and `/edit-profile.html`.
+- Security basics baked in: bcrypt hashing (legacy migration), CSRF tokens, rate limiting, secure cookies, and safety headers.
 
-## What this webapp is
-- A self-hosted blog with user registration/login and session-based auth.
-- Supports creating/editing/deleting posts (users manage their own, admin can post as @admin and moderate all).
-- Commenting, useful/not useful reactions, and per-user notifications.
-- Admin dashboard to list users, flag/unflag posts, and delete content.
-- Profile editing with selectable avatars and short bios.
-- SQLite-backed with auto-migrations on startup; ships as a single Node server.
-- Ships with basic security hardening: bcrypt hashing (legacy migration included), CSRF tokens, rate limiting, secure cookies, and safety headers.
+## Not the target
+- Not a hosted SaaS; you run it.
+- Not suited for regulated data (HIPAA/PCI/FERPA/GDPR-sensitive use is out of scope).
+- Not tuned for large scale or hostile traffic; rate limiting is in-memory.
+- No outbound email/SMS; no password reset or MFA.
+- No OAuth/SSO or multi-language support.
 
-## What this webapp is NOT
-- Not a multi-tenant SaaS or hosted service; you run it yourself.
-- Not production-grade for regulated data (HIPAA/PCI/FERPA/GDPR-sensitive use is out of scope).
-- Not battle-tested for large scale or hostile environments; security is best-effort for a small app.
-- Not an email/notifications delivery system (no outbound email/SMS built in).
-- Not offering SSO/OAuth, password reset, 2FA, or multi-language support.
-
-## Stack
-- Node.js, Express 5, express-session
-- PostgreSQL (Supabase free tier recommended; data persists across deploys) via `pg`
+## Tech stack
+- Node.js 18+, Express 5, express-session
+- PostgreSQL (Supabase free tier recommended) via `pg`
 - bcryptjs for password hashing
-- Plain HTML/CSS/JS frontend served from `public/`
+- Plain HTML/CSS/JS served from `public/`
 
-## Requirements
-- Node.js 18+ recommended
-- npm (for dependency install)
-- PostgreSQL database (free Supabase account recommended)
+## Prerequisites
+- Node.js 18+ and npm
+- PostgreSQL database (supply a `DATABASE_URL`)
 
-## Quick start (local)
+## Quick start
 ```
 npm install
 DATABASE_URL="postgresql://..." npm start
 ```
-The app starts on http://localhost:3000. You must provide a `DATABASE_URL` pointing to a PostgreSQL database.
+The server listens on http://localhost:3000. Provide a valid `DATABASE_URL` and set a strong `SESSION_SECRET` in production.
 
-In production, set a strong SESSION_SECRET and run behind HTTPS.
-
-## Usage highlights
-- Users: register, log in, create/edit/delete their own posts; comment and react; view notifications.
-- Admin: log in from `/login.html` (switch to Admin mode), create admin posts, flag/unflag or delete any post, list users.
-- Profiles: edit name, email, bio, avatar from `/profile.html` or `/edit-profile.html`.
+## Usage
+- Users: register, log in, write/edit/delete their own posts; comment and react; view notifications.
+- Admin: toggle Admin mode on `/login.html`, post as `@admin`, flag/unflag or delete any post, list users.
+- Profiles: update basic info and avatar from `/profile.html` or `/edit-profile.html`.
 
 ## Configuration
-Environment variables you can set:
+Environment variables:
 - `PORT` (default 3000)
 - `SESSION_SECRET` (required in production; min 16 chars)
 - `SESSION_NAME` (cookie name; default `sid`)
-- `NODE_ENV` (`production` enables secure cookies + HSTS header)
-- `TRUST_PROXY=1` when running behind a reverse proxy to honor secure cookies
+- `NODE_ENV` (`production` enables secure cookies + HSTS)
+- `TRUST_PROXY=1` when behind a reverse proxy to honor secure cookies
 - `BCRYPT_ROUNDS` (8-14; default 12)
-- `ADMIN_USERNAME` (optional; default `@admin` for first-time bootstrap)
-- `ADMIN_PASSWORD` (strongly recommended in production; used only when no admin exists yet)
-- `ADMIN_EMAIL` (optional; default `admin@example.local`)
-- `ADMIN_RESET_ON_BOOT=1` (optional recovery mode: if a super admin already exists, reset its credentials from `ADMIN_*` on startup)
+- `DATABASE_URL` (PostgreSQL connection string)
+- `ADMIN_USERNAME` (default `@admin` for first-time bootstrap)
+- `ADMIN_PASSWORD` (strongly recommended; used only when no admin exists yet)
+- `ADMIN_EMAIL` (default `admin@example.local`)
+- `ADMIN_RESET_ON_BOOT=1` to reset an existing super admin from `ADMIN_*` once
 
-Admin bootstrap behavior:
-- On first startup, if no admin exists, the app creates one.
-- If `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set, those are used.
-- If `ADMIN_PASSWORD` is missing, a random password is generated. In production, the value is hidden in logs, so set `ADMIN_PASSWORD` explicitly on Render.
-- Recovery for existing deployments: set `ADMIN_RESET_ON_BOOT=1` + `ADMIN_PASSWORD` (and optionally `ADMIN_USERNAME`/`ADMIN_EMAIL`), deploy once, log in, then set `ADMIN_RESET_ON_BOOT=0` and deploy again.
+## Admin bootstrap
+- On first start, if no admin exists, one is created.
+- If `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set, those are used; otherwise a random password is generated (hidden in production logs).
+- Recovery: set `ADMIN_RESET_ON_BOOT=1` with `ADMIN_PASSWORD` (and optionally `ADMIN_USERNAME`/`ADMIN_EMAIL`), deploy once, log in, then clear `ADMIN_RESET_ON_BOOT`.
 
-## Data & storage
-- PostgreSQL database (data persists across deploys)
-- Tables: users, posts, comments, reactions, notifications
-- Admin posts store `author_id` to identify them as admin posts
+## Data and storage
+- PostgreSQL tables: users, posts, comments, reactions, notifications
+- Admin posts store `author_id` to distinguish admin content
 - No email delivery or file uploads
-- Setup: Use free Supabase PostgreSQL, set `DATABASE_URL` env var in production
+- Data persists in your PostgreSQL instance; Supabase free tier works fine
 
 ## Security notes
-- Passwords hashed with bcrypt; legacy SHA-256 hashes auto-migrate on successful login.
+- Passwords hashed with bcrypt; legacy SHA-256 hashes migrate on successful login.
 - CSRF protection via per-session token and client helper in `public/csrf.js`.
-- Session cookies are httpOnly, SameSite=strict; `secure` set when NODE_ENV=production.
-- Simple in-memory rate limiters on auth and write endpoints; restart clears counters.
+- Cookies are httpOnly, SameSite=strict; `secure` when `NODE_ENV=production`.
+- In-memory rate limiters on auth and write endpoints (reset on restart).
 - Security headers: CSP, X-Frame-Options DENY, Referrer-Policy same-origin, X-Content-Type-Options nosniff, HSTS in production.
-- Admin actions (delete/flag) log to stdout for audit visibility; stdout should be persisted in production.
+- Admin delete/flag actions are logged to stdout for audit visibility.
 
-## Intentional Limitations
+## Intentional limitations
 - No email verification, password reset, or MFA.
 - No media storage/uploads; posts are text-only.
 - No WYSIWYG editor; body is plain text.
-- No search indexing beyond simple SQL LIKE.
-- No horizontal scaling; single-instance with in-memory rate limits.
+- No search indexing beyond simple SQL `LIKE`.
+- Single-instance design; no horizontal scaling and rate limits are in-memory.
 
-## Deploying/selling on Gumroad
-- Ship the full source; buyer runs `npm install && SESSION_SECRET=... node server.js`.
-- Provide a strong `SESSION_SECRET` and set `DATABASE_URL` to a PostgreSQL connection string.
-- Run behind HTTPS; set `TRUST_PROXY=1` if fronted by a proxy.
-- Data automatically persists in the PostgreSQL database across restarts.
+## Deploying or selling
+- Ship the source; buyer runs `npm install && SESSION_SECRET=... DATABASE_URL=... node server.js`.
+- Always set a strong `SESSION_SECRET`; run behind HTTPS and set `TRUST_PROXY=1` if fronted by a proxy.
+- PostgreSQL keeps data across restarts; back it up for production use.
 
 ## Support
-This is offered as-is. For production use, add backups, logging, HTTPS termination, and stronger monitoring/rate-limiting as needed.
+Offered as-is. For production, add backups, logging, HTTPS termination, and stronger monitoring/rate limiting as needed.
 
 ## Visuals
 
