@@ -1856,9 +1856,14 @@
                             const btn = this;
                             const id = btn.getAttribute('data-id');
                             
-                            if (!CURRENT_USER.userId || CURRENT_USER.isAdmin) {
+                            // Allow logged-in users and admins to bookmark; only block when logged out or Super Admin
+                            if (!CURRENT_USER.userId) {
                                 showToast('Log in to save bookmarks', 'warning', 1800);
                                 setTimeout(() => navigateWithTransition('/login.html'), 400);
+                                return;
+                            }
+                            if (CURRENT_USER.isSuperAdmin) {
+                                showToast('Super Admins cannot save bookmarks', 'info', 2000);
                                 return;
                             }
                             
