@@ -406,6 +406,17 @@
                 transform: translateY(-2px);
             }
 
+            .manage-btn {
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+            }
+
+            .manage-btn:hover {
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 6px 20px rgba(30, 58, 95, 0.45);
+            }
+
             /* Responsibilities Section */
             .responsibilities-section {
                 background: #ffffff;
@@ -527,6 +538,9 @@
             .verify-results {
                 display: grid;
                 gap: 10px;
+                max-height: 420px;
+                overflow-y: auto;
+                padding-right: 4px;
             }
 
             .verify-row {
@@ -761,6 +775,7 @@
                     <div class="profile-actions">
                         <button class="action-btn edit-btn" onclick="location.href='/edit-profile.html'">✎ Edit Profile</button>
                         <button class="action-btn create-btn" onclick="location.href='/create-post.html'">📝 Create Story</button>
+                        <button class="action-btn manage-btn" onclick="location.href='/admin-management.html'">🧭 Admin Management</button>
                         <button class="action-btn home-btn" data-brand-copy="promoted.home.back" onclick="location.href='/'">🏠 Back to Stories</button>
                     </div>
                 </div>
@@ -924,6 +939,10 @@
                     const statusMeta = author.authorVerified && author.verifiedByAdminUsername
                         ? `Verified by @${escapeHtml(author.verifiedByAdminUsername)}`
                         : (author.emailVerified ? 'Eligible for verification' : 'Email not verified');
+                    const actionLabel = author.authorVerified ? 'Set Community' : 'Mark Verified';
+                    const actionType = author.authorVerified ? 'clear' : 'verify';
+                    const actionClass = author.authorVerified ? 'clear' : 'set';
+                    const disabledAttr = !author.authorVerified && !author.emailVerified ? 'disabled' : '';
                     return `
                         <div class="verify-row" data-author-id="${author.id}">
                             <div class="verify-author-meta">
@@ -931,8 +950,7 @@
                                 <div class="verify-author-sub">${escapeHtml(author.email)} · ${statusMeta}</div>
                             </div>
                             <div class="verify-actions">
-                                <button class="verify-btn set" data-action="verify" ${author.emailVerified ? '' : 'disabled'}>Mark Verified</button>
-                                <button class="verify-btn clear" data-action="clear">Set Community</button>
+                                <button class="verify-btn ${actionClass}" data-action="${actionType}" ${disabledAttr}>${actionLabel}</button>
                             </div>
                         </div>
                     `;
@@ -1222,13 +1240,12 @@
                         const csrfData = await csrfResp.json();
                         const csrfToken = csrfData.token || '';
                         
-                        const resp = await fetch('/api/admin/admins/demote', {
+                        const resp = await fetch('/api/admin/self/step-down', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'x-csrf-token': csrfToken
-                            },
-                            body: JSON.stringify({ userId: currentUser.id })
+                            }
                         });
                         
                         const data = await resp.json();

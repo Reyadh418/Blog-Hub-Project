@@ -496,6 +496,18 @@ async function createNotification({ userId, postId, type, message, allowAdmin = 
   }
 }
 
+async function logAdminAudit({ actorAdminId, targetUserId = null, actionType, details = "" }) {
+  try {
+    if (!actorAdminId || !actionType) return;
+    await dbRun(
+      "INSERT INTO admin_audit_logs (actor_admin_id, target_user_id, action_type, details) VALUES (?, ?, ?, ?)",
+      [actorAdminId, targetUserId, actionType, (details || "").toString().slice(0, 800)]
+    );
+  } catch (err) {
+    console.error("admin audit log failed", err.message);
+  }
+}
+
 function extractMentions(text = "") {
   const mentions = new Set();
   const regex = /@([a-zA-Z0-9._-]{3,32})/g;
@@ -656,6 +668,13 @@ app.patch("/api/admin/authors/:id/verification", requireAdmin, async (req, res, 
         "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'profile', ?)",
         [authorId, '✅ Your author profile was marked as Verified by an admin.']
       );
+
+      await logAdminAudit({
+        actorAdminId: req.session.userId,
+        targetUserId: authorId,
+        actionType: "author_verify",
+        details: `Marked @${target.username} as Verified author`,
+      });
     } else {
       await dbRun(
         `UPDATE users
@@ -665,6 +684,13 @@ app.patch("/api/admin/authors/:id/verification", requireAdmin, async (req, res, 
          WHERE id = ?`,
         [authorId]
       );
+
+      await logAdminAudit({
+        actorAdminId: req.session.userId,
+        targetUserId: authorId,
+        actionType: "author_unverify",
+        details: `Set @${target.username} author trust to Community`,
+      });
     }
 
     const updated = await dbGet(
@@ -857,9 +883,14 @@ app.post("/api/admin/login", authLimiter, async (req, res, next) => {
 // Admin profile (fetch minimal data)
 app.get("/api/admin/profile", requireAdmin, async (req, res, next) => {
   try {
-    const admin = await dbGet("SELECT id, username, is_super_admin FROM users WHERE id = ?", [req.session.userId]);
+    const admin = await dbGet("SELECT id, username, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [req.session.userId]);
     if (!admin) return res.status(404).json({ error: "Admin user not found" });
-    res.json({ id: admin.id, username: admin.username, isSuperAdmin: Number(admin.is_super_admin) === 1 });
+    res.json({
+      id: admin.id,
+      username: admin.username,
+      isSuperAdmin: Number(admin.is_super_admin) === 1,
+      isPromotedAdmin: Number(admin.is_promoted_admin) === 1,
+    });
   } catch (err) {
     next(err);
   }
@@ -930,7 +961,7 @@ app.put("/api/admin/credentials", requireAdmin, async (req, res, next) => {
 // =====================================================
 
 // Get all admins
-app.get("/api/admin/admins", requireSuperAdmin, async (req, res, next) => {
+app.get("/api/admin/admins", requireAdmin, async (req, res, next) => {
   try {
     const admins = await dbAll(
       `SELECT id, username, email, full_name, avatar, is_super_admin, is_promoted_admin, created_at 
@@ -945,6 +976,81 @@ app.get("/api/admin/admins", requireSuperAdmin, async (req, res, next) => {
       isSuperAdmin: Number(a.is_super_admin) === 1,
       isPromotedAdmin: Number(a.is_promoted_admin) === 1,
       createdAt: a.created_at
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/admin/audit-trail", requireAdmin, async (req, res, next) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const actionType = (req.query.actionType || "").toString().trim().toLowerCase();
+    const query = (req.query.q || "").toString().trim().toLowerCase();
+    const rawWindowDays = Number(req.query.windowDays);
+    const windowDays = Number.isFinite(rawWindowDays) && rawWindowDays > 0
+      ? Math.min(Math.floor(rawWindowDays), 365)
+      : 0;
+
+    const allowedActionTypes = new Set([
+      "author_verify",
+      "author_unverify",
+      "admin_promote",
+      "admin_demote",
+      "admin_step_down",
+      "super_admin_transfer",
+    ]);
+
+    if (actionType && !allowedActionTypes.has(actionType)) {
+      return res.status(400).json({ error: "Invalid action filter" });
+    }
+
+    const where = [];
+    const params = [];
+
+    if (actionType) {
+      where.push("l.action_type = ?");
+      params.push(actionType);
+    }
+
+    if (query) {
+      where.push(`(
+        LOWER(COALESCE(actor.username, '')) LIKE ?
+        OR LOWER(COALESCE(target.username, '')) LIKE ?
+        OR LOWER(COALESCE(l.details, '')) LIKE ?
+      )`);
+      const likeQuery = `%${query}%`;
+      params.push(likeQuery, likeQuery, likeQuery);
+    }
+
+    if (windowDays > 0) {
+      where.push("l.created_at >= datetime('now', ?)");
+      params.push(`-${windowDays} days`);
+    }
+
+    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const rows = await dbAll(
+      `SELECT l.id, l.actor_admin_id, l.target_user_id, l.action_type, l.details, l.created_at,
+              actor.username AS actor_username,
+              target.username AS target_username
+       FROM admin_audit_logs l
+       LEFT JOIN users actor ON actor.id = l.actor_admin_id
+       LEFT JOIN users target ON target.id = l.target_user_id
+       ${whereClause}
+       ORDER BY l.created_at DESC
+       LIMIT ?`,
+      [...params, limit]
+    );
+
+    res.json(rows.map((r) => ({
+      id: r.id,
+      actorAdminId: r.actor_admin_id,
+      actorUsername: r.actor_username || "unknown",
+      targetUserId: r.target_user_id || null,
+      targetUsername: r.target_username || null,
+      actionType: r.action_type,
+      details: r.details || "",
+      createdAt: r.created_at,
     })));
   } catch (err) {
     next(err);
@@ -1000,6 +1106,13 @@ app.post("/api/admin/admins/promote", requireSuperAdmin, async (req, res, next) 
       "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'promotion', ?)",
       [userId, notifMessage]
     );
+
+    await logAdminAudit({
+      actorAdminId: req.session.userId,
+      targetUserId: userId,
+      actionType: "admin_promote",
+      details: `Promoted @${user.username} to Promoted Admin`,
+    });
     
     res.json({ ok: true, message: `${user.username} is now a Promoted Admin` });
   } catch (err) {
@@ -1007,19 +1120,13 @@ app.post("/api/admin/admins/promote", requireSuperAdmin, async (req, res, next) 
   }
 });
 
-// Demote admin to regular user
-// - Super Admin can demote any Promoted Admin (but NOT themselves)
-// - Promoted Admins can ONLY demote themselves (self-demote)
-app.post("/api/admin/admins/demote", requireAdmin, async (req, res, next) => {
+// Demote admin to regular user (Super Admin only)
+app.post("/api/admin/admins/demote", requireSuperAdmin, async (req, res, next) => {
   try {
     const userId = parseInt(req.body.userId, 10);
     const currentUserId = req.session.userId;
     
     if (!userId || isNaN(userId)) return res.status(400).json({ error: "userId is required" });
-    
-    // Get current user's admin status
-    const currentUser = await dbGet("SELECT is_super_admin, is_promoted_admin FROM users WHERE id = ?", [currentUserId]);
-    if (!currentUser) return res.status(401).json({ error: "Not authenticated" });
     
     // Get target user
     const targetUser = await dbGet("SELECT id, username, is_admin, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [userId]);
@@ -1030,16 +1137,9 @@ app.post("/api/admin/admins/demote", requireAdmin, async (req, res, next) => {
     if (targetUser.is_super_admin === 1) {
       return res.status(403).json({ error: "The Super Admin cannot be demoted. Use 'Transfer Super Admin' to pass the role to someone else." });
     }
-    
-    // RULE: Promoted Admins can ONLY demote themselves
-    if (currentUser.is_promoted_admin === 1 && !currentUser.is_super_admin) {
-      if (userId !== currentUserId) {
-        return res.status(403).json({ error: "Promoted Admins can only demote themselves" });
-      }
-    }
-    
+
     // RULE: Super Admin cannot demote themselves (they must transfer first)
-    if (currentUser.is_super_admin === 1 && userId === currentUserId) {
+    if (userId === currentUserId) {
       return res.status(400).json({ error: "Super Admin cannot demote themselves. Transfer Super Admin status first." });
     }
     
@@ -1056,12 +1156,53 @@ app.post("/api/admin/admins/demote", requireAdmin, async (req, res, next) => {
         [userId, '📋 Your admin privileges have been removed. You are now a regular user.']
       );
     }
+
+    await logAdminAudit({
+      actorAdminId: currentUserId,
+      targetUserId: userId,
+      actionType: "admin_demote",
+      details: `Demoted @${targetUser.username} to regular user`,
+    });
     
-    const message = userId === currentUserId 
-      ? 'You have stepped down from your admin role'
-      : `${targetUser.username} is no longer an admin`;
+    const message = `${targetUser.username} is no longer an admin`;
     
-    res.json({ ok: true, message, selfDemote: userId === currentUserId });
+    res.json({ ok: true, message, selfDemote: false });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Promoted admin self step-down endpoint
+app.post("/api/admin/self/step-down", requireAdmin, async (req, res, next) => {
+  try {
+    const currentUserId = req.session.userId;
+    const currentUser = await dbGet("SELECT id, username, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [currentUserId]);
+    if (!currentUser) return res.status(401).json({ error: "Not authenticated" });
+    if (Number(currentUser.is_super_admin) === 1) {
+      return res.status(403).json({ error: "Super Admin must transfer role instead of stepping down here" });
+    }
+    if (Number(currentUser.is_promoted_admin) !== 1) {
+      return res.status(400).json({ error: "Only promoted admins can step down here" });
+    }
+
+    await dbRun(
+      "UPDATE users SET is_admin = 0, is_super_admin = 0, is_promoted_admin = 0 WHERE id = ?",
+      [currentUserId]
+    );
+
+    await logAdminAudit({
+      actorAdminId: currentUserId,
+      targetUserId: currentUserId,
+      actionType: "admin_step_down",
+      details: `@${currentUser.username} stepped down from Promoted Admin`,
+    });
+
+    req.session.isAdmin = false;
+    req.session.isPromotedAdmin = false;
+    req.session.isSuperAdmin = false;
+    req.session.userRole = "user";
+
+    res.json({ ok: true, message: "You have stepped down from admin role." });
   } catch (err) {
     next(err);
   }
@@ -1125,6 +1266,13 @@ app.post("/api/admin/admins/transfer-super", requireSuperAdmin, async (req, res,
       "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'promotion', ?)",
       [newSuperAdminId, '👑 You are now the Super Admin! You have full control over the site and all admins.']
     );
+
+    await logAdminAudit({
+      actorAdminId: currentUserId,
+      targetUserId: newSuperAdminId,
+      actionType: "super_admin_transfer",
+      details: `Transferred Super Admin role to @${targetUser.username}`,
+    });
     
     res.json({ 
       ok: true, 

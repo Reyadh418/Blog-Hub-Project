@@ -120,6 +120,19 @@ const initPromise = (async () => {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_audit_logs (
+        id SERIAL PRIMARY KEY,
+        actor_admin_id INTEGER NOT NULL,
+        target_user_id INTEGER,
+        action_type TEXT NOT NULL,
+        details TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (actor_admin_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
     // Create indexes
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)',
@@ -137,6 +150,8 @@ const initPromise = (async () => {
       'CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)',
       'CREATE INDEX IF NOT EXISTS idx_bookmarks_post_id ON bookmarks(post_id)',
       'CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON notifications(user_id, created_at DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_admin_audit_actor_created_at ON admin_audit_logs(actor_admin_id, created_at DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_admin_audit_created_at ON admin_audit_logs(created_at DESC)',
     ];
 
     for (const idx of indexes) {

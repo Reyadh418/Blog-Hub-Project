@@ -245,6 +245,25 @@
                 transition: color 0.2s;
             }
 
+            .skip-btn {
+                width: 100%;
+                margin-top: 14px;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 86%, white);
+                background: #fff;
+                color: var(--color-primary-800);
+                font-weight: 600;
+                font-size: 0.94rem;
+                cursor: pointer;
+                transition: all 0.25s ease;
+            }
+
+            .skip-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+            }
+
             .skip-link:hover {
                 color: #7f8c8d;
             }
@@ -334,7 +353,8 @@
                     </p>
                 </div>
 
-                <a href="/" class="skip-link">Skip for now — I'll verify later</a>
+                <button type="button" class="skip-btn" id="skipVerifyBtn">Skip for now</button>
+                <a href="/" class="skip-link">I'll verify later</a>
             </div>
 
             <div class="verify-card already-verified is-hidden" id="alreadyVerified">
@@ -355,6 +375,7 @@
             const alreadyVerified = document.getElementById('alreadyVerified');
             const resendCooldown = document.getElementById('resendCooldown');
             const countdownEl = document.getElementById('countdown');
+            const skipVerifyBtn = document.getElementById('skipVerifyBtn');
 
             let resendTimer = null;
 
@@ -531,6 +552,12 @@
                     resendBtn.disabled = false;
                 }
             });
+
+            if (skipVerifyBtn) {
+                skipVerifyBtn.addEventListener('click', () => {
+                    window.location.href = '/';
+                });
+            }
 
             init();
         </script>

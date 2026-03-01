@@ -464,6 +464,9 @@
             .verify-results {
                 display: grid;
                 gap: 10px;
+                max-height: 420px;
+                overflow-y: auto;
+                padding-right: 4px;
             }
 
             .verify-row {
@@ -827,6 +830,10 @@
                     const statusMeta = author.authorVerified && author.verifiedByAdminUsername
                         ? `Verified by @${escapeHtml(author.verifiedByAdminUsername)}`
                         : (author.emailVerified ? 'Eligible for verification' : 'Email not verified');
+                    const actionLabel = author.authorVerified ? 'Set Community' : 'Mark Verified';
+                    const actionType = author.authorVerified ? 'clear' : 'verify';
+                    const actionClass = author.authorVerified ? 'clear' : 'set';
+                    const disabledAttr = !author.authorVerified && !author.emailVerified ? 'disabled' : '';
                     return `
                         <div class="verify-row" data-author-id="${author.id}">
                             <div class="verify-author-meta">
@@ -834,8 +841,7 @@
                                 <div class="verify-author-sub">${escapeHtml(author.email)} · ${statusMeta}</div>
                             </div>
                             <div class="verify-actions">
-                                <button class="verify-btn set" data-action="verify" ${author.emailVerified ? '' : 'disabled'}>Mark Verified</button>
-                                <button class="verify-btn clear" data-action="clear">Set Community</button>
+                                <button class="verify-btn ${actionClass}" data-action="${actionType}" ${disabledAttr}>${actionLabel}</button>
                             </div>
                         </div>
                     `;

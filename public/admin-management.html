@@ -251,6 +251,99 @@
             font-size: 0.95rem;
         }
 
+        .audit-section {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid rgba(196, 138, 90, 0.22);
+        }
+
+        .audit-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            color: #1d2e4a;
+        }
+
+        .audit-section > p {
+            color: #64748b;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+
+        .audit-filters {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 0.9fr auto auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .audit-filter-input,
+        .audit-filter-select {
+            width: 100%;
+            border: 1px solid #e8dece;
+            border-radius: 10px;
+            background: #fff;
+            color: #1e3a5f;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+        }
+
+        .audit-filter-btn {
+            border: 1px solid #d7c7b2;
+            border-radius: 10px;
+            padding: 10px 14px;
+            background: #fff;
+            color: #1e3a5f;
+            font-weight: 700;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+
+        .audit-filter-btn.apply {
+            background: linear-gradient(145deg, #1e3a5f 0%, #244063 100%);
+            border-color: #1e3a5f;
+            color: #fff;
+        }
+
+        .audit-filter-btn:hover {
+            filter: brightness(0.97);
+        }
+
+        .audit-summary {
+            color: #64748b;
+            font-size: 0.82rem;
+            margin-bottom: 12px;
+        }
+
+        .audit-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .audit-item {
+            display: grid;
+            gap: 6px;
+            padding: 14px;
+            border: 1px solid #eee6da;
+            border-radius: 12px;
+            background: #fdfbf7;
+        }
+
+        .audit-main {
+            color: #1e3a5f;
+            font-weight: 600;
+            font-size: 0.93rem;
+        }
+
+        .audit-meta {
+            color: #64748b;
+            font-size: 0.82rem;
+        }
+
         .admin-card {
             display: flex;
             align-items: center;
@@ -742,6 +835,9 @@
             .search-result-item { flex-direction: column; gap: 12px; align-items: flex-start; }
             .promote-options { width: 100%; }
             .promote-btn { flex: 1; justify-content: center; }
+            .audit-filters {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -751,11 +847,11 @@
             <div>
                 <h1>👑 Admin Management</h1>
             </div>
-            <a href="/admin-profile.html" class="back-btn">← Back to Profile</a>
+            <a href="/admin-profile.html" id="backToProfile" class="back-btn">← Back to Profile</a>
         </div>
 
         <!-- Add New Admin Section -->
-        <div class="search-section">
+        <div class="search-section" id="promoteSection">
             <h2>➕ Add New Admin</h2>
             <p>Search for a user by username, email, or name to promote them to admin status.</p>
             <div class="search-wrapper">
@@ -773,6 +869,39 @@
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Loading admins...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="audit-section">
+            <h2>🧾 Admin Audit Trail</h2>
+            <p>Recent admin actions including author verification and role changes.</p>
+            <div class="audit-filters">
+                <select id="auditActionFilter" class="audit-filter-select">
+                    <option value="">All actions</option>
+                    <option value="author_verify">Author verified</option>
+                    <option value="author_unverify">Author set to community</option>
+                    <option value="admin_promote">User promoted to admin</option>
+                    <option value="admin_demote">Admin demoted to user</option>
+                    <option value="admin_step_down">Admin stepped down</option>
+                    <option value="super_admin_transfer">Super Admin transferred</option>
+                </select>
+                <input id="auditQueryFilter" class="audit-filter-input" type="text" placeholder="Search actor, target, or details" maxlength="120" />
+                <select id="auditWindowFilter" class="audit-filter-select">
+                    <option value="">Any time</option>
+                    <option value="1">Last 24 hours</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button id="auditApplyBtn" class="audit-filter-btn apply" type="button">Apply</button>
+                <button id="auditResetBtn" class="audit-filter-btn" type="button">Reset</button>
+            </div>
+            <div id="auditSummary" class="audit-summary">Showing recent actions</div>
+            <div id="auditList" class="audit-list">
+                <div class="loading">
+                    <div class="spinner spinner-sm"></div>
+                    <p>Loading audit trail...</p>
                 </div>
             </div>
         </div>
@@ -832,8 +961,8 @@
             }
         }
 
-        // Check if user is a super admin
-        async function checkSuperAdminAccess() {
+        // Check if user is an admin (super or promoted)
+        async function checkAdminAccess() {
             try {
                 const resp = await fetch('/api/admin/profile');
                 if (!resp.ok) {
@@ -841,12 +970,18 @@
                     return false;
                 }
                 const data = await resp.json();
-                if (!data.isSuperAdmin) {
-                    showToast('Only Super Admins can access this page', 'error');
-                    setTimeout(() => navigateWithTransition('/admin-profile.html'), 1500);
-                    return false;
-                }
                 CURRENT_ADMIN = data;
+
+                const backToProfile = document.getElementById('backToProfile');
+                if (backToProfile) {
+                    backToProfile.href = data.isSuperAdmin ? '/admin-profile.html' : '/promoted-admin-profile.html';
+                }
+
+                const promoteSection = document.getElementById('promoteSection');
+                if (promoteSection && !data.isSuperAdmin) {
+                    promoteSection.classList.add('is-hidden');
+                }
+
                 return true;
             } catch (err) {
                 console.error('Auth check failed', err);
@@ -858,12 +993,48 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchCsrfToken();
-            const hasAccess = await checkSuperAdminAccess();
+            const hasAccess = await checkAdminAccess();
             if (!hasAccess) return; // Stop if not authorized
             
+            setupAuditFilters();
             await loadAdmins();
-            setupSearch();
+            await loadAuditTrail();
+            if (CURRENT_ADMIN && CURRENT_ADMIN.isSuperAdmin) {
+                setupSearch();
+            }
         });
+
+        function setupAuditFilters() {
+            const applyBtn = document.getElementById('auditApplyBtn');
+            const resetBtn = document.getElementById('auditResetBtn');
+            const actionFilter = document.getElementById('auditActionFilter');
+            const queryFilter = document.getElementById('auditQueryFilter');
+            const windowFilter = document.getElementById('auditWindowFilter');
+
+            if (applyBtn) {
+                applyBtn.addEventListener('click', () => {
+                    loadAuditTrail();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    if (actionFilter) actionFilter.value = '';
+                    if (queryFilter) queryFilter.value = '';
+                    if (windowFilter) windowFilter.value = '';
+                    loadAuditTrail();
+                });
+            }
+
+            if (queryFilter) {
+                queryFilter.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        loadAuditTrail();
+                    }
+                });
+            }
+        }
 
         // Load all admins
         async function loadAdmins() {
@@ -914,24 +1085,21 @@
                     const isYou = CURRENT_ADMIN && admin.id === CURRENT_ADMIN.id;
                     const isSuperAdmin = admin.isSuperAdmin === true;
                     const isPromotedAdmin = admin.isPromotedAdmin === true;
+                    const canManageRoles = CURRENT_ADMIN && CURRENT_ADMIN.isSuperAdmin === true;
                     // Super Admin is protected - cannot be demoted
                     // Promoted Admins can be demoted by Super Admin
-                    const canModify = !isYou && !isSuperAdmin && isPromotedAdmin;
-                    const canTransfer = isYou && isSuperAdmin; // Only Super Admin can see transfer option on themselves
+                    const canModify = canManageRoles && !isYou && !isSuperAdmin && isPromotedAdmin;
                     const initial = (admin.username || 'A').charAt(0).toUpperCase();
                     const avatarTone = getAvatarTone(admin.avatar || admin.username);
                     const safeUsername = escapeHtml(admin.username);
                     
                     // Build action buttons
                     let actionHtml = '';
-                    if (isSuperAdmin && isYou) {
-                        // Super Admin viewing themselves - show transfer option
+                    if (canManageRoles && isSuperAdmin && isYou) {
                         actionHtml = `<div class="admin-actions"><span class="admin-action-note admin-action-note-super">👑 You are the Super Admin</span></div>`;
-                    } else if (isSuperAdmin && !isYou) {
-                        // Someone else is Super Admin - shouldn't happen in current list
+                    } else if (canManageRoles && isSuperAdmin && !isYou) {
                         actionHtml = `<div class="admin-actions"><span class="admin-action-note admin-action-note-protected">👑 Super Admin (Protected)</span></div>`;
                     } else if (canModify) {
-                        // Promoted Admin - can be demoted or transferred to; Super Admin can view profile
                         actionHtml = `
                             <div class="admin-actions">
                                 <button class="action-btn view-profile" data-user-id="${admin.id}">
@@ -945,8 +1113,15 @@
                                 </button>
                             </div>
                         `;
+                    } else if (!canManageRoles) {
+                        actionHtml = `
+                            <div class="admin-actions">
+                                <button class="action-btn view-profile" data-user-id="${admin.id}">👁 View Profile</button>
+                                <span class="admin-action-note">Role changes require Super Admin</span>
+                            </div>
+                        `;
                     } else if (isYou && isPromotedAdmin) {
-                        actionHtml = `<div class="admin-actions"><span class="admin-action-note">Cannot modify yourself here</span></div>`;
+                        actionHtml = `<div class="admin-actions"><span class="admin-action-note">Use your profile to step down if needed</span></div>`;
                     } else {
                         actionHtml = `<div class="admin-actions"><span class="admin-action-note">—</span></div>`;
                     }
@@ -980,8 +1155,88 @@
             }
         }
 
+        function formatAuditAction(item) {
+            const map = {
+                author_verify: 'Author verified',
+                author_unverify: 'Author set to community',
+                admin_promote: 'User promoted to admin',
+                admin_demote: 'Admin demoted to user',
+                admin_step_down: 'Admin stepped down',
+                super_admin_transfer: 'Super Admin transferred',
+            };
+            return map[item.actionType] || item.actionType;
+        }
+
+        function formatAuditTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        async function loadAuditTrail() {
+            const container = document.getElementById('auditList');
+            const summary = document.getElementById('auditSummary');
+            if (!container) return;
+
+            try {
+                const actionType = (document.getElementById('auditActionFilter')?.value || '').trim();
+                const query = (document.getElementById('auditQueryFilter')?.value || '').trim();
+                const windowDays = (document.getElementById('auditWindowFilter')?.value || '').trim();
+
+                const params = new URLSearchParams({ limit: '80' });
+                if (actionType) params.set('actionType', actionType);
+                if (query) params.set('q', query);
+                if (windowDays) params.set('windowDays', windowDays);
+
+                const resp = await fetch(`/api/admin/audit-trail?${params.toString()}`);
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to load audit trail');
+                }
+
+                const logs = await resp.json();
+                if (!Array.isArray(logs) || logs.length === 0) {
+                    if (summary) summary.textContent = 'No actions match current filters';
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">🧾</div>
+                            <p>No admin actions match your filters.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (summary) {
+                    summary.textContent = `Showing ${logs.length} recent action${logs.length === 1 ? '' : 's'}`;
+                }
+
+                container.innerHTML = logs.map((item) => {
+                    const actor = item.actorUsername ? `@${escapeHtml(item.actorUsername)}` : 'Unknown admin';
+                    const target = item.targetUsername ? `@${escapeHtml(item.targetUsername)}` : '—';
+                    const action = formatAuditAction(item);
+                    const details = item.details ? escapeHtml(item.details) : '';
+                    return `
+                        <div class="audit-item">
+                            <div class="audit-main"><strong>${actor}</strong> · ${escapeHtml(action)}</div>
+                            <div class="audit-meta">Target: ${target} · ${formatAuditTime(item.createdAt)}</div>
+                            ${details ? `<div class="audit-meta">${details}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load audit trail', err);
+                if (summary) summary.textContent = 'Audit trail unavailable';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">⚠️</div>
+                        <p>${escapeHtml(err.message) || 'Unable to load audit trail.'}</p>
+                    </div>
+                `;
+            }
+        }
+
         // Search for users
         function setupSearch() {
+            if (!CURRENT_ADMIN || !CURRENT_ADMIN.isSuperAdmin) return;
             const input = document.getElementById('userSearch');
             const results = document.getElementById('searchResults');
 
@@ -1095,6 +1350,7 @@
                 document.getElementById('userSearch').value = '';
                 document.getElementById('searchResults').innerHTML = '';
                 await loadAdmins();
+                await loadAuditTrail();
             } catch (err) {
                 console.error('Promote failed', err);
                 showToast(err.message, 'error');
@@ -1140,6 +1396,7 @@
                     }, 1500);
                 } else {
                     await loadAdmins();
+                    await loadAuditTrail();
                 }
             } catch (err) {
                 console.error('Transfer failed', err);
@@ -1234,6 +1491,7 @@
 
                 showToast(data.message, 'success');
                 await loadAdmins();
+                await loadAuditTrail();
             } catch (err) {
                 console.error('Demote failed', err);
                 showToast(err.message, 'error');
