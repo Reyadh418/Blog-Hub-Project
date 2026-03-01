@@ -4,12 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>View User - Admin</title>
+    <link rel="stylesheet" href="/ui-primitives.css" />
     <script src="/csrf.js"></script>
+    <script src="/brand-expression.js"></script>
     <style>
+        :root {
+            --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+            --color-primary-900: #0f172a;
+            --color-primary-800: #1d2e4a;
+            --color-accent-500: #c48a5a;
+            --color-surface: #fcf9f4;
+            --color-surface-soft: #f3ede3;
+            --color-border-soft: #d8cebc;
+            --color-text-primary: #1c2738;
+            --color-text-muted: #616b7b;
+            --gradient-bg-main: linear-gradient(145deg, #f7f2e9 0%, #ece4d7 100%);
+            --gradient-primary-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --shadow-1: 0 12px 30px rgba(10, 18, 33, 0.2);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        .is-hidden { display: none !important; }
         body {
-            font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-            background: linear-gradient(135deg, #f5f7fb 0%, #e8edf5 100%);
+            font-family: var(--font-family-base);
+            background: var(--gradient-bg-main);
             min-height: 100vh;
             padding: 30px 14px 60px;
         }
@@ -18,7 +38,7 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 22px;
         }
-        .nav h1 { color: #1e3a5f; font-size: 1.6rem; letter-spacing: 0.5px; }
+        .nav h1 { color: var(--color-primary-900); font-size: 1.6rem; letter-spacing: 0.5px; }
         .nav-actions { display: flex; gap: 10px; }
         .btn {
             border: none; border-radius: 10px; padding: 10px 16px;
@@ -27,11 +47,11 @@
         }
         .btn:hover { transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
-        .primary { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%); color:#fff; }
-        .ghost { background:#fff; color:#1e3a5f; border:1px solid #dfe6ef; }
+        .primary { background: var(--gradient-primary-main); color:#fff; }
+        .ghost { background:var(--color-surface); color:var(--color-primary-900); border:1px solid #dfe6ef; }
 
         .card {
-            background: #fff;
+            background: var(--color-surface);
             border-radius: 16px;
             padding: 22px;
             box-shadow: 0 16px 48px rgba(0,0,0,0.14);
@@ -50,15 +70,26 @@
             color: #fff; font-weight: 800; font-size: 2.4rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.14);
         }
-        .name { color:#1e3a5f; font-size:1.6rem; font-weight:700; }
-        .username { color:#d4a574; font-weight:700; margin: 4px 0; }
+        .avatar[data-avatar='aurora'] { background: linear-gradient(135deg, #5efce8 0%, #736efe 100%); }
+        .avatar[data-avatar='sunset'] { background: linear-gradient(135deg, #f83600 0%, #f9d423 100%); }
+        .avatar[data-avatar='wave'] { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+        .avatar[data-avatar='forest'] { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .avatar[data-avatar='midnight'] { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+        .avatar[data-avatar='plum'] { background: linear-gradient(135deg, #cc2b5e 0%, #753a88 100%); }
+        .avatar[data-avatar='citrus'] { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+        .avatar[data-avatar='ember'] { background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%); }
+        .avatar[data-avatar='mint'] { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); }
+        .avatar[data-avatar='default'] { background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%); }
+        .name { color:var(--color-primary-900); font-size:1.6rem; font-weight:700; }
+        .username { color:var(--color-accent-500); font-weight:700; margin: 4px 0; }
         .email { color:#52606d; margin-bottom: 6px; }
         .bio { color:#2c3e50; line-height:1.6; }
 
         .meta-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
         .pill { background:#eef2f7; border:1px solid #e0e6ee; border-radius:999px; padding:8px 12px; font-weight:700; color:#52606d; }
 
-        .section-title { color:#1e3a5f; font-size:1.2rem; font-weight:700; margin-bottom:12px; }
+        .section-title { color:var(--color-primary-900); font-size:1.2rem; font-weight:700; margin-bottom:12px; }
+        .section-title.error-title { color:#c0392b; }
         .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; }
         .item-card {
             background: linear-gradient(145deg, #ffffff 0%, #f7f9fc 100%);
@@ -68,27 +99,46 @@
             box-shadow: 0 10px 28px rgba(0,0,0,0.1);
             transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         }
-        .item-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); border-color: #d4a574; }
-        .item-title { color:#1e3a5f; font-weight:700; margin-bottom:6px; }
-        .item-meta { color:#95a5a6; font-size:0.9rem; margin-bottom:6px; }
-        .item-body { color:#2c3e50; line-height:1.5; }
+        .item-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); border-color: #c48a5a; }
+        .item-title { color:var(--color-primary-900); font-weight:700; margin-bottom:6px; }
+        .item-meta { color:#95a5a6; font-size:0.9rem; margin-bottom:6px; line-height:1.45; }
+        .item-body { color:#2c3e50; line-height:1.7; max-width:68ch; }
+        .item-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+        .item-pill {
+            background:#eef2f7;
+            border:1px solid #e0e6ee;
+            border-radius:999px;
+            padding:3px 10px;
+            color:#52606d;
+            font-size:0.78rem;
+            font-weight:700;
+            letter-spacing:0.2px;
+        }
+        .item-pill.category {
+            background: rgba(212,165,116,0.16);
+            color:#1d2e4a;
+            border-color: rgba(212,165,116,0.35);
+        }
         .link { color:#4a90e2; font-weight:700; text-decoration:none; }
 
-        .empty { text-align:center; padding:30px 10px; color:#6b7280; }
+        .empty { text-align:center; padding:30px 10px; color:var(--color-text-muted); }
 
         .toast-container { position:fixed; top:20px; right:20px; z-index:10000; max-width:400px; }
-        .toast { background:#fff; padding:14px 16px; border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,0.18); display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+        .toast { background:var(--color-surface); padding:14px 16px; border-radius:10px; box-shadow:var(--shadow-1); display:flex; gap:10px; align-items:center; margin-bottom:10px; }
         .toast.success{border-left:4px solid #4CAF50; }
         .toast.error{border-left:4px solid #f44336; }
         .toast .toast-icon { font-weight:700; }
         .toast .toast-message { flex:1; }
+        .toast-close { cursor: pointer; }
+        .item-link-wrap { margin-top: 8px; }
+        .error-text { color:#721c24; }
 
         @media (max-width: 640px) {
             .header { grid-template-columns: 1fr; justify-items: center; text-align:center; }
         }
     </style>
 </head>
-<body>
+<body data-brand-page="view-profile">
 <div class="shell">
     <div class="toast-container" id="toastContainer"></div>
     <div class="nav">
@@ -99,7 +149,7 @@
         </div>
     </div>
 
-    <div class="card" id="profileCard" style="display:none;">
+    <div class="card is-hidden" id="profileCard">
         <div class="header">
             <div class="avatar" id="avatar">U</div>
             <div>
@@ -116,21 +166,21 @@
         </div>
     </div>
 
-    <div class="card" id="postsCard" style="display:none;">
+    <div class="card is-hidden" id="postsCard">
         <div class="section-title">Posts</div>
         <div class="grid" id="postsGrid"></div>
-        <div class="empty" id="postsEmpty" style="display:none;">No posts yet.</div>
+        <div class="empty is-hidden" id="postsEmpty">No posts yet.</div>
     </div>
 
-    <div class="card" id="commentsCard" style="display:none;">
+    <div class="card is-hidden" id="commentsCard">
         <div class="section-title">Comments</div>
         <div class="grid" id="commentsGrid"></div>
-        <div class="empty" id="commentsEmpty" style="display:none;">No comments yet.</div>
+        <div class="empty is-hidden" id="commentsEmpty">No comments yet.</div>
     </div>
 
-    <div class="card" id="errorCard" style="display:none;">
-        <div class="section-title" style="color:#c0392b;">Access Restricted</div>
-        <p style="color:#721c24;">You must be an admin to view this page.</p>
+    <div class="card is-hidden" id="errorCard">
+        <div class="section-title error-title">Access Restricted</div>
+        <p class="error-text">You must be an admin to view this page.</p>
         <button class="btn primary" onclick="window.location.href='/login.html'">Go to login</button>
     </div>
 </div>
@@ -166,7 +216,8 @@ const postsCard = document.getElementById('postsCard');
 const commentsCard = document.getElementById('commentsCard');
 const errorCard = document.getElementById('errorCard');
 
-function avatarStyle(key) { return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)'; }
+function avatarStyle(key) { return AVATAR_PALETTE[key] || 'linear-gradient(145deg, #d0a273 0%, #b2774a 100%)'; }
+function avatarKey(key) { return Object.prototype.hasOwnProperty.call(AVATAR_PALETTE, key) ? key : 'default'; }
 function escapeHtml(str='') { return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[m])); }
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -177,7 +228,7 @@ function showToast(message, type='info', duration=2500) {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     const icons = { success:'✓', error:'✕', info:'ℹ', warning:'⚠' };
-    toast.innerHTML = `<span class="toast-icon">${icons[type]||icons.info}</span><span class="toast-message">${message}</span><span class="toast-close" style="cursor:pointer;">×</span>`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type]||icons.info}</span><span class="toast-message">${message}</span><span class="toast-close">×</span>`;
     container.appendChild(toast);
     toast.querySelector('.toast-close').onclick = () => toast.remove();
     if (duration>0) setTimeout(()=>toast.remove(), duration);
@@ -200,7 +251,7 @@ async function fetchUserProfile(id) {
 }
 
 function renderProfile(user) {
-    avatarEl.style.background = avatarStyle(user.avatar || '');
+    avatarEl.dataset.avatar = avatarKey(user.avatar || '');
     avatarEl.textContent = (user.username || 'U').charAt(0).toUpperCase();
     nameEl.textContent = user.full_name || user.username || '—';
     usernameEl.textContent = '@' + (user.username || '');
@@ -209,41 +260,50 @@ function renderProfile(user) {
     joinedEl.textContent = 'Joined: ' + (user.created_at ? formatDate(user.created_at) : '—');
     postCountEl.textContent = 'Posts: ' + (user.posts ? user.posts.length : 0);
     commentCountEl.textContent = 'Comments: ' + (user.comments ? user.comments.length : 0);
-    profileCard.style.display = 'block';
+    profileCard.classList.remove('is-hidden');
 }
 
 function renderPosts(posts=[]) {
     if (!posts.length) {
-        postsEmpty.style.display = 'block';
-        postsCard.style.display = 'block';
+        postsEmpty.classList.remove('is-hidden');
+        postsCard.classList.remove('is-hidden');
         return;
     }
-    postsCard.style.display = 'block';
-    postsEmpty.style.display = 'none';
+    postsCard.classList.remove('is-hidden');
+    postsEmpty.classList.add('is-hidden');
+    const categories = ['Education', 'Stories', 'Mindset', 'Lessons'];
     postsGrid.innerHTML = posts.map(p => `
         <div class="item-card">
             <div class="item-title">${escapeHtml(p.title)}</div>
             <div class="item-meta">${p.created_at ? formatDate(p.created_at) : ''}</div>
+            <div class="item-pills">
+                <span class="item-pill category">${escapeHtml((p.category || (Array.isArray(p.tags) ? p.tags.find(tag => categories.includes(tag)) : '') || 'Stories'))}</span>
+                <span class="item-pill">Story</span>
+            </div>
             <div class="item-body">${escapeHtml((p.body||'').slice(0, 160))}${p.body && p.body.length>160 ? '...' : ''}</div>
-            <div style="margin-top:8px;"><a class="link" href="/post.html?id=${p.id}">View post →</a></div>
+            <div class="item-link-wrap"><a class="link" href="/post.html?id=${p.id}">View post →</a></div>
         </div>
     `).join('');
 }
 
 function renderComments(comments=[]) {
     if (!comments.length) {
-        commentsEmpty.style.display = 'block';
-        commentsCard.style.display = 'block';
+        commentsEmpty.classList.remove('is-hidden');
+        commentsCard.classList.remove('is-hidden');
         return;
     }
-    commentsCard.style.display = 'block';
-    commentsEmpty.style.display = 'none';
+    commentsCard.classList.remove('is-hidden');
+    commentsEmpty.classList.add('is-hidden');
     commentsGrid.innerHTML = comments.map(c => `
         <div class="item-card">
             <div class="item-title">${escapeHtml(c.post_title || 'Post')}</div>
             <div class="item-meta">${c.created_at ? new Date(c.created_at).toLocaleString() : ''}${c.updated_at && c.updated_at !== c.created_at ? ' · edited' : ''}</div>
+            <div class="item-pills">
+                <span class="item-pill">Comment</span>
+                ${c.updated_at && c.updated_at !== c.created_at ? '<span class="item-pill">Edited</span>' : ''}
+            </div>
             <div class="item-body">${escapeHtml((c.body||'').slice(0, 200))}${c.body && c.body.length>200 ? '...' : ''}</div>
-            <div style="margin-top:8px;"><a class="link" href="/post.html?id=${c.post_id}">Open post →</a></div>
+            <div class="item-link-wrap"><a class="link" href="/post.html?id=${c.post_id}">Open post →</a></div>
         </div>
     `).join('');
 }
@@ -255,7 +315,7 @@ async function init() {
     }
     const isAdmin = await ensureAdmin();
     if (!isAdmin) {
-        errorCard.style.display = 'block';
+        errorCard.classList.remove('is-hidden');
         return;
     }
     try {

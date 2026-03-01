@@ -1,9 +1,11 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+const DATABASE_URL = (process.env.DATABASE_URL || '').toString().trim();
+
 // Create connection pool from DATABASE_URL env var (Supabase/Render)
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL || undefined,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   statement_timeout: 30000,
   idle_in_transaction_session_timeout: 30000,
@@ -22,6 +24,10 @@ pool.on('connect', () => {
 // Initialize schema on startup (exported as promise so server can await it)
 const initPromise = (async () => {
   try {
+    if (!DATABASE_URL) {
+      throw new Error('DATABASE_URL is missing. Set DATABASE_URL in your environment (.env) before starting the server.');
+    }
+
     // Create tables with PostgreSQL syntax
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -36,11 +42,18 @@ const initPromise = (async () => {
         full_name TEXT DEFAULT '',
         bio TEXT DEFAULT '',
         email_verified INTEGER DEFAULT 0,
+        is_author_verified INTEGER DEFAULT 0,
+        author_verified_by_admin_id INTEGER,
+        author_verified_at TIMESTAMP,
         verification_code TEXT DEFAULT '',
         verification_code_expires TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_author_verified INTEGER DEFAULT 0`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS author_verified_by_admin_id INTEGER`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS author_verified_at TIMESTAMP`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS posts (
@@ -115,6 +128,7 @@ const initPromise = (async () => {
       'CREATE INDEX IF NOT EXISTS idx_posts_title ON posts(title)',
       'CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts(tags)',
       'CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin)',
+      'CREATE INDEX IF NOT EXISTS idx_users_is_author_verified ON users(is_author_verified)',
       'CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)',
       'CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)',
       'CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)',
@@ -134,7 +148,7 @@ const initPromise = (async () => {
 
     console.log('[db] Schema initialization complete');
   } catch (err) {
-    console.error('[db] Schema initialization error:', err.message);
+    console.error('[db] Schema initialization error:', err);
     throw err; // Let the caller know init failed
   }
 })();

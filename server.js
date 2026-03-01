@@ -395,20 +395,87 @@ const dbGet = async (sql, params = []) => {
   return row || null;
 };
 
+const CATEGORY_TAXONOMY = Object.freeze(["Education", "Stories", "Mindset", "Lessons"]);
+const CATEGORY_ALIASES = Object.freeze({
+  education: "Education",
+  stories: "Stories",
+  story: "Stories",
+  mindset: "Mindset",
+  lessons: "Lessons",
+  lesson: "Lessons",
+  "life lessons": "Lessons",
+  discipline: "Mindset",
+  "real stories": "Stories",
+  career: "Education",
+});
+
+function canonicalizeCategory(value) {
+  const key = (value || "").toString().trim().toLowerCase();
+  if (!key) return null;
+  return CATEGORY_ALIASES[key] || null;
+}
+
+function parseTagsArray(rawTags) {
+  if (Array.isArray(rawTags)) return rawTags;
+  if (rawTags == null) return [];
+  if (typeof rawTags === "string") {
+    try {
+      const parsed = JSON.parse(rawTags);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return rawTags
+        .toString()
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return rawTags
+    .toString()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function normalizePostTags(rawTags, preferredCategory = null) {
+  const parsed = parseTagsArray(rawTags)
+    .map((s) => (s || "").toString().trim())
+    .filter(Boolean);
+
+  const unique = [];
+  const seen = new Set();
+  parsed.forEach((token) => {
+    const lower = token.toLowerCase();
+    if (seen.has(lower)) return;
+    seen.add(lower);
+    unique.push(token);
+  });
+
+  const inferredCategory =
+    canonicalizeCategory(preferredCategory) || unique.map((token) => canonicalizeCategory(token)).find(Boolean) || "Stories";
+
+  const filtered = unique.filter((token) => !canonicalizeCategory(token));
+  return [inferredCategory, ...filtered];
+}
+
+function extractCategoryFromTags(tags) {
+  return normalizePostTags(tags).find((token) => CATEGORY_TAXONOMY.includes(token)) || "Stories";
+}
+
+function normalizePostRow(row) {
+  if (!row || typeof row !== "object") return row;
+  const tags = normalizePostTags(row.tags, row.category || null);
+  return {
+    ...row,
+    tags,
+    category: extractCategoryFromTags(tags),
+  };
+}
+
 const dbAll = async (sql, params = []) => {
   const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
   const rows = await db.all(convertedSql, convertedParams);
-  // normalize tags into arrays
-  const normalized = rows.map(r => {
-    if (r.tags == null) r.tags = '';
-    try {
-      r.tags = JSON.parse(r.tags);
-    } catch (e) {
-      // fallback: comma-separated
-      r.tags = (r.tags || '').toString().split(',').map(s => s.trim()).filter(Boolean);
-    }
-    return r;
-  });
+  const normalized = rows.map((r) => normalizePostRow(r));
   return normalized;
 };
 
@@ -490,19 +557,137 @@ app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
   try {
     const search = (req.query.search || "").toString().trim().toLowerCase();
     const params = [];
-    let where = "WHERE is_admin = 0";
+    let where = "WHERE u.is_admin = 0";
     if (search) {
-      where += " AND lower(username) LIKE ?";
+      where += " AND lower(u.username) LIKE ?";
       params.push(`%${search}%`);
     }
     const rows = await dbAll(
-      `SELECT id, username, full_name, email, avatar, bio, created_at
-       FROM users
+      `SELECT u.id, u.username, u.full_name, u.email, u.avatar, u.bio, u.created_at,
+              u.email_verified, u.is_author_verified, u.author_verified_by_admin_id, u.author_verified_at,
+              verifier.username as author_verified_by_admin_username
+       FROM users u
+       LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
        ${where}
-       ORDER BY lower(username) ASC`,
+       ORDER BY lower(u.username) ASC`,
       params
     );
     res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/admin/authors", requireAdmin, async (req, res, next) => {
+  try {
+    const search = (req.query.search || "").toString().trim().toLowerCase();
+    const params = [];
+    let where = "WHERE u.is_admin = 0";
+    if (search) {
+      where += " AND (lower(u.username) LIKE ? OR lower(u.email) LIKE ? OR lower(COALESCE(u.full_name, '')) LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    const rows = await dbAll(
+      `SELECT u.id, u.username, u.full_name, u.email, u.avatar, u.created_at,
+              u.email_verified, u.is_author_verified, u.author_verified_by_admin_id, u.author_verified_at,
+              verifier.username AS author_verified_by_admin_username
+       FROM users u
+       LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
+       ${where}
+       ORDER BY u.is_author_verified DESC, u.email_verified DESC, lower(u.username) ASC
+       LIMIT 60`,
+      params
+    );
+
+    res.json(rows.map((row) => ({
+      id: row.id,
+      username: row.username,
+      fullName: row.full_name || "",
+      email: row.email,
+      avatar: row.avatar || "",
+      createdAt: row.created_at,
+      emailVerified: Number(row.email_verified) === 1,
+      authorVerified: Number(row.is_author_verified) === 1,
+      verifiedByAdminId: row.author_verified_by_admin_id || null,
+      verifiedByAdminUsername: row.author_verified_by_admin_username || null,
+      verifiedAt: row.author_verified_at || null,
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/admin/authors/:id/verification", requireAdmin, async (req, res, next) => {
+  try {
+    const authorId = Number(req.params.id);
+    if (!Number.isInteger(authorId) || authorId <= 0) {
+      return res.status(400).json({ error: "Invalid author id" });
+    }
+
+    const target = await dbGet(
+      `SELECT id, username, is_admin, email_verified, is_author_verified
+       FROM users
+       WHERE id = ?`,
+      [authorId]
+    );
+
+    if (!target) return res.status(404).json({ error: "Author not found" });
+    if (Number(target.is_admin) === 1) {
+      return res.status(400).json({ error: "Admin accounts always use Admin trust label" });
+    }
+
+    const verified = req.body.verified === true;
+    if (verified && Number(target.email_verified) !== 1) {
+      return res.status(400).json({ error: "Cannot mark as verified until email is verified" });
+    }
+
+    if (verified) {
+      await dbRun(
+        `UPDATE users
+         SET is_author_verified = 1,
+             author_verified_by_admin_id = ?,
+             author_verified_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [req.session.userId, authorId]
+      );
+
+      await dbRun(
+        "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'profile', ?)",
+        [authorId, '✅ Your author profile was marked as Verified by an admin.']
+      );
+    } else {
+      await dbRun(
+        `UPDATE users
+         SET is_author_verified = 0,
+             author_verified_by_admin_id = NULL,
+             author_verified_at = NULL
+         WHERE id = ?`,
+        [authorId]
+      );
+    }
+
+    const updated = await dbGet(
+      `SELECT u.id, u.username, u.email_verified, u.is_author_verified, u.author_verified_at,
+              u.author_verified_by_admin_id, verifier.username AS author_verified_by_admin_username
+       FROM users u
+       LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
+       WHERE u.id = ?`,
+      [authorId]
+    );
+
+    res.json({
+      ok: true,
+      author: {
+        id: updated.id,
+        username: updated.username,
+        emailVerified: Number(updated.email_verified) === 1,
+        authorVerified: Number(updated.is_author_verified) === 1,
+        verifiedAt: updated.author_verified_at || null,
+        verifiedByAdminId: updated.author_verified_by_admin_id || null,
+        verifiedByAdminUsername: updated.author_verified_by_admin_username || null,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -974,7 +1159,7 @@ app.get("/api/auth/me", async (req, res, next) => {
 
     // Always fetch current user data from database (single source of truth)
     const user = await dbGet(
-      "SELECT id, username, full_name, email, bio, avatar, is_admin, is_super_admin, is_promoted_admin, email_verified FROM users WHERE id = ?",
+      "SELECT id, username, full_name, email, bio, avatar, is_admin, is_super_admin, is_promoted_admin, email_verified, is_author_verified FROM users WHERE id = ?",
       [req.session.userId]
     );
 
@@ -1004,6 +1189,7 @@ app.get("/api/auth/me", async (req, res, next) => {
       isAdmin: user.is_admin === 1,
       isSuperAdmin: user.is_super_admin === 1,
       isPromotedAdmin: user.is_promoted_admin === 1,
+      isAuthorVerified: user.is_author_verified === 1,
       userRole: user.is_admin === 1 ? "admin" : "user",
       emailVerified: user.email_verified === 1
     });
@@ -1061,11 +1247,11 @@ app.get("/api/users/:id", async (req, res, next) => {
     const userId = Number(req.params.id);
     if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: "Invalid user id" });
 
-    const user = await dbGet("SELECT id, username, email, full_name, bio, created_at, avatar, is_admin FROM users WHERE id = ?", [userId]);
+    const user = await dbGet("SELECT id, username, email, full_name, bio, created_at, avatar, is_admin, email_verified, is_author_verified, author_verified_by_admin_id, author_verified_at FROM users WHERE id = ?", [userId]);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     // Get user's posts (include posts by this user, even if they're an admin)
-    const posts = await dbAll("SELECT id, title, body, created_at FROM posts WHERE author_id = ? ORDER BY created_at DESC", [userId]);
+    const posts = await dbAll("SELECT id, title, body, created_at, tags FROM posts WHERE author_id = ? ORDER BY created_at DESC", [userId]);
 
     // Get user's comments with post context
     const comments = await dbAll(
@@ -1086,6 +1272,10 @@ app.get("/api/users/:id", async (req, res, next) => {
       avatar: user.avatar || "", 
       created_at: user.created_at, 
       is_admin: user.is_admin === 1,
+      email_verified: user.email_verified === 1,
+      is_author_verified: user.is_author_verified === 1,
+      author_verified_by_admin_id: user.author_verified_by_admin_id || null,
+      author_verified_at: user.author_verified_at || null,
       posts, 
       comments 
     });
@@ -1178,6 +1368,14 @@ app.get("/api/posts", async (req, res, next) => {
           WHEN p.author_id IS NULL THEN 1
           ELSE COALESCE(u.is_admin, 0)
         END as author_is_admin,
+        COALESCE(u.email_verified, 0) as author_email_verified,
+        CASE
+          WHEN p.author_id IS NULL THEN 1
+          ELSE COALESCE(u.is_author_verified, 0)
+        END as author_is_verified_by_admin,
+        COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+        COALESCE(verifier.username, '') as author_verified_by_admin_name,
+        u.author_verified_at as author_verified_at,
         CASE 
           WHEN p.author_id IS NULL THEN 1
           ELSE 0
@@ -1188,6 +1386,7 @@ app.get("/api/posts", async (req, res, next) => {
         ${bookmarkSelect}
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
+      LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
       ORDER BY p.id DESC
     `, params);
     res.json(rows);
@@ -1229,6 +1428,14 @@ app.get("/api/posts/:id", async (req, res, next) => {
           WHEN p.author_id IS NULL THEN 1
           ELSE COALESCE(u.is_admin, 0)
         END as author_is_admin,
+        COALESCE(u.email_verified, 0) as author_email_verified,
+        CASE
+          WHEN p.author_id IS NULL THEN 1
+          ELSE COALESCE(u.is_author_verified, 0)
+        END as author_is_verified_by_admin,
+        COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+        COALESCE(verifier.username, '') as author_verified_by_admin_name,
+        u.author_verified_at as author_verified_at,
         CASE 
           WHEN p.author_id IS NULL THEN 1
           ELSE 0
@@ -1239,6 +1446,7 @@ app.get("/api/posts/:id", async (req, res, next) => {
         ${bookmarkSelect}
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
+      LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
       WHERE p.id = ?
     `, [...params, id]);
 
@@ -1285,21 +1493,31 @@ app.put("/api/posts/:id", async (req, res, next) => {
     const title = (req.body.title || "").toString().trim();
     const body = (req.body.body || "").toString().trim();
     let tags = req.body.tags || [];
+    const category = req.body.category || null;
     if (!Array.isArray(tags)) {
       tags = tags.toString().split(',').map(s => s.trim()).filter(Boolean);
     }
+    const normalizedTags = normalizePostTags(tags, category);
 
     if (!title || !body) return res.status(400).json({ error: "Title and body are required" });
 
-    const result = await dbRun("UPDATE posts SET title = ?, body = ?, tags = ? WHERE id = ?", [title, body, JSON.stringify(tags), id]);
+    const result = await dbRun("UPDATE posts SET title = ?, body = ?, tags = ? WHERE id = ?", [title, body, JSON.stringify(normalizedTags), id]);
     if (!result.changes) return res.status(404).json({ error: "Post not found" });
 
     const rows = await dbAll(`
       SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
         CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
-        COALESCE(u.avatar, '') as author_avatar
+        COALESCE(u.avatar, '') as author_avatar,
+        COALESCE(u.email_verified, 0) as author_email_verified,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_admin, 0) END as author_is_admin,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_author_verified, 0) END as author_is_verified_by_admin,
+        COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+        COALESCE(verifier.username, '') as author_verified_by_admin_name,
+        u.author_verified_at as author_verified_at,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.id
+      LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
       WHERE p.id = ?
     `, [id]);
     const actorUsername = req.session.username || (req.session.isAdmin ? "admin" : "someone");
@@ -1404,28 +1622,39 @@ app.post("/api/posts", async (req, res, next) => {
     const title = (req.body.title || "").toString().trim();
     const body = (req.body.body || "").toString().trim();
     let tags = req.body.tags || [];
+    const category = req.body.category || null;
     if (!Array.isArray(tags)) {
       tags = tags.toString().split(',').map(s => s.trim()).filter(Boolean);
     }
+    const normalizedTags = normalizePostTags(tags, category);
 
     if (!title || !body) return res.status(400).json({ error: "Title and body are required" });
 
     const result = await dbRun("INSERT INTO posts (author_id, title, body, tags) VALUES (?, ?, ?, ?) RETURNING id", 
-      [authorId, title, body, JSON.stringify(tags)]);
+      [authorId, title, body, JSON.stringify(normalizedTags)]);
 
     // Return created resource including author info
     const created = await dbGet(`
       SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
         CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
         COALESCE(u.avatar, '') as author_avatar,
+        COALESCE(u.email_verified, 0) as author_email_verified,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_admin, 0) END as author_is_admin,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_author_verified, 0) END as author_is_verified_by_admin,
+        COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+        COALESCE(verifier.username, '') as author_verified_by_admin_name,
+        u.author_verified_at as author_verified_at,
         CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post
-      FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?
+      FROM posts p
+      LEFT JOIN users u ON p.author_id = u.id
+      LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
+      WHERE p.id = ?
     `, [result.lastID]);
 
     const actorUsername = req.session.username || (req.session.isAdmin ? "admin" : "someone");
     await notifyMentions({ actorId: req.session.userId || null, actorUsername, text: `${title}\n${body}`, postId: result.lastID });
 
-    res.status(201).json(created);
+    res.status(201).json(normalizePostRow(created));
   } catch (err) {
     next(err);
   }
@@ -1800,6 +2029,12 @@ app.get('/api/bookmarks', requireUserOnly, async (req, res, next) => {
       SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
         CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
         COALESCE(u.avatar, '') as author_avatar,
+        COALESCE(u.email_verified, 0) as author_email_verified,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_admin, 0) END as author_is_admin,
+        CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_author_verified, 0) END as author_is_verified_by_admin,
+        COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+        COALESCE(verifier.username, '') as author_verified_by_admin_name,
+        u.author_verified_at as author_verified_at,
         CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
         COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
         COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
@@ -1809,6 +2044,7 @@ app.get('/api/bookmarks', requireUserOnly, async (req, res, next) => {
       FROM bookmarks b
       JOIN posts p ON b.post_id = p.id
       LEFT JOIN users u ON p.author_id = u.id
+      LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
       WHERE b.user_id = ?
       ORDER BY b.created_at DESC
     `, [req.session.userId]);
@@ -1837,6 +2073,12 @@ app.get('/api/search', async (req, res, next) => {
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
           COALESCE(u.avatar, '') as author_avatar,
+          COALESCE(u.email_verified, 0) as author_email_verified,
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_admin, 0) END as author_is_admin,
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_author_verified, 0) END as author_is_verified_by_admin,
+          COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+          COALESCE(verifier.username, '') as author_verified_by_admin_name,
+          u.author_verified_at as author_verified_at,
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
           COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
@@ -1844,6 +2086,7 @@ app.get('/api/search', async (req, res, next) => {
           ${bookmarkSelect}
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
+        LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
         ORDER BY p.id DESC
       `, params);
       return res.json(rows);
@@ -1860,6 +2103,12 @@ app.get('/api/search', async (req, res, next) => {
           SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
             CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
             COALESCE(u.avatar, '') as author_avatar,
+            COALESCE(u.email_verified, 0) as author_email_verified,
+            CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_admin, 0) END as author_is_admin,
+            CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_author_verified, 0) END as author_is_verified_by_admin,
+            COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+            COALESCE(verifier.username, '') as author_verified_by_admin_name,
+            u.author_verified_at as author_verified_at,
             CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
             COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
             COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
@@ -1867,6 +2116,7 @@ app.get('/api/search', async (req, res, next) => {
             ${bookmarkSelect}
           FROM posts p
           LEFT JOIN users u ON p.author_id = u.id
+           LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
           WHERE (p.author_id IS NULL AND '@admin' LIKE ?)
              OR lower(u.username) LIKE ?
           ORDER BY p.id DESC
@@ -1895,6 +2145,12 @@ app.get('/api/search', async (req, res, next) => {
         SELECT p.id, p.title, p.body, p.created_at, p.tags, p.is_flagged,
           CASE WHEN p.author_id IS NULL THEN '@admin' ELSE u.username END as author_name,
           COALESCE(u.avatar, '') as author_avatar,
+          COALESCE(u.email_verified, 0) as author_email_verified,
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_admin, 0) END as author_is_admin,
+          CASE WHEN p.author_id IS NULL THEN 1 ELSE COALESCE(u.is_author_verified, 0) END as author_is_verified_by_admin,
+          COALESCE(u.author_verified_by_admin_id, NULL) as author_verified_by_admin_id,
+          COALESCE(verifier.username, '') as author_verified_by_admin_name,
+          u.author_verified_at as author_verified_at,
           CASE WHEN p.author_id IS NULL THEN 1 ELSE 0 END as is_admin_post,
           COALESCE((SELECT COUNT(*) FROM comments WHERE post_id = p.id), 0) as comment_count,
           COALESCE((SELECT COUNT(*) FROM reactions WHERE post_id = p.id AND reaction_type = 'useful'), 0) as useful_count,
@@ -1902,6 +2158,7 @@ app.get('/api/search', async (req, res, next) => {
           ${bookmarkSelect}
         FROM posts p
         LEFT JOIN users u ON p.author_id = u.id
+        LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
         ${where}
         ORDER BY p.id DESC
       `,
@@ -2032,6 +2289,6 @@ db.initPromise
     });
   })
   .catch((err) => {
-    console.error("[startup] Database initialization failed:", err.message);
+    console.error("[startup] Database initialization failed:", err);
     process.exit(1);
   });

@@ -4,7 +4,9 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Admin Profile - Blog Hub</title>
+        <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
             * {
@@ -14,16 +16,16 @@
             }
 
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+                font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(145deg, #f7f2e9 0%, #ece4d7 100%);
                 min-height: 100vh;
                 padding: 40px 20px;
             }
 
             .navbar {
-                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
                 padding: 16px 0;
-                box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
+                box-shadow: 0 8px 24px rgba(10, 18, 33, 0.2);
                 margin-bottom: 40px;
             }
 
@@ -57,7 +59,7 @@
 
             .navbar-actions a,
             .navbar-actions button {
-                color: #e9d5ff;
+                color: #e7c9ab;
                 text-decoration: none;
                 font-weight: 600;
                 font-size: 0.95rem;
@@ -69,7 +71,7 @@
 
             .navbar-actions a:hover,
             .navbar-actions button:hover {
-                color: #ffffff;
+                color: #f2dbc5;
             }
 
             .container {
@@ -81,6 +83,10 @@
                 text-align: center;
                 padding: 60px 20px;
                 color: #666;
+            }
+
+            .is-hidden {
+                display: none !important;
             }
 
             .spinner {
@@ -107,42 +113,52 @@
                 border: 1px solid #f5c6cb;
             }
 
+            .error-actions {
+                text-align: center;
+            }
+
+            .error-back-link {
+                color: #8b5cf6;
+                text-decoration: none;
+                font-weight: 600;
+            }
+
             .profile-header {
-                background: #ffffff;
+                background: #fcf9f4;
                 border-radius: 12px;
                 padding: 40px;
                 margin-bottom: 40px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                 text-align: center;
-                border-top: 4px solid #8b5cf6;
+                border-top: 4px solid #c48a5a;
             }
 
             .admin-badge-header {
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
-                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
                 color: #fff;
                 padding: 6px 16px;
                 border-radius: 20px;
                 font-size: 0.85rem;
                 font-weight: 700;
                 margin-bottom: 20px;
-                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+                box-shadow: 0 4px 12px rgba(176, 119, 74, 0.3);
             }
 
             .profile-avatar {
                 width: 120px;
                 height: 120px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 3rem;
                 margin: 0 auto 24px;
                 color: #ffffff;
-                box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+                box-shadow: 0 4px 12px rgba(176, 119, 74, 0.3);
                 cursor: pointer;
                 position: relative;
                 overflow: hidden;
@@ -175,17 +191,38 @@
                 text-transform: uppercase;
             }
 
+            .avatar-chip[data-avatar='aurora'], .profile-avatar[data-avatar='aurora'] { background: linear-gradient(135deg, #5efce8 0%, #736efe 100%); }
+            .avatar-chip[data-avatar='sunset'], .profile-avatar[data-avatar='sunset'] { background: linear-gradient(135deg, #f83600 0%, #f9d423 100%); }
+            .avatar-chip[data-avatar='wave'], .profile-avatar[data-avatar='wave'] { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+            .avatar-chip[data-avatar='forest'], .profile-avatar[data-avatar='forest'] { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+            .avatar-chip[data-avatar='midnight'], .profile-avatar[data-avatar='midnight'] { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+            .avatar-chip[data-avatar='plum'], .profile-avatar[data-avatar='plum'] { background: linear-gradient(135deg, #cc2b5e 0%, #753a88 100%); }
+            .avatar-chip[data-avatar='citrus'], .profile-avatar[data-avatar='citrus'] { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+            .avatar-chip[data-avatar='ember'], .profile-avatar[data-avatar='ember'] { background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%); }
+            .avatar-chip[data-avatar='mint'], .profile-avatar[data-avatar='mint'] { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); }
+            .avatar-chip[data-avatar='default'], .profile-avatar[data-avatar='default'] { background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%); }
+
             /* Avatar modal */
             .avatar-modal-backdrop {
                 position: fixed;
                 inset: 0;
                 background: rgba(20, 33, 61, 0.55);
                 backdrop-filter: blur(6px);
-                display: none;
+                display: flex;
                 align-items: center;
                 justify-content: center;
                 z-index: 12000;
                 padding: 20px;
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.22s ease;
+            }
+
+            .avatar-modal-backdrop.is-open {
+                visibility: visible;
+                opacity: 1;
+                pointer-events: all;
             }
 
             .avatar-modal {
@@ -214,6 +251,9 @@
                 grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
                 gap: 14px;
                 margin: 16px 0 12px 0;
+            }
+
+            .avatar-options.is-hidden {
                 display: none;
             }
 
@@ -385,6 +425,32 @@
                 gap: 12px;
             }
 
+            .responsibilities-section-danger {
+                background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+                border: 1px solid #fca5a5;
+            }
+
+            .responsibilities-title-danger {
+                color: #b91c1c;
+            }
+
+            .stepdown-copy {
+                color: #7f1d1d;
+                margin-bottom: 1rem;
+                text-align: center;
+            }
+
+            .stepdown-actions {
+                text-align: center;
+            }
+
+            .stepdown-btn {
+                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                color: #ffffff;
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+            }
+
             .responsibilities-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -420,6 +486,118 @@
                 color: #666;
                 font-size: 0.9rem;
                 line-height: 1.5;
+            }
+
+            .author-verify-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 32px;
+                margin-bottom: 40px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .verify-search-row {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                margin-top: 8px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+            }
+
+            .verify-search-input {
+                flex: 1;
+                min-width: 220px;
+                padding: 11px 14px;
+                border: 1px solid #ddd6fe;
+                border-radius: 8px;
+                font-size: 0.95rem;
+            }
+
+            .verify-refresh-btn {
+                border: 1px solid #e9d5ff;
+                background: #faf5ff;
+                color: #6d28d9;
+                padding: 11px 14px;
+                border-radius: 8px;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+            .verify-results {
+                display: grid;
+                gap: 10px;
+            }
+
+            .verify-row {
+                border: 1px solid #ece7f7;
+                border-radius: 10px;
+                padding: 12px;
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+                background: linear-gradient(135deg, #fefcff 0%, #fff 100%);
+            }
+
+            .verify-author-meta {
+                display: grid;
+                gap: 4px;
+            }
+
+            .verify-author-name {
+                font-weight: 700;
+                color: #6d28d9;
+            }
+
+            .verify-author-sub {
+                font-size: 0.86rem;
+                color: #6b7280;
+            }
+
+            .verify-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 0.74rem;
+                font-weight: 800;
+                letter-spacing: 0.4px;
+                text-transform: uppercase;
+                border: 1px solid transparent;
+            }
+
+            .verify-status.verified { background: #ecfdf3; color: #166534; border-color: #86efac; }
+            .verify-status.community { background: #fff7ed; color: #9a3412; border-color: #fdba74; }
+            .verify-status.unverified { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+
+            .verify-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .verify-btn {
+                border: none;
+                border-radius: 8px;
+                padding: 10px 12px;
+                font-size: 0.84rem;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+            .verify-btn.set {
+                background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                color: #fff;
+            }
+
+            .verify-btn.clear {
+                background: #f4f4f5;
+                color: #3f3f46;
+                border: 1px solid #e4e4e7;
             }
 
             /* Posts Section */
@@ -467,6 +645,7 @@
                 line-height: 1.6;
                 margin-bottom: 16px;
                 font-size: 0.95rem;
+                max-width: 68ch;
             }
 
             .post-meta {
@@ -474,6 +653,16 @@
                 color: #999;
                 display: flex;
                 gap: 16px;
+                line-height: 1.5;
+            }
+
+            .post-category-pill {
+                background: rgba(139, 92, 246, 0.12);
+                border: 1px solid rgba(124, 58, 237, 0.28);
+                color: #6d28d9;
+                border-radius: 999px;
+                padding: 2px 10px;
+                font-weight: 700;
             }
 
             .empty-posts {
@@ -542,14 +731,14 @@
             }
         </style>
     </head>
-    <body>
+    <body data-brand-page="promoted-admin-profile">
         <div class="toast-container" id="toastContainer"></div>
 
         <div class="navbar">
             <div class="navbar-content">
-                <a href="/">📝 Blog Hub</a>
+                <a href="/" data-brand-copy="promoted.nav.brand">📝 Stories Hub</a>
                 <div class="navbar-actions">
-                    <a href="/create-post.html">New Post</a>
+                    <a href="/create-post.html" data-brand-copy="promoted.nav.newStory">New Story</a>
                     <button id="logoutBtn">Logout</button>
                 </div>
             </div>
@@ -561,7 +750,7 @@
                 <p>Loading profile...</p>
             </div>
 
-            <div id="profileContainer" style="display: none;">
+            <div id="profileContainer" class="is-hidden">
                 <div class="profile-header">
                     <div class="admin-badge-header">🛡️ Admin</div>
                     <div class="profile-avatar" id="profileAvatar">👤</div>
@@ -571,8 +760,8 @@
                     <p class="profile-bio" id="profileBio"></p>
                     <div class="profile-actions">
                         <button class="action-btn edit-btn" onclick="location.href='/edit-profile.html'">✎ Edit Profile</button>
-                        <button class="action-btn create-btn" onclick="location.href='/create-post.html'">📝 Create Post</button>
-                        <button class="action-btn home-btn" onclick="location.href='/'">🏠 Back to Blog</button>
+                        <button class="action-btn create-btn" onclick="location.href='/create-post.html'">📝 Create Story</button>
+                        <button class="action-btn home-btn" data-brand-copy="promoted.home.back" onclick="location.href='/'">🏠 Back to Stories</button>
                     </div>
                 </div>
 
@@ -602,14 +791,24 @@
                     </div>
                 </div>
 
+                <div class="author-verify-section">
+                    <h2 class="responsibilities-title">✅ Author Verification</h2>
+                    <p class="responsibility-description">Set trust status for non-admin authors. Rule set: Verified (admin-verified), Community (email-verified), Unverified (email not verified).</p>
+                    <div class="verify-search-row">
+                        <input id="verifySearchInput" class="verify-search-input" type="search" placeholder="Search author by username or email" />
+                        <button id="verifyRefreshBtn" class="verify-refresh-btn" type="button">Refresh</button>
+                    </div>
+                    <div id="verifyResults" class="verify-results"></div>
+                </div>
+
                 <!-- Step Down Section -->
-                <div class="responsibilities-section" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #fca5a5;">
-                    <h2 class="responsibilities-title" style="color: #b91c1c;">⚠️ Step Down from Admin</h2>
-                    <p style="color: #7f1d1d; margin-bottom: 1rem; text-align: center;">
+                <div class="responsibilities-section responsibilities-section-danger">
+                    <h2 class="responsibilities-title responsibilities-title-danger">⚠️ Step Down from Admin</h2>
+                    <p class="stepdown-copy">
                         If you no longer wish to be an admin, you can step down and become a regular user. This action cannot be undone by you.
                     </p>
-                    <div style="text-align: center;">
-                        <button id="stepDownBtn" class="action-btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 0.75rem 1.5rem; font-size: 1rem;">
+                    <div class="stepdown-actions">
+                        <button id="stepDownBtn" class="action-btn stepdown-btn">
                             🚪 Step Down from Admin Role
                         </button>
                     </div>
@@ -627,7 +826,7 @@
                     <h3>Choose your avatar</h3>
                     <p>Pick a premium badge. Changes apply instantly after confirm.</p>
                     <button id="avatarToggle" class="avatar-toggle">Update avatar</button>
-                    <div class="avatar-options" id="avatarOptions"></div>
+                    <div class="avatar-options is-hidden" id="avatarOptions"></div>
                     <div class="avatar-modal-actions">
                         <button id="avatarConfirm" class="avatar-primary">Confirm</button>
                         <button id="avatarCancel" class="avatar-secondary">Cancel</button>
@@ -635,10 +834,10 @@
                 </div>
             </div>
 
-            <div id="errorContainer" style="display: none;">
+            <div id="errorContainer" class="is-hidden">
                 <div class="error" id="errorMessage"></div>
-                <div style="text-align: center;">
-                    <a href="/login.html" style="color: #8b5cf6; text-decoration: none; font-weight: 600;">← Back to Login</a>
+                <div class="error-actions">
+                    <a href="/login.html" class="error-back-link">← Back to Login</a>
                 </div>
             </div>
         </div>
@@ -658,13 +857,13 @@
                 container.appendChild(toast);
                 const closeBtn = toast.querySelector('.toast-close');
                 closeBtn.addEventListener('click', () => {
-                    toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    toast.classList.add('is-exiting');
                     setTimeout(() => toast.remove(), 300);
                 });
                 if (duration > 0) {
                     setTimeout(() => { 
                         if (toast.parentElement) { 
-                            toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)'; 
+                            toast.classList.add('is-exiting'); 
                             setTimeout(() => toast.remove(), 300); 
                         } 
                     }, duration);
@@ -697,6 +896,84 @@
                 return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
             }
 
+            function avatarKey(key) {
+                return Object.prototype.hasOwnProperty.call(AVATAR_PALETTE, key) ? key : 'default';
+            }
+
+            function computeAuthorTrust(author) {
+                if (!author.emailVerified) return { key: 'unverified', label: 'Unverified' };
+                if (author.authorVerified) return { key: 'verified', label: 'Verified' };
+                return { key: 'community', label: 'Community' };
+            }
+
+            async function csrfHeader() {
+                const csrfResp = await fetch('/api/auth/csrf');
+                const csrfData = await csrfResp.json().catch(() => ({}));
+                return { 'x-csrf-token': csrfData.token || '' };
+            }
+
+            function renderVerifyRows(authors) {
+                if (!verifyResults) return;
+                if (!authors.length) {
+                    verifyResults.innerHTML = '<div class="verify-row"><div class="verify-author-sub">No authors found for this filter.</div></div>';
+                    return;
+                }
+
+                verifyResults.innerHTML = authors.map((author) => {
+                    const trust = computeAuthorTrust(author);
+                    const statusMeta = author.authorVerified && author.verifiedByAdminUsername
+                        ? `Verified by @${escapeHtml(author.verifiedByAdminUsername)}`
+                        : (author.emailVerified ? 'Eligible for verification' : 'Email not verified');
+                    return `
+                        <div class="verify-row" data-author-id="${author.id}">
+                            <div class="verify-author-meta">
+                                <div class="verify-author-name">@${escapeHtml(author.username)} <span class="verify-status ${trust.key}">${trust.label}</span></div>
+                                <div class="verify-author-sub">${escapeHtml(author.email)} · ${statusMeta}</div>
+                            </div>
+                            <div class="verify-actions">
+                                <button class="verify-btn set" data-action="verify" ${author.emailVerified ? '' : 'disabled'}>Mark Verified</button>
+                                <button class="verify-btn clear" data-action="clear">Set Community</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function loadAuthorVerificationList(search = '') {
+                try {
+                    const response = await fetch(`/api/admin/authors?search=${encodeURIComponent(search)}`);
+                    const authors = response.ok ? await response.json() : [];
+                    renderVerifyRows(Array.isArray(authors) ? authors : []);
+                } catch (err) {
+                    console.error('Failed to load author verification list', err);
+                    if (verifyResults) verifyResults.innerHTML = '<div class="verify-row"><div class="verify-author-sub">Unable to load authors right now.</div></div>';
+                }
+            }
+
+            async function updateAuthorVerification(authorId, verified) {
+                try {
+                    const extraHeaders = await csrfHeader();
+                    const response = await fetch(`/api/admin/authors/${authorId}/verification`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...extraHeaders,
+                        },
+                        body: JSON.stringify({ verified }),
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(data.error || 'Could not update author verification', 'error');
+                        return;
+                    }
+                    showToast(verified ? 'Author marked as Verified' : 'Author moved to Community', 'success', 1700);
+                    await loadAuthorVerificationList((verifySearchInput?.value || '').trim());
+                } catch (err) {
+                    console.error('Verification update failed', err);
+                    showToast('Could not update author verification', 'error');
+                }
+            }
+
             const loadingContainer = document.getElementById('loadingContainer');
             const profileContainer = document.getElementById('profileContainer');
             const errorContainer = document.getElementById('errorContainer');
@@ -707,36 +984,40 @@
             const avatarConfirm = document.getElementById('avatarConfirm');
             const avatarCancel = document.getElementById('avatarCancel');
             const profileAvatar = document.getElementById('profileAvatar');
+            const verifySearchInput = document.getElementById('verifySearchInput');
+            const verifyRefreshBtn = document.getElementById('verifyRefreshBtn');
+            const verifyResults = document.getElementById('verifyResults');
+            let verifySearchDebounce = null;
 
-            function setAvatarCircle(el, avatarKey, fallbackText) {
+            function setAvatarCircle(el, avatarToken, fallbackText) {
                 if (!el) return;
-                el.style.background = avatarStyle(avatarKey);
+                el.dataset.avatar = avatarKey(avatarToken);
                 el.textContent = (fallbackText || '👤').substring(0, 2).toUpperCase();
             }
 
             function openAvatarModal() {
                 if (!avatarModal) return;
-                avatarModal.style.display = 'flex';
+                avatarModal.classList.add('is-open');
                 renderAvatarOptions();
             }
 
             function closeAvatarModal() {
                 if (!avatarModal) return;
-                avatarModal.style.display = 'none';
+                avatarModal.classList.remove('is-open');
                 const grid = document.querySelector('.avatar-options');
-                if (grid) grid.style.display = 'none';
+                if (grid) grid.classList.add('is-hidden');
             }
 
             function renderAvatarOptions() {
                 if (!avatarOptionsEl) return;
                 avatarOptionsEl.innerHTML = '';
-                avatarOptionsEl.style.display = 'grid';
+                avatarOptionsEl.classList.remove('is-hidden');
                 Object.keys(AVATAR_PALETTE).forEach((key) => {
                     const option = document.createElement('div');
                     option.className = 'avatar-option' + (selectedAvatar === key ? ' selected' : '');
                     option.dataset.avatar = key;
                     option.innerHTML = `
-                        <div class="avatar-chip" style="background:${avatarStyle(key)}">${key[0].toUpperCase()}</div>
+                        <div class="avatar-chip" data-avatar="${avatarKey(key)}">${key[0].toUpperCase()}</div>
                         <span>${key}</span>
                     `;
                     option.addEventListener('click', () => {
@@ -783,12 +1064,13 @@
                     const profileData = await profileResponse.json();
 
                     displayProfile(profileData);
-                    loadingContainer.style.display = 'none';
-                    profileContainer.style.display = 'block';
+                    await loadAuthorVerificationList();
+                    loadingContainer.classList.add('is-hidden');
+                    profileContainer.classList.remove('is-hidden');
                 } catch (error) {
                     console.error('Load profile error:', error);
-                    loadingContainer.style.display = 'none';
-                    errorContainer.style.display = 'block';
+                    loadingContainer.classList.add('is-hidden');
+                    errorContainer.classList.remove('is-hidden');
                     document.getElementById('errorMessage').textContent = error.message || 'Could not load profile. Please log in again.';
                 }
             }
@@ -806,19 +1088,24 @@
                 if (user.posts && user.posts.length > 0) {
                     document.getElementById('postsCount').textContent = `Your Posts (${user.posts.length})`;
                     postsContainer.innerHTML = user.posts
-                        .map(post => `
+                        .map(post => {
+                            const tags = Array.isArray(post.tags) ? post.tags : [];
+                            const category = post.category || tags.find((token) => ['Education', 'Stories', 'Mindset', 'Lessons'].includes(token)) || 'Stories';
+                            return `
                             <div class="post-card" onclick="window.location.href='/post.html?id=${post.id}'">
                                 <h3 class="post-title">${escapeHtml(post.title)}</h3>
                                 <p class="post-excerpt">${escapeHtml(post.body.substring(0, 150))}${post.body.length > 150 ? '...' : ''}</p>
                                 <div class="post-meta">
+                                    <span class="post-category-pill">${escapeHtml(category)}</span>
                                     <span>📅 ${new Date(post.created_at).toLocaleDateString()}</span>
                                 </div>
                             </div>
-                        `)
+                        `;
+                        })
                         .join('');
                 } else {
                     document.getElementById('postsCount').textContent = 'Your Posts (0)';
-                    postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No posts published yet. Create your first post!</p></div>';
+                    postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No stories published yet. Create your first story!</p></div>';
                 }
             }
 
@@ -847,7 +1134,7 @@
             if (avatarToggle) {
                 avatarToggle.addEventListener('click', () => {
                     const grid = document.querySelector('.avatar-options');
-                    if (grid) grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
+                    if (grid) grid.classList.toggle('is-hidden');
                 });
             }
 
@@ -885,6 +1172,34 @@
             if (avatarModal) {
                 avatarModal.addEventListener('click', (e) => {
                     if (e.target === avatarModal) closeAvatarModal();
+                });
+            }
+
+            if (verifySearchInput) {
+                verifySearchInput.addEventListener('input', () => {
+                    if (verifySearchDebounce) clearTimeout(verifySearchDebounce);
+                    verifySearchDebounce = setTimeout(() => {
+                        loadAuthorVerificationList(verifySearchInput.value.trim());
+                    }, 260);
+                });
+            }
+
+            if (verifyRefreshBtn) {
+                verifyRefreshBtn.addEventListener('click', () => {
+                    loadAuthorVerificationList((verifySearchInput?.value || '').trim());
+                });
+            }
+
+            if (verifyResults) {
+                verifyResults.addEventListener('click', async (event) => {
+                    const button = event.target.closest('button.verify-btn');
+                    if (!button) return;
+                    const row = button.closest('.verify-row');
+                    if (!row) return;
+                    const authorId = Number(row.dataset.authorId);
+                    if (!authorId) return;
+                    const action = button.dataset.action;
+                    await updateAuthorVerification(authorId, action === 'verify');
                 });
             }
 

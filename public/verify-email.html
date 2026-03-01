@@ -4,18 +4,43 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Verify Email - Blog Hub</title>
+        <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
+            :root {
+                --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --color-primary-900: #0f172a;
+                --color-primary-800: #1d2e4a;
+                --color-accent-500: #c48a5a;
+                --color-accent-600: #a86c44;
+                --color-surface: #fcf9f4;
+                --color-surface-soft: #f3ede3;
+                --color-border-soft: #d8cebc;
+                --color-text-muted: #616b7b;
+                --gradient-bg-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+                --gradient-accent-main: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
+                --gradient-primary-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+                --radius-sm: 10px;
+                --radius-md: 14px;
+                --shadow-1: 0 24px 64px rgba(10, 18, 33, 0.32);
+            }
+
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
 
+            .is-hidden { display: none !important; }
+
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                font-family: var(--font-family-base);
+                background:
+                    radial-gradient(circle at 14% 12%, rgba(196, 138, 90, 0.2), transparent 42%),
+                    radial-gradient(circle at 90% 0%, rgba(244, 227, 202, 0.14), transparent 38%),
+                    var(--gradient-bg-main);
                 min-height: 100vh;
                 display: flex;
                 align-items: center;
@@ -29,11 +54,12 @@
             }
 
             .verify-card {
-                background: #ffffff;
-                border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                background: var(--color-surface);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-1);
                 padding: 50px 40px;
                 text-align: center;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 76%, white);
             }
 
             .verify-icon {
@@ -42,7 +68,7 @@
             }
 
             h1 {
-                color: #1e3a5f;
+                color: var(--color-primary-900);
                 font-size: 1.8rem;
                 font-weight: 600;
                 margin-bottom: 8px;
@@ -50,15 +76,18 @@
             }
 
             .verify-subtitle {
-                color: #7f8c8d;
+                color: var(--color-text-muted);
                 font-size: 0.95rem;
                 font-weight: 300;
                 margin-bottom: 8px;
                 line-height: 1.5;
+                max-width: 54ch;
+                margin-left: auto;
+                margin-right: auto;
             }
 
             .verify-email-display {
-                color: #1e3a5f;
+                color: var(--color-primary-900);
                 font-weight: 600;
                 font-size: 1rem;
                 margin-bottom: 32px;
@@ -79,7 +108,7 @@
                 font-size: 1.5rem;
                 font-weight: 700;
                 text-align: center;
-                color: #1e3a5f;
+                color: var(--color-primary-800);
                 background: #f8f9fa;
                 transition: all 0.3s ease;
                 font-family: 'Segoe UI', monospace;
@@ -87,13 +116,13 @@
 
             .code-digit:focus {
                 outline: none;
-                border-color: #d4a574;
+                border-color: var(--color-accent-500);
                 background: #ffffff;
                 box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2);
             }
 
             .code-digit.filled {
-                border-color: #1e3a5f;
+                border-color: var(--color-primary-800);
                 background: #f0f4f8;
             }
 
@@ -119,8 +148,8 @@
                 padding: 14px;
                 border: none;
                 border-radius: 8px;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
-                color: #ffffff;
+                background: var(--gradient-accent-main);
+                color: var(--color-surface);
                 font-size: 1.05rem;
                 font-weight: 600;
                 cursor: pointer;
@@ -145,15 +174,15 @@
             }
 
             .resend-text {
-                color: #7f8c8d;
+                color: var(--color-text-muted);
                 font-size: 0.9rem;
                 margin-bottom: 12px;
             }
 
             .resend-btn {
                 background: none;
-                border: 2px solid #1e3a5f;
-                color: #1e3a5f;
+                border: 2px solid var(--color-primary-900);
+                color: var(--color-primary-900);
                 padding: 10px 24px;
                 border-radius: 8px;
                 font-size: 0.9rem;
@@ -163,8 +192,8 @@
             }
 
             .resend-btn:hover:not(:disabled) {
-                background: #1e3a5f;
-                color: #ffffff;
+                background: var(--color-primary-900);
+                color: var(--color-surface);
             }
 
             .resend-btn:disabled {
@@ -173,7 +202,7 @@
             }
 
             .countdown {
-                color: #d4a574;
+                color: var(--color-accent-500);
                 font-weight: 600;
             }
 
@@ -202,7 +231,7 @@
 
             .message.info {
                 background: #e8f0fe;
-                color: #1e3a5f;
+                color: var(--color-primary-800);
                 border: 1px solid #c9daf8;
                 display: block;
             }
@@ -236,10 +265,6 @@
                 to { transform: rotate(360deg); }
             }
 
-            .already-verified {
-                display: none;
-            }
-
             .already-verified h2 {
                 color: #27ae60;
                 font-size: 1.5rem;
@@ -254,8 +279,8 @@
             .continue-btn {
                 display: inline-block;
                 padding: 12px 32px;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
-                color: #fff;
+                background: var(--gradient-primary-main);
+                color: var(--color-surface);
                 text-decoration: none;
                 border-radius: 8px;
                 font-weight: 600;
@@ -280,7 +305,7 @@
             }
         </style>
     </head>
-    <body>
+    <body data-brand-page="verify-email">
         <div class="verify-container">
             <div class="verify-card" id="verifyCard">
                 <div class="verify-icon">📧</div>
@@ -304,7 +329,7 @@
                 <div class="resend-section">
                     <p class="resend-text">Didn't receive the code?</p>
                     <button class="resend-btn" id="resendBtn">Resend Code</button>
-                    <p class="resend-text" id="resendCooldown" style="display: none;">
+                    <p class="resend-text is-hidden" id="resendCooldown">
                         Resend available in <span class="countdown" id="countdown"></span>
                     </p>
                 </div>
@@ -312,11 +337,11 @@
                 <a href="/" class="skip-link">Skip for now — I'll verify later</a>
             </div>
 
-            <div class="verify-card already-verified" id="alreadyVerified">
+            <div class="verify-card already-verified is-hidden" id="alreadyVerified">
                 <div class="verify-icon">✅</div>
                 <h2>Email Verified!</h2>
                 <p>Your email has been verified. You're all set!</p>
-                <a href="/" class="continue-btn">Continue to Blog Hub</a>
+                <a href="/" class="continue-btn" data-brand-copy="verify.continue">Continue to Stories Hub</a>
             </div>
         </div>
 
@@ -404,8 +429,8 @@
                     }
 
                     if (data.emailVerified) {
-                        verifyCard.style.display = 'none';
-                        alreadyVerified.style.display = 'block';
+                        verifyCard.classList.add('is-hidden');
+                        alreadyVerified.classList.remove('is-hidden');
                         return;
                     }
 
@@ -458,8 +483,8 @@
 
             // Resend button
             function startResendCooldown(seconds) {
-                resendBtn.style.display = 'none';
-                resendCooldown.style.display = 'block';
+                resendBtn.classList.add('is-hidden');
+                resendCooldown.classList.remove('is-hidden');
                 let remaining = seconds;
                 countdownEl.textContent = `${remaining}s`;
 
@@ -468,9 +493,9 @@
                     countdownEl.textContent = `${remaining}s`;
                     if (remaining <= 0) {
                         clearInterval(resendTimer);
-                        resendBtn.style.display = 'inline-block';
+                        resendBtn.classList.remove('is-hidden');
                         resendBtn.disabled = false;
-                        resendCooldown.style.display = 'none';
+                        resendCooldown.classList.add('is-hidden');
                     }
                 }, 1000);
             }

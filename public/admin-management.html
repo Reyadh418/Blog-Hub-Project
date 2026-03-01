@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Management | Blog</title>
+    <title>Admin Management | Stories</title>
+    <link rel="stylesheet" href="/ui-primitives.css" />
+    <script src="/brand-expression.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,9 +18,9 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #fdfbf7 0%, #f5f0e8 100%);
+            background: linear-gradient(145deg, #f7f2e9 0%, #ece4d7 100%);
             min-height: 100vh;
-            color: #1e3a5f;
+            color: #1d2e4a;
         }
 
         .container {
@@ -40,7 +42,7 @@
             font-family: 'Playfair Display', serif;
             font-size: 2.2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -51,7 +53,7 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+            background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
             color: #fff;
             border-radius: 999px;
             font-weight: 600;
@@ -64,8 +66,8 @@
             gap: 8px;
             padding: 10px 20px;
             background: #fff;
-            color: #1e3a5f;
-            border: 1px solid rgba(30, 58, 95, 0.15);
+            color: #1d2e4a;
+            border: 1px solid rgba(29, 46, 74, 0.16);
             border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -74,7 +76,7 @@
         }
 
         .back-btn:hover {
-            background: #1e3a5f;
+            background: #1d2e4a;
             color: #fff;
         }
 
@@ -85,7 +87,7 @@
             padding: 28px;
             margin-bottom: 32px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(212, 165, 116, 0.15);
+            border: 1px solid rgba(196, 138, 90, 0.22);
         }
 
         .search-section h2 {
@@ -99,6 +101,8 @@
             color: #64748b;
             margin-bottom: 20px;
             font-size: 0.95rem;
+            max-width: 62ch;
+            line-height: 1.62;
         }
 
         .search-wrapper {
@@ -118,7 +122,7 @@
 
         .search-input:focus {
             outline: none;
-            border-color: #d4a574;
+            border-color: #c48a5a;
             background: #fff;
         }
 
@@ -171,9 +175,19 @@
             flex-shrink: 0;
         }
 
+        .user-avatar[data-tone='0'], .admin-avatar[data-tone='0'] { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .user-avatar[data-tone='1'], .admin-avatar[data-tone='1'] { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .user-avatar[data-tone='2'], .admin-avatar[data-tone='2'] { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .user-avatar[data-tone='3'], .admin-avatar[data-tone='3'] { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .user-avatar[data-tone='4'], .admin-avatar[data-tone='4'] { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .user-avatar[data-tone='5'], .admin-avatar[data-tone='5'] { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+        .user-avatar[data-tone='6'], .admin-avatar[data-tone='6'] { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .user-avatar[data-tone='7'], .admin-avatar[data-tone='7'] { background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%); }
+        .user-avatar[data-tone='8'], .admin-avatar[data-tone='8'] { background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%); }
+
         .user-details h4 {
             font-weight: 600;
-            color: #1e3a5f;
+            color: #1d2e4a;
             margin-bottom: 2px;
         }
 
@@ -221,14 +235,14 @@
             border-radius: 20px;
             padding: 28px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(212, 165, 116, 0.15);
+            border: 1px solid rgba(196, 138, 90, 0.22);
         }
 
         .admin-list-section h2 {
             font-family: 'Playfair Display', serif;
             font-size: 1.4rem;
             margin-bottom: 8px;
-            color: #1e3a5f;
+            color: #1d2e4a;
         }
 
         .admin-list-section > p {
@@ -332,6 +346,19 @@
         .admin-actions {
             display: flex;
             gap: 8px;
+        }
+
+        .admin-action-note {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .admin-action-note-super {
+            color: #8b5cf6;
+        }
+
+        .admin-action-note-protected {
+            color: #f59e0b;
         }
 
         .action-btn {
@@ -448,6 +475,12 @@
             border-top-color: #d4a574;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
+        }
+
+        .spinner.spinner-sm {
+            width: 24px;
+            height: 24px;
+            border-width: 2px;
         }
 
         @keyframes spin {
@@ -583,6 +616,11 @@
             font-size: 0.95rem;
         }
 
+        .password-label-note {
+            font-weight: 400;
+            color: #94a3b8;
+        }
+
         .input-wrapper {
             position: relative;
             width: 100%;
@@ -707,7 +745,7 @@
         }
     </style>
 </head>
-<body>
+<body data-brand-page="admin-management">
     <div class="container">
         <div class="header">
             <div>
@@ -760,7 +798,7 @@
             <h3 id="passwordTitle">Confirm Transfer</h3>
             <p id="passwordDesc">Enter your Super Admin password to continue.</p>
             <div class="password-input-row">
-                <label class="password-label" for="passwordInput">Password <span style="font-weight:400;color:#94a3b8;">(kept local, sent securely)</span></label>
+                <label class="password-label" for="passwordInput">Password <span class="password-label-note">(kept local, sent securely)</span></label>
                 <div class="input-wrapper">
                     <span class="input-icon">🛡</span>
                     <input type="password" id="passwordInput" placeholder="Super Admin password" autocomplete="current-password" />
@@ -881,17 +919,17 @@
                     const canModify = !isYou && !isSuperAdmin && isPromotedAdmin;
                     const canTransfer = isYou && isSuperAdmin; // Only Super Admin can see transfer option on themselves
                     const initial = (admin.username || 'A').charAt(0).toUpperCase();
-                    const avatarBg = getAvatarColor(admin.avatar || admin.username);
+                    const avatarTone = getAvatarTone(admin.avatar || admin.username);
                     const safeUsername = escapeHtml(admin.username);
                     
                     // Build action buttons
                     let actionHtml = '';
                     if (isSuperAdmin && isYou) {
                         // Super Admin viewing themselves - show transfer option
-                        actionHtml = `<div class="admin-actions"><span style="color:#8b5cf6;font-size:0.85rem;">👑 You are the Super Admin</span></div>`;
+                        actionHtml = `<div class="admin-actions"><span class="admin-action-note admin-action-note-super">👑 You are the Super Admin</span></div>`;
                     } else if (isSuperAdmin && !isYou) {
                         // Someone else is Super Admin - shouldn't happen in current list
-                        actionHtml = `<div class="admin-actions"><span style="color:#f59e0b;font-size:0.85rem;">👑 Super Admin (Protected)</span></div>`;
+                        actionHtml = `<div class="admin-actions"><span class="admin-action-note admin-action-note-protected">👑 Super Admin (Protected)</span></div>`;
                     } else if (canModify) {
                         // Promoted Admin - can be demoted or transferred to; Super Admin can view profile
                         actionHtml = `
@@ -908,15 +946,15 @@
                             </div>
                         `;
                     } else if (isYou && isPromotedAdmin) {
-                        actionHtml = `<div class="admin-actions"><span style="color:#64748b;font-size:0.85rem;">Cannot modify yourself here</span></div>`;
+                        actionHtml = `<div class="admin-actions"><span class="admin-action-note">Cannot modify yourself here</span></div>`;
                     } else {
-                        actionHtml = `<div class="admin-actions"><span style="color:#64748b;font-size:0.85rem;">—</span></div>`;
+                        actionHtml = `<div class="admin-actions"><span class="admin-action-note">—</span></div>`;
                     }
                     
                     return `
                         <div class="admin-card ${isSuperAdmin ? 'super-admin' : ''} ${isYou ? 'is-you' : ''}" data-id="${admin.id}">
                             <div class="admin-info">
-                                <div class="admin-avatar" style="background: ${avatarBg}">${initial}</div>
+                                <div class="admin-avatar" data-tone="${avatarTone}">${initial}</div>
                                 <div class="admin-details">
                                     <h4>
                                         ${safeUsername}
@@ -972,7 +1010,7 @@
                 // Show loading state
                 results.innerHTML = `
                     <div class="empty-state">
-                        <div class="spinner" style="width:24px;height:24px;border-width:2px;"></div>
+                        <div class="spinner spinner-sm"></div>
                         <p>Searching...</p>
                     </div>
                 `;
@@ -997,13 +1035,13 @@
 
                         results.innerHTML = users.map(user => {
                             const initial = (user.username || 'U').charAt(0).toUpperCase();
-                            const avatarBg = getAvatarColor(user.avatar || user.username);
+                            const avatarTone = getAvatarTone(user.avatar || user.username);
                             const safeUsername = escapeHtml(user.username);
                             
                             return `
                                 <div class="search-result-item">
                                     <div class="user-info">
-                                        <div class="user-avatar" style="background: ${avatarBg}">${initial}</div>
+                                        <div class="user-avatar" data-tone="${avatarTone}">${initial}</div>
                                         <div class="user-details">
                                             <h4>${safeUsername}</h4>
                                             <span>${escapeHtml(user.email)} ${user.fullName ? '• ' + escapeHtml(user.fullName) : ''}</span>
@@ -1259,24 +1297,13 @@
             return String(text).replace(/[&<>"']/g, m => map[m]);
         }
 
-        function getAvatarColor(str) {
-            const colors = [
-                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-                'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-                'linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)',
-                'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)'
-            ];
-            if (!str) return colors[0];
+        function getAvatarTone(str) {
+            if (!str) return 0;
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
             }
-            return colors[Math.abs(hash) % colors.length];
+            return Math.abs(hash) % 9;
         }
 
         function navigateWithTransition(url) {

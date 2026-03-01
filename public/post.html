@@ -4,9 +4,26 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Blog Post</title>
+        <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
+            :root {
+                --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --color-primary-900: #0f172a;
+                --color-primary-800: #1d2e4a;
+                --color-accent-500: #c48a5a;
+                --color-accent-600: #a86c44;
+                --color-surface: #fcf9f4;
+                --color-surface-soft: #f3ede3;
+                --color-border-soft: #d8cebc;
+                --color-text-primary: #1c2738;
+                --color-text-muted: #616b7b;
+                --gradient-bg-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+                --gradient-accent-main: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
+            }
+
             * {
                 margin: 0;
                 padding: 0;
@@ -14,10 +31,17 @@
             }
 
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                font-family: var(--font-family-base);
+                background:
+                    radial-gradient(circle at 14% 12%, rgba(196, 138, 90, 0.22), transparent 42%),
+                    radial-gradient(circle at 90% 0%, rgba(244, 227, 202, 0.16), transparent 38%),
+                    var(--gradient-bg-main);
                 min-height: 100vh;
                 padding: 40px 20px;
+            }
+
+            body.reading-mode-open {
+                overflow: hidden;
             }
 
             .post-header {
@@ -29,7 +53,7 @@
             .nav-back {
                 display: inline-block;
                 margin-bottom: 20px;
-                color: #d4a574;
+                color: #e7c9ab;
                 text-decoration: none;
                 font-weight: 600;
                 font-size: 0.95rem;
@@ -38,36 +62,51 @@
             }
 
             .nav-back:hover {
-                color: #e8b896;
+                color: #f2dbc5;
             }
 
             h1 {
-                color: #1e3a5f;
+                color: var(--pillar-title-color, var(--color-text-primary));
                 font-size: 2.8rem;
-                font-weight: 300;
-                letter-spacing: 1px;
+                font-weight: var(--pillar-title-weight, 340);
+                letter-spacing: var(--pillar-title-spacing, 0.8px);
+                font-family: var(--pillar-title-family, var(--font-family-title-serif));
                 margin-bottom: 20px;
                 line-height: 1.2;
             }
 
             .post-header h1 {
-                color: #1e3a5f;
+                color: var(--color-text-primary);
             }
 
             .post-meta {
-                color: #d4a574;
+                color: var(--pillar-meta-color, var(--color-accent-500));
                 font-size: 0.95rem;
-                letter-spacing: 0.5px;
+                letter-spacing: var(--pillar-meta-spacing, 0.5px);
+                text-transform: var(--pillar-meta-case, none);
+                font-weight: var(--pillar-meta-weight, 500);
                 display: flex;
                 justify-content: center;
-                gap: 20px;
+                gap: 24px;
+                row-gap: 10px;
                 flex-wrap: wrap;
+                margin-top: 6px;
             }
 
             .meta-item {
                 display: flex;
                 align-items: center;
                 gap: 6px;
+            }
+
+            .category-chip {
+                background: color-mix(in srgb, var(--pillar-accent, #d4a574) 16%, white);
+                border: 1px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 36%, white);
+                color: color-mix(in srgb, var(--pillar-accent, #d4a574) 80%, black);
+                border-radius: 999px;
+                padding: 4px 10px;
+                font-weight: 700;
+                letter-spacing: 0.2px;
             }
 
             .avatar-chip {
@@ -83,6 +122,17 @@
                 text-transform: uppercase;
                 flex-shrink: 0;
             }
+
+            .avatar-chip[data-avatar='aurora'], .mention-suggestion-avatar[data-avatar='aurora'] { background: linear-gradient(135deg, #5efce8 0%, #736efe 100%); }
+            .avatar-chip[data-avatar='sunset'], .mention-suggestion-avatar[data-avatar='sunset'] { background: linear-gradient(135deg, #f83600 0%, #f9d423 100%); }
+            .avatar-chip[data-avatar='wave'], .mention-suggestion-avatar[data-avatar='wave'] { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+            .avatar-chip[data-avatar='forest'], .mention-suggestion-avatar[data-avatar='forest'] { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+            .avatar-chip[data-avatar='midnight'], .mention-suggestion-avatar[data-avatar='midnight'] { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+            .avatar-chip[data-avatar='plum'], .mention-suggestion-avatar[data-avatar='plum'] { background: linear-gradient(135deg, #cc2b5e 0%, #753a88 100%); }
+            .avatar-chip[data-avatar='citrus'], .mention-suggestion-avatar[data-avatar='citrus'] { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+            .avatar-chip[data-avatar='ember'], .mention-suggestion-avatar[data-avatar='ember'] { background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%); }
+            .avatar-chip[data-avatar='mint'], .mention-suggestion-avatar[data-avatar='mint'] { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); }
+            .avatar-chip[data-avatar='default'], .mention-suggestion-avatar[data-avatar='default'] { background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%); }
 
             .admin-badge {
                 display: inline-flex;
@@ -124,12 +174,166 @@
             .post-container {
                 max-width: 900px;
                 margin: 0 auto;
-                background: #ffffff;
+                background: var(--color-surface);
                 border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                padding: 60px 50px;
+                box-shadow: 0 24px 64px rgba(10, 18, 33, 0.32);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 76%, white);
+                padding: 68px 56px;
                 opacity: 0;
                 animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+
+            .post-container[data-accent] {
+                --pillar-title-weight: 340;
+                --pillar-title-spacing: 0.8px;
+                --pillar-title-family: var(--font-family-title-serif);
+                --pillar-title-color: var(--color-text-primary);
+                --pillar-meta-case: none;
+                --pillar-meta-spacing: 0.5px;
+                --pillar-meta-weight: 500;
+                --pillar-meta-color: var(--color-accent-500);
+                --pillar-body-font: var(--font-family-base);
+                --pillar-body-size: 1.08rem;
+                --pillar-body-color: #2c3e50;
+                --pillar-body-leading: 1.9;
+                --pillar-body-width: 72ch;
+                --pillar-divider-thickness: 3px;
+                --pillar-divider-stop: 42%;
+                --pillar-quote-stroke: 4px;
+                --pillar-quote-radius: 10px;
+                --pillar-quote-fill: 14%;
+                --pillar-quote-text: #1f2937;
+                --pillar-pull-size: 1.36rem;
+                --pillar-pull-style: normal;
+                --pillar-pull-spacing: 0.2px;
+                --pillar-pull-weight: 700;
+                --pillar-pull-fill: 8%;
+                --pillar-pull-stroke-fill: 16%;
+            }
+
+            .post-container[data-accent='mindset'] {
+                --pillar-title-weight: 620;
+                --pillar-title-spacing: 0.22px;
+                --pillar-title-family: var(--font-family-title-serif);
+                --pillar-title-color: #213b5e;
+                --pillar-meta-weight: 560;
+                --pillar-meta-color: color-mix(in srgb, var(--pillar-accent) 74%, #1f3656);
+                --pillar-body-font: var(--font-family-base);
+                --pillar-body-size: 1.06rem;
+                --pillar-body-color: #2a3d57;
+                --pillar-body-leading: 1.9;
+                --pillar-body-width: 70ch;
+                --pillar-pull-size: 1.4rem;
+                --pillar-pull-style: normal;
+                --pillar-pull-spacing: 0.04px;
+                --pillar-pull-weight: 700;
+                --pillar-quote-radius: 14px;
+                --pillar-quote-fill: 18%;
+                --pillar-quote-text: #20334c;
+                --pillar-pull-fill: 12%;
+            }
+
+            .post-container[data-accent='discipline'] {
+                --pillar-title-weight: 680;
+                --pillar-title-spacing: 0.3px;
+                --pillar-title-family: var(--font-family-title-serif);
+                --pillar-meta-case: uppercase;
+                --pillar-meta-spacing: 1px;
+                --pillar-meta-weight: 700;
+                --pillar-body-font: var(--font-family-base);
+                --pillar-body-size: 1.02rem;
+                --pillar-body-leading: 1.78;
+                --pillar-body-width: 68ch;
+                --pillar-divider-thickness: 2px;
+                --pillar-divider-stop: 32%;
+                --pillar-quote-stroke: 5px;
+                --pillar-quote-radius: 6px;
+                --pillar-pull-size: 1.28rem;
+                --pillar-pull-weight: 760;
+                --pillar-pull-fill: 6%;
+                --pillar-pull-stroke-fill: 22%;
+            }
+
+            .post-container[data-accent='lessons'] {
+                --pillar-title-weight: 520;
+                --pillar-title-spacing: 0.6px;
+                --pillar-title-family: 'Georgia', 'Times New Roman', serif;
+                --pillar-title-color: #5b4328;
+                --pillar-meta-weight: 560;
+                --pillar-meta-color: color-mix(in srgb, var(--pillar-accent) 70%, #684826);
+                --pillar-body-font: 'Georgia', 'Times New Roman', serif;
+                --pillar-body-size: 1.1rem;
+                --pillar-body-color: #4b3a28;
+                --pillar-body-leading: 2;
+                --pillar-body-width: 73ch;
+                --pillar-pull-size: 1.5rem;
+                --pillar-pull-style: italic;
+                --pillar-pull-spacing: 0.15px;
+                --pillar-quote-radius: 14px;
+                --pillar-quote-text: #493824;
+                --pillar-quote-fill: 18%;
+                --pillar-pull-fill: 12%;
+            }
+
+            .post-container[data-accent='stories'] {
+                --pillar-title-weight: 440;
+                --pillar-title-spacing: 0.5px;
+                --pillar-title-family: 'Georgia', 'Times New Roman', serif;
+                --pillar-title-color: #3d2d24;
+                --pillar-meta-weight: 520;
+                --pillar-meta-color: color-mix(in srgb, var(--pillar-accent) 72%, #5b3728);
+                --pillar-body-font: 'Georgia', 'Times New Roman', serif;
+                --pillar-body-size: 1.13rem;
+                --pillar-body-color: #3f3128;
+                --pillar-body-leading: 2.06;
+                --pillar-body-width: 75ch;
+                --pillar-pull-size: 1.6rem;
+                --pillar-pull-style: italic;
+                --pillar-pull-weight: 680;
+                --pillar-pull-fill: 10%;
+            }
+
+            .post-container[data-accent='education'] {
+                --pillar-title-weight: 640;
+                --pillar-title-spacing: 0.35px;
+                --pillar-title-family: var(--font-family-title-serif);
+                --pillar-title-color: #1e3553;
+                --pillar-meta-case: uppercase;
+                --pillar-meta-spacing: 0.9px;
+                --pillar-meta-weight: 700;
+                --pillar-meta-color: color-mix(in srgb, var(--pillar-accent) 76%, #1f3a5a);
+                --pillar-body-font: var(--font-family-base);
+                --pillar-body-size: 1.04rem;
+                --pillar-body-color: #263a53;
+                --pillar-body-leading: 1.84;
+                --pillar-body-width: 70ch;
+                --pillar-divider-thickness: 4px;
+                --pillar-divider-stop: 35%;
+                --pillar-quote-radius: 8px;
+                --pillar-quote-text: #1f3348;
+                --pillar-pull-size: 1.32rem;
+                --pillar-pull-weight: 740;
+                --pillar-pull-fill: 6%;
+            }
+
+            .post-container[data-accent='career'] {
+                --pillar-title-weight: 700;
+                --pillar-title-spacing: 0.3px;
+                --pillar-title-family: var(--font-family-title-serif);
+                --pillar-meta-case: uppercase;
+                --pillar-meta-spacing: 0.8px;
+                --pillar-meta-weight: 700;
+                --pillar-body-font: var(--font-family-base);
+                --pillar-body-size: 1.03rem;
+                --pillar-body-leading: 1.82;
+                --pillar-body-width: 69ch;
+                --pillar-divider-thickness: 3px;
+                --pillar-divider-stop: 30%;
+                --pillar-quote-stroke: 5px;
+                --pillar-quote-radius: 8px;
+                --pillar-pull-size: 1.3rem;
+                --pillar-pull-weight: 760;
+                --pillar-pull-fill: 6%;
             }
 
             @keyframes slideUp {
@@ -144,29 +348,141 @@
             }
 
             .post-divider {
-                height: 3px;
-                background: linear-gradient(to right, #d4a574 0%, transparent 100%);
-                margin: 40px 0;
+                height: var(--pillar-divider-thickness, 3px);
+                background: linear-gradient(
+                    to right,
+                    var(--pillar-accent, #d4a574) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 24%, transparent) var(--pillar-divider-stop, 42%),
+                    transparent 100%
+                );
+                margin: 48px 0;
+            }
+
+            .post-container .brand-trust-note {
+                border-left-color: var(--pillar-accent, #d4a574);
+                background: color-mix(in srgb, var(--pillar-accent, #d4a574) 10%, white);
+            }
+
+            .story-credibility {
+                margin: 0 0 34px;
+                padding: 14px;
+                border-radius: 12px;
+                border: 1px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 26%, #d8cebc);
+                background: linear-gradient(
+                    160deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 8%, white) 0%,
+                    #fffdf9 100%
+                );
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+                gap: 10px;
+            }
+
+            .story-cred-item {
+                border-radius: 10px;
+                border: 1px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 16%, #d8cebc);
+                background: #fff;
+                padding: 10px;
+                display: grid;
+                gap: 4px;
+            }
+
+            .story-cred-label {
+                font-size: 0.7rem;
+                letter-spacing: 0.95px;
+                text-transform: uppercase;
+                font-weight: 800;
+                color: #6b7280;
+            }
+
+            .story-cred-value {
+                color: #1f2937;
+                font-size: 0.92rem;
+                line-height: 1.45;
+                font-weight: 700;
             }
 
             .post-body {
-                color: #2c3e50;
-                font-size: 1.1rem;
-                line-height: 1.9;
-                margin-bottom: 40px;
+                color: var(--pillar-body-color, #2c3e50);
+                font-size: var(--pillar-body-size, 1.08rem);
+                font-family: var(--pillar-body-font, var(--font-family-base));
+                line-height: var(--pillar-body-leading, 1.9);
+                max-width: var(--pillar-body-width, 72ch);
+                margin-inline: auto;
+                margin-bottom: 48px;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
-                white-space: pre-wrap;
+                white-space: normal;
+                display: flex;
+                flex-direction: column;
+                gap: 22px;
+            }
+
+            .post-paragraph {
+                margin: 0;
+            }
+
+            .post-blockquote {
+                margin: 4px 0;
+                padding: 14px 18px;
+                border-left: var(--pillar-quote-stroke, 4px) solid var(--pillar-accent, #d4a574);
+                border-radius: var(--pillar-quote-radius, 10px);
+                background: linear-gradient(135deg, color-mix(in srgb, var(--pillar-accent, #d4a574) var(--pillar-quote-fill, 14%), white) 0%, rgba(255,255,255,0.88) 100%);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            }
+
+            .post-blockquote p {
+                margin: 0;
+                color: var(--pillar-quote-text, #1f2937);
+                font-style: italic;
+                line-height: 1.8;
+            }
+
+            .post-pullquote {
+                margin: 8px auto;
+                padding: 14px 20px;
+                max-width: 58ch;
+                border-top: 2px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 70%, white);
+                border-bottom: 2px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 70%, white);
+                text-align: center;
+                color: color-mix(in srgb, var(--pillar-accent, #d4a574) 76%, #0f172a);
+                font-size: var(--pillar-pull-size, 1.36rem);
+                line-height: 1.55;
+                font-weight: var(--pillar-pull-weight, 700);
+                letter-spacing: var(--pillar-pull-spacing, 0.2px);
+                font-style: var(--pillar-pull-style, normal);
+                background: linear-gradient(135deg, color-mix(in srgb, var(--pillar-accent, #d4a574) var(--pillar-pull-fill, 8%), white) 0%, rgba(255,255,255,0.9) 100%);
+                border-radius: 10px;
+                box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pillar-accent, #d4a574) var(--pillar-pull-stroke-fill, 16%), white);
+                position: relative;
+            }
+
+            .post-pullquote::before,
+            .post-pullquote::after {
+                color: color-mix(in srgb, var(--pillar-accent, #d4a574) 75%, white);
+                font-size: 1.5rem;
+                font-weight: 800;
+                line-height: 1;
+            }
+
+            .post-pullquote::before {
+                content: '“';
+                margin-right: 4px;
+            }
+
+            .post-pullquote::after {
+                content: '”';
+                margin-left: 4px;
             }
 
             .post-footer {
-                padding-top: 30px;
+                padding-top: 36px;
                 border-top: 2px solid #ecf0f1;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 flex-wrap: wrap;
-                gap: 20px;
+                gap: 24px;
             }
 
             /* Animation styles */
@@ -219,11 +535,12 @@
             .confirm-overlay {
                 position: fixed;
                 inset: 0;
-                display: none;
+                display: flex;
                 align-items: center;
                 justify-content: center;
                 background: rgba(10, 24, 47, 0.8);
                 backdrop-filter: blur(4px);
+                visibility: hidden;
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.22s ease;
@@ -232,7 +549,7 @@
             }
 
             .confirm-overlay.show {
-                display: flex;
+                visibility: visible;
                 opacity: 1;
                 pointer-events: all;
             }
@@ -318,24 +635,323 @@
                 box-shadow: 0 6px 14px rgba(39, 174, 96, 0.25);
                 transform: translateY(-1px);
                 border-color: #27ae60 !important;
+                background: #d4f1d4;
             }
 
             .reaction-btn.is-active-notuseful {
                 box-shadow: 0 6px 14px rgba(231, 76, 60, 0.25);
                 transform: translateY(-1px);
                 border-color: #e74c3c !important;
+                background: #fde4e4;
+            }
+
+            .reaction-btn.is-neutral {
+                border-color: transparent !important;
+                background: #ecf0f1 !important;
+                box-shadow: none !important;
             }
 
             .comment-form-container {
                 animation: scaleIn 0.3s ease-out;
             }
 
+            .is-hidden {
+                display: none;
+            }
+
+            .post-notif-btn {
+                margin-left: 10px;
+            }
+
+            .post-search-form {
+                display: inline-block;
+                margin-left: 12px;
+            }
+
+            .post-search-input {
+                padding: 8px 10px;
+                border-radius: 8px;
+                border: 1px solid #dfe6ea;
+            }
+
+            .post-search-submit {
+                padding: 8px 10px;
+                border-radius: 8px;
+                border: none;
+                margin-left: 6px;
+                background: #d4a574;
+                color: #fff;
+            }
+
+            .flag-notice {
+                background: #fee;
+                color: #c33;
+                padding: 16px;
+                border-radius: 6px;
+                margin-bottom: 20px;
+                font-weight: 600;
+                text-align: center;
+            }
+
+            .reaction-panel {
+                margin-top: 52px;
+                padding: 34px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                animation: fadeIn 0.5s ease-out;
+            }
+
+            .reaction-row {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+                margin-bottom: 18px;
+                flex-wrap: wrap;
+            }
+
+            .reaction-label {
+                font-weight: 600;
+                color: #1e3a5f;
+                font-size: 1.1rem;
+                letter-spacing: 0.3px;
+            }
+
+            .reaction-btn.useful {
+                background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
+                border: 2px solid #27ae60;
+                padding: 12px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #27ae60;
+            }
+
+            .reaction-btn.useful:hover {
+                background: linear-gradient(135deg, #d4f1d4 0%, #f0f9f0 100%);
+                box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+            }
+
+            .reaction-btn.notuseful {
+                background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%);
+                border: 2px solid #e74c3c;
+                padding: 12px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #e74c3c;
+            }
+
+            .reaction-btn.notuseful:hover {
+                background: linear-gradient(135deg, #fde4e4 0%, #fff0f0 100%);
+                box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+            }
+
+            .reaction-login-prompt {
+                color: #7f8c8d;
+                font-size: 0.95rem;
+                padding: 10px 16px;
+                background: #ecf0f1;
+                border-radius: 8px;
+            }
+
+            .reaction-login-link {
+                color: #4a90e2;
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+            .comments-section {
+                margin-top: 58px;
+                animation: fadeIn 0.6s ease-out;
+            }
+
+            .comments-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 34px;
+            }
+
+            .comments-title {
+                font-size: 1.5rem;
+                color: #1e3a5f;
+                margin: 0;
+                font-weight: 600;
+                letter-spacing: 0.3px;
+            }
+
+            .comments-policy-note {
+                color: #6b7280;
+                font-size: 0.92rem;
+                line-height: 1.5;
+                max-width: 54ch;
+                margin-left: 16px;
+                text-align: right;
+            }
+
+            .comments-title::before {
+                background: var(--pillar-accent, #d4a574);
+                box-shadow: 0 0 0 5px color-mix(in srgb, var(--pillar-accent, #d4a574) 20%, transparent);
+            }
+
+            .comments-badge {
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 88%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 68%, #1e3a5f) 100%
+                );
+                color: #fff;
+                padding: 2px 10px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+                margin-left: 10px;
+            }
+
+            .comment-form-container {
+                margin-bottom: 34px;
+                padding: 28px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+                border-left: 4px solid var(--pillar-accent, #d4a574);
+                animation: scaleIn 0.3s ease-out;
+            }
+
+            .comment-form-label {
+                display: block;
+                margin-bottom: 10px;
+                color: #1e3a5f;
+                font-weight: 600;
+            }
+
+            .comment-input-wrap {
+                position: relative;
+            }
+
+            .comment-body-input {
+                width: 100%;
+                padding: 14px;
+                border: 2px solid #ecf0f1;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 0.95rem;
+                min-height: 110px;
+                resize: vertical;
+                color: #2c3e50;
+            }
+
+            .comment-body-input:focus {
+                border-color: var(--pillar-accent, #d4a574);
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--pillar-accent, #d4a574) 22%, transparent);
+            }
+
+            .comment-actions {
+                margin-top: 18px;
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .submit-comment-btn {
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 88%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 68%, #1e3a5f) 100%
+                );
+                color: #fff;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.95rem;
+                box-shadow: 0 4px 12px color-mix(in srgb, var(--pillar-accent, #d4a574) 32%, transparent);
+            }
+
+            .submit-comment-btn:hover {
+                box-shadow: 0 6px 16px color-mix(in srgb, var(--pillar-accent, #d4a574) 40%, transparent);
+            }
+
+            .cancel-comment-btn {
+                background: #ecf0f1;
+                color: #2c3e50;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+            }
+
+            .cancel-comment-btn:hover {
+                background: #ddd;
+            }
+
+            .comment-login-prompt {
+                margin-bottom: 30px;
+                padding: 25px;
+                background: linear-gradient(135deg, #e8f4f8 0%, #f0f8fc 100%);
+                border-radius: 12px;
+                text-align: center;
+                color: #1e3a5f;
+                border-left: 4px solid #4a90e2;
+                animation: slideUp 0.3s ease-out;
+            }
+
+            .comment-login-text {
+                margin: 0 0 15px 0;
+                font-weight: 600;
+                font-size: 1.05rem;
+            }
+
+            .comment-login-btn {
+                margin-top: 0;
+                background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+                color: #fff;
+                padding: 10px 24px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+            }
+
+            .comment-login-btn:hover {
+                box-shadow: 0 6px 16px rgba(74, 144, 226, 0.3);
+            }
+
+            .comments-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .no-comments {
+                text-align: center;
+                padding: 50px 30px;
+                color: #95a5a6;
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                border-radius: 12px;
+                animation: fadeIn 0.4s ease-out;
+            }
+
+            .no-comments-icon {
+                font-size: 2rem;
+            }
+
+            .no-comments-text {
+                margin-top: 10px;
+                font-size: 1rem;
+            }
+
             /* Comment cards & inline edit */
             .comment-card {
-                padding: 20px;
+                padding: 22px;
                 background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
                 border-radius: 10px;
-                border-left: 4px solid #d4a574;
+                border-left: 4px solid var(--pillar-accent, #d4a574);
                 animation: fadeIn 0.3s ease-out;
             }
 
@@ -365,11 +981,19 @@
             }
 
             .comment-action-btn.edit {
-                background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 88%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 68%, #1e3a5f) 100%
+                );
             }
 
             .comment-action-btn.delete {
-                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 82%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 62%, #1e3a5f) 100%
+                );
             }
 
             .comment-action-btn:hover {
@@ -406,8 +1030,8 @@
             }
 
             .comment-edit textarea:focus {
-                border-color: #d4a574;
-                box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.15);
+                border-color: var(--pillar-accent, #d4a574);
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--pillar-accent, #d4a574) 28%, transparent);
                 outline: none;
             }
 
@@ -452,15 +1076,15 @@
                 padding: 2px 6px;
                 margin: 0 2px;
                 border-radius: 999px;
-                background: rgba(212, 165, 116, 0.18);
-                color: #b35312;
+                background: color-mix(in srgb, var(--pillar-accent, #d4a574) 20%, white);
+                color: color-mix(in srgb, var(--pillar-accent, #d4a574) 78%, #2b3442);
                 font-weight: 700;
                 letter-spacing: 0.1px;
                 transition: transform 0.18s ease, box-shadow 0.18s ease;
             }
             .mention:hover {
                 transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(212, 165, 116, 0.25);
+                box-shadow: 0 4px 12px color-mix(in srgb, var(--pillar-accent, #d4a574) 30%, transparent);
             }
             .mention-hint {
                 margin-top: 8px;
@@ -476,14 +1100,14 @@
                 width: 8px;
                 height: 8px;
                 border-radius: 50%;
-                background: #d4a574;
-                box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.4);
+                background: var(--pillar-accent, #d4a574);
+                box-shadow: 0 0 0 0 color-mix(in srgb, var(--pillar-accent, #d4a574) 38%, transparent);
                 animation: pulse 1.6s ease-in-out infinite;
             }
             @keyframes pulse {
-                0% { box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.4); }
-                70% { box-shadow: 0 0 0 10px rgba(212, 165, 116, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(212, 165, 116, 0); }
+                0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pillar-accent, #d4a574) 38%, transparent); }
+                70% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--pillar-accent, #d4a574) 0%, transparent); }
+                100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pillar-accent, #d4a574) 0%, transparent); }
             }
 
             /* Mention suggestions */
@@ -525,6 +1149,90 @@
             }
             .mention-suggestion-name { color: #1e3a5f; font-weight: 700; }
             .mention-suggestion-admin { color: #d35400; font-weight: 700; font-size: 0.85rem; }
+            .mention-empty-state { padding: 10px; color: #7f8c8d; }
+            .mention-suggestion-meta {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .author-link {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #1e3a5f;
+                font-weight: 700;
+                text-decoration: none;
+            }
+
+            .author-link.is-admin {
+                color: #7c3aed;
+            }
+
+            .author-chip-label {
+                color: inherit;
+            }
+
+            .author-chip-label.is-admin {
+                color: #7c3aed;
+            }
+
+            .author-admin-chip {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #1e3a5f;
+                font-weight: 700;
+            }
+
+            .avatar-chip.avatar-chip-admin {
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            }
+
+            .avatar-chip.avatar-chip-admin-purple {
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            }
+
+            .comment-identity {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .comment-author-name {
+                color: #1e3a5f;
+                font-size: 1rem;
+            }
+
+            .comment-author-link {
+                color: #1e3a5f;
+                font-weight: 700;
+                text-decoration: none;
+            }
+
+            .comment-author-link.is-admin,
+            .comment-author-text.is-admin {
+                color: #7c3aed;
+            }
+
+            .comment-author-text {
+                color: #1e3a5f;
+            }
+
+            .rel-time {
+                color: #95a5a6;
+                font-size: 0.85rem;
+                margin-left: 10px;
+                letter-spacing: 0.2px;
+            }
+
+            .comment-edited {
+                color: var(--pillar-accent, #d4a574);
+                font-size: 0.85rem;
+                margin-left: 8px;
+                font-style: italic;
+            }
 
             .count-bump {
                 animation: bump 0.35s ease;
@@ -724,8 +1432,73 @@
             }
 
             .post-stats {
+
+                button,
+                .pill,
+                .post-action-btn,
+                .comment-action-btn,
+                .post-search-submit,
+                .post-search-clear,
+                .post-search-input,
+                .reading-control,
+                .back-link,
+                .signin-button,
+                .comment-submit,
+                .comment-cancel,
+                .reply-btn,
+                .mention-remove,
+                .reaction-chip,
+                .bookmark-btn {
+                    min-height: 44px;
+                }
+
+                .post-search-input {
+                    width: 100%;
+                    max-width: none;
+                    min-width: 0;
+                }
+
+                .post-search-controls {
+                    width: 100%;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+
+                .post-search-controls .post-search-submit,
+                .post-search-controls .post-search-clear {
+                    flex: 1;
+                }
+
+                .post-actions {
+                    width: 100%;
+                }
+
+                .post-action-btn {
+                    flex: 1 1 calc(50% - 6px);
+                    justify-content: center;
+                }
+
+                .engagement-panel {
+                    gap: 14px;
+                }
+
+                .comment-actions,
+                .comment-header-actions,
+                .mention-row {
+                    gap: 10px;
+                }
+
+                .comment-action-btn,
+                .reply-btn,
+                .mention-remove,
+                .comment-submit,
+                .comment-cancel {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
                 display: flex;
-                gap: 30px;
+                gap: 34px;
                 font-size: 0.95rem;
                 color: #7f8c8d;
             }
@@ -745,14 +1518,16 @@
             }
 
             .stat-value {
-                color: #d4a574;
+                color: var(--pillar-accent, #d4a574);
                 font-weight: 600;
                 font-size: 1rem;
             }
 
             .post-actions {
                 display: flex;
-                gap: 12px;
+                gap: 14px;
+                row-gap: 12px;
+                flex-wrap: wrap;
             }
 
             button {
@@ -768,14 +1543,22 @@
             }
 
             .btn-home {
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 88%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 68%, #1e3a5f) 100%
+                );
                 color: #ffffff;
             }
 
             .btn-home:hover {
-                background: linear-gradient(135deg, #e8b896 0%, #d4a574 100%);
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 95%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 78%, #1e3a5f) 100%
+                );
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(212, 165, 116, 0.3);
+                box-shadow: 0 6px 20px color-mix(in srgb, var(--pillar-accent, #d4a574) 42%, transparent);
             }
 
             .btn-copy {
@@ -785,9 +1568,9 @@
             }
 
             .btn-copy:hover {
-                background: #d4a574;
+                background: var(--pillar-accent, #d4a574);
                 color: #ffffff;
-                border-color: #d4a574;
+                border-color: var(--pillar-accent, #d4a574);
             }
 
             .btn-copy.copied {
@@ -797,19 +1580,27 @@
             }
 
             .btn-bookmark {
-                background: #fff8ef;
-                color: #b9834a;
-                border: 1px solid rgba(212, 165, 116, 0.35);
+                background: color-mix(in srgb, var(--pillar-accent, #d4a574) 12%, white);
+                color: color-mix(in srgb, var(--pillar-accent, #d4a574) 78%, #2b3442);
+                border: 1px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 34%, white);
             }
 
             .btn-bookmark:hover {
-                background: linear-gradient(135deg, #f4e3c1 0%, #d4a574 100%);
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 34%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 82%, white) 100%
+                );
                 color: #1e3a5f;
                 border-color: transparent;
             }
 
             .btn-bookmark.active {
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 88%, white) 0%,
+                    color-mix(in srgb, var(--pillar-accent, #d4a574) 68%, #1e3a5f) 100%
+                );
                 color: #ffffff;
                 border-color: transparent;
             }
@@ -872,6 +1663,17 @@
                     line-height: 1.8;
                 }
 
+                .post-pullquote {
+                    font-size: 1.16rem;
+                    padding: 12px 14px;
+                }
+
+                .story-credibility {
+                    grid-template-columns: 1fr;
+                    padding: 12px;
+                    margin-bottom: 28px;
+                }
+
                 .post-footer {
                     flex-direction: column;
                     align-items: flex-start;
@@ -884,6 +1686,17 @@
 
                 .post-actions {
                     width: 100%;
+                }
+
+                .comments-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 8px;
+                }
+
+                .comments-policy-note {
+                    margin-left: 0;
+                    text-align: left;
                 }
 
                 button {
@@ -986,19 +1799,20 @@
                 width: 100%;
                 color: var(--reading-text, #5b4636);
                 font-size: var(--reading-font-size, 1.2rem);
-                line-height: var(--reading-line-height, 1.9);
-                font-family: Georgia, 'Times New Roman', serif;
+                line-height: calc(var(--reading-line-height, 1.9) + var(--reading-pillar-line-adjust, 0));
+                font-family: var(--reading-font-family, Georgia, 'Times New Roman', serif);
                 transition: all 0.3s ease;
                 background: transparent;
             }
 
             .reading-overlay .reading-title {
                 font-size: 2.4rem;
-                font-weight: 400;
+                font-weight: var(--reading-title-weight, 400);
                 margin-bottom: 20px;
                 color: var(--reading-title, #3d2914);
                 line-height: 1.3;
-                letter-spacing: 0.5px;
+                font-family: var(--reading-title-family, var(--font-family-title-serif));
+                letter-spacing: var(--reading-title-spacing, 0.5px);
             }
 
             .reading-overlay .reading-meta {
@@ -1010,11 +1824,127 @@
                 display: flex;
                 gap: 20px;
                 flex-wrap: wrap;
+                text-transform: var(--reading-meta-case, none);
+                letter-spacing: var(--reading-meta-spacing, 0.3px);
+                font-weight: var(--reading-meta-weight, 520);
+            }
+
+            .reading-overlay[data-pillar='mindset'] {
+                --reading-width: 760px;
+                --reading-pillar-line-adjust: 0.08;
+                --reading-title-spacing: 0.2px;
+                --reading-font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --reading-title-family: var(--font-family-title-serif);
+                --reading-title-weight: 620;
+                --reading-pull-style: normal;
+                --reading-pull-weight: 700;
+                --reading-meta: #4a607a;
+                --reading-title: #273d5b;
+            }
+
+            .reading-overlay[data-pillar='discipline'] {
+                --reading-width: 660px;
+                --reading-pillar-line-adjust: -0.06;
+                --reading-meta-case: uppercase;
+                --reading-meta-spacing: 0.8px;
+                --reading-meta-weight: 700;
+                --reading-font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --reading-title-family: var(--font-family-title-serif);
+                --reading-title-weight: 700;
+                --reading-pull-weight: 760;
+            }
+
+            .reading-overlay[data-pillar='lessons'] {
+                --reading-width: 730px;
+                --reading-pillar-line-adjust: 0.05;
+                --reading-title-spacing: 0.15px;
+                --reading-font-family: Georgia, 'Times New Roman', serif;
+                --reading-title-family: var(--font-family-title-serif);
+                --reading-title-weight: 520;
+                --reading-pull-style: italic;
+                --reading-pull-weight: 670;
+                --reading-meta: #8f6f4b;
+                --reading-title: #5a4227;
+            }
+
+            .reading-overlay[data-pillar='stories'] {
+                --reading-width: 780px;
+                --reading-pillar-line-adjust: 0.1;
+                --reading-font-family: Georgia, 'Times New Roman', serif;
+                --reading-title-family: var(--font-family-title-serif);
+                --reading-title-weight: 470;
+                --reading-pull-style: italic;
+                --reading-pull-weight: 680;
+                --reading-pull-spacing: 0.18px;
+                --reading-meta: #8a5f47;
+                --reading-title: #4b3327;
+            }
+
+            .reading-overlay[data-pillar='education'] {
+                --reading-width: 675px;
+                --reading-pillar-line-adjust: -0.03;
+                --reading-meta-case: uppercase;
+                --reading-meta-spacing: 0.7px;
+                --reading-meta-weight: 680;
+                --reading-font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --reading-title-family: var(--font-family-title-serif);
+                --reading-title-weight: 680;
+                --reading-pull-weight: 740;
+                --reading-meta: #567190;
+                --reading-title: #2a4668;
+            }
+
+            .reading-overlay[data-pillar='career'] {
+                --reading-width: 655px;
+                --reading-pillar-line-adjust: -0.04;
+                --reading-meta-case: uppercase;
+                --reading-meta-spacing: 0.75px;
+                --reading-meta-weight: 700;
+                --reading-font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --reading-title-family: var(--font-family-title-serif);
+                --reading-title-weight: 700;
+                --reading-pull-weight: 760;
             }
 
             .reading-overlay .reading-body {
-                white-space: pre-wrap;
+                white-space: normal;
                 color: inherit;
+                display: flex;
+                flex-direction: column;
+                gap: 22px;
+            }
+
+            .reading-paragraph {
+                margin: 0;
+            }
+
+            .reading-blockquote {
+                margin: 0;
+                padding: 14px 18px;
+                border-left: 3px solid var(--reading-meta, #8b7355);
+                border-radius: 8px;
+                background: color-mix(in srgb, var(--reading-border, #e0dbd4) 22%, transparent);
+            }
+
+            .reading-blockquote p {
+                margin: 0;
+                font-style: italic;
+                line-height: 1.85;
+            }
+
+            .reading-pullquote {
+                margin: 4px auto;
+                padding: 12px 16px;
+                text-align: center;
+                max-width: 56ch;
+                border-top: 1px solid var(--reading-border, #e0dbd4);
+                border-bottom: 1px solid var(--reading-border, #e0dbd4);
+                color: var(--reading-title, #3d2914);
+                font-size: clamp(1.2rem, 2.8vw, 1.8rem);
+                line-height: 1.55;
+                font-weight: var(--reading-pull-weight, 600);
+                letter-spacing: var(--reading-pull-spacing, 0.2px);
+                font-style: var(--reading-pull-style, normal);
             }
 
             /* Reading Mode Controls */
@@ -1172,7 +2102,7 @@
             }
         </style>
     </head>
-    <body>
+    <body data-brand-page="post">
         <div class="toast-container" id="toastContainer"></div>
 
         <!-- Reading Mode Button -->
@@ -1199,9 +2129,9 @@
             </div>
             <div class="reading-backdrop"></div>
             <div class="reading-container" id="readingContainer">
-                <div class="reading-content" style="color: #5b4636;">
-                    <h1 class="reading-title" id="readingTitle" style="color: #3d2914;"></h1>
-                    <div class="reading-meta" id="readingMeta" style="color: #8b7355;"></div>
+                <div class="reading-content">
+                    <h1 class="reading-title" id="readingTitle"></h1>
+                    <div class="reading-meta" id="readingMeta"></div>
                     <div class="reading-body" id="readingBody"></div>
                 </div>
             </div>
@@ -1216,29 +2146,34 @@
                 </div>
             </div>
             <div id="notificationList" class="notification-list"></div>
-            <div id="notificationEmpty" class="notif-empty" style="display:none;">No notifications yet. Interactions on your posts will appear here.</div>
+            <div id="notificationEmpty" class="notif-empty is-hidden">No notifications yet. Interactions on your posts will appear here.</div>
         </div>
 
-        <div id="loading" class="loading" style="display: none;">
+        <div id="loading" class="loading is-hidden">
             <div class="spinner"></div>
-            <p>Loading post...</p>
+            <p data-brand-copy="post.loading">Loading post...</p>
         </div>
 
-        <div id="post-wrapper" style="display: none;">
+        <div id="post-wrapper" class="is-hidden">
             <div class="post-header">
-                <a href="/" class="nav-back">← Back to Blog</a>
-                <button id="notifications-btn" class="notif-btn" style="display:none; margin-left:10px;">🔔 Notifications <span id="notifBadge" class="notif-badge">0</span></button>
-                <form id="post-search-form" style="display:inline-block; margin-left:12px;">
-                    <input id="post-search-input" type="search" placeholder="Search blog..." style="padding:8px 10px;border-radius:8px;border:1px solid #dfe6ea;" />
-                    <button id="post-search-btn" type="submit" style="padding:8px 10px;border-radius:8px;border:none;margin-left:6px;background:#d4a574;color:#fff;">🔎</button>
+                <a href="/" class="nav-back" data-brand-copy="post.back">← Back to Stories</a>
+                <button id="notifications-btn" class="notif-btn post-notif-btn is-hidden">🔔 Notifications <span id="notifBadge" class="notif-badge is-hidden">0</span></button>
+                <form id="post-search-form" class="post-search-form">
+                    <input id="post-search-input" class="post-search-input" type="search" placeholder="Search stories..." />
+                    <button id="post-search-btn" class="post-search-submit" type="submit">🔎</button>
                 </form>
             </div>
 
             <div class="post-container">
                 <div class="post-header">
-                    <h1 id="postTitle"></h1>                    <div id="flagNotice" style="display:none; background:#fee; color:#c33; padding:16px; border-radius:6px; margin-bottom:20px; font-weight:600; text-align:center;">
+                    <h1 id="postTitle"></h1>
+                    <div id="flagNotice" class="flag-notice is-hidden">
                         🚩 This post has been flagged by an administrator
-                    </div>                    <div class="post-meta">
+                    </div>
+                    <div class="post-meta">
+                        <div class="meta-item">
+                            <span class="category-chip" id="postCategory">Stories</span>
+                        </div>
                         <div class="meta-item">
                             📅 <span id="postDate"></span>
                         </div>
@@ -1256,7 +2191,24 @@
 
                 <div class="post-divider"></div>
 
-                <p class="post-body" id="postBody"></p>
+                <p class="brand-trust-note" data-brand-copy="post.trust">Publication promise: this story is shared for clarity and growth, and community responses are moderated for respectful, useful discussion.</p>
+
+                <div class="story-credibility" id="storyCredibility" aria-label="Story credibility details">
+                    <div class="story-cred-item">
+                        <span class="story-cred-label">Author type</span>
+                        <span class="story-cred-value" id="credAuthorType">Community contributor</span>
+                    </div>
+                    <div class="story-cred-item">
+                        <span class="story-cred-label">Review status</span>
+                        <span class="story-cred-value" id="credReviewStatus">Moderation enabled</span>
+                    </div>
+                    <div class="story-cred-item">
+                        <span class="story-cred-label">Content update</span>
+                        <span class="story-cred-value" id="credUpdatedAt">Latest publication snapshot</span>
+                    </div>
+                </div>
+
+                <div class="post-body" id="postBody"></div>
 
                 <div class="post-footer">
                     <div class="post-stats">
@@ -1271,72 +2223,73 @@
                     </div>
                     <div class="post-actions">
                         <button class="btn-copy" onclick="copyPostLink()" id="copyBtn">📋 Copy Link</button>
-                        <button id="bookmarkBtn" class="btn-bookmark" style="display:none;">🔖 Save</button>
-                        <button id="flagBtn" class="btn-home" style="display:none;">🚩 Flag</button>
-                        <button id="editPostBtn" class="btn-home" style="display:none;">✎ Edit</button>
-                        <button id="deletePostBtn" class="btn-home" style="display:none;">🗑 Delete</button>
+                        <button id="bookmarkBtn" class="btn-bookmark is-hidden">🔖 Save</button>
+                        <button id="flagBtn" class="btn-home is-hidden">🚩 Flag</button>
+                        <button id="editPostBtn" class="btn-home is-hidden">✎ Edit</button>
+                        <button id="deletePostBtn" class="btn-home is-hidden">🗑 Delete</button>
                         <button class="btn-home" onclick="location.href='/'">🏠 Back Home</button>
                     </div>
                 </div>
 
                 <!-- Reactions Section -->
-                <div style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); animation: fadeIn 0.5s ease-out;">
-                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-                        <span style="font-weight: 600; color: #1e3a5f; font-size: 1.1rem; letter-spacing: 0.3px;">Was this helpful?</span>
-                        <button id="usefulBtn" class="reaction-btn" style="display:none; background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%); border: 2px solid #27ae60; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; color: #27ae60; transition: all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, #d4f1d4 0%, #f0f9f0 100%)'; this.style.boxShadow='0 4px 12px rgba(39, 174, 96, 0.2)';" onmouseout="this.style.background='linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%)'; this.style.boxShadow='none';">👍 <span id="usefulCount">0</span></button>
-                        <button id="notusefulBtn" class="reaction-btn" style="display:none; background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%); border: 2px solid #e74c3c; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; color: #e74c3c; transition: all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, #fde4e4 0%, #fff0f0 100%)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.2)';" onmouseout="this.style.background='linear-gradient(135deg, #fff0f0 0%, #ffffff 100%)'; this.style.boxShadow='none';">👎 <span id="notusefulCount">0</span></button>
-                        <span id="reactLoginPrompt" style="color: #7f8c8d; font-size: 0.95rem; padding: 10px 16px; background: #ecf0f1; border-radius: 8px;">📝 <a href="/login.html" style="color: #4a90e2; text-decoration: none; font-weight: 600;">Log in to react</a></span>
+                <div class="reaction-panel">
+                    <div class="reaction-row">
+                        <span class="reaction-label" data-brand-copy="post.reaction.helpful">Was this helpful?</span>
+                        <button id="usefulBtn" class="reaction-btn useful is-hidden">👍 <span id="usefulCount">0</span></button>
+                        <button id="notusefulBtn" class="reaction-btn notuseful is-hidden">👎 <span id="notusefulCount">0</span></button>
+                        <span id="reactLoginPrompt" class="reaction-login-prompt">📝 <a href="/login.html" class="reaction-login-link">Log in to react</a></span>
                     </div>
                 </div>
 
                 <!-- Comments Section -->
-                <div style="margin-top: 50px; animation: fadeIn 0.6s ease-out;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
-                        <h2 style="font-size: 1.5rem; color: #1e3a5f; margin: 0; font-weight: 600; letter-spacing: 0.3px;">💬 Comments <span style="background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%); color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.9rem; margin-left: 10px;">(<span id="commentCount">0</span>)</span></h2>
+                <div class="comments-section">
+                    <div class="comments-header">
+                        <h2 class="comments-title">💬 Comments <span class="comments-badge">(<span id="commentCount">0</span>)</span></h2>
+                        <p class="comments-policy-note">Comments are reviewed for respect, relevance, and practical value.</p>
                     </div>
 
                     <!-- Comment Form (only for logged in users) -->
-                    <div id="commentForm" style="display: none; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-left: 4px solid #d4a574; animation: scaleIn 0.3s ease-out;" class="comment-form-container">
+                    <div id="commentForm" class="comment-form-container is-hidden">
                         <form onsubmit="submitComment(event)">
-                            <label style="display: block; margin-bottom: 10px; color: #1e3a5f; font-weight: 600;">Share your thoughts</label>
-                            <div style="position: relative;">
-                                <textarea id="commentBody" class="mentionable" placeholder="What do you think about this post?" style="width: 100%; padding: 14px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: inherit; font-size: 0.95rem; min-height: 110px; resize: vertical; transition: all 0.3s ease; color: #2c3e50;" onfocus="this.style.borderColor='#d4a574'; this.style.boxShadow='0 0 0 3px rgba(212, 165, 116, 0.1)';" onblur="this.style.borderColor='#ecf0f1'; this.style.boxShadow='none';"></textarea>
+                            <label class="comment-form-label">Share your thoughts</label>
+                            <div class="comment-input-wrap">
+                                <textarea id="commentBody" class="mentionable comment-body-input" placeholder="What do you think about this post?"></textarea>
                                 <div id="mentionSuggestions" class="mention-suggestions"></div>
                             </div>
                             <div class="mention-hint"><span class="mention-dot"></span><span>Type @username to mention someone — they’ll get notified.</span></div>
-                            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button type="submit" id="submitCommentBtn" style="background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%); color: #fff; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(212, 165, 116, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(212, 165, 116, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(212, 165, 116, 0.2)';">✓ Post Comment</button>
-                                <button type="button" onclick="document.getElementById('commentForm').style.display='none'; document.getElementById('commentBody').value='';" style="background: #ecf0f1; color: #2c3e50; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.background='#ddd';" onmouseout="this.style.background='#ecf0f1';">Cancel</button>
+                            <div class="comment-actions">
+                                <button type="submit" id="submitCommentBtn" class="submit-comment-btn">✓ Post Comment</button>
+                                <button type="button" class="cancel-comment-btn" onclick="document.getElementById('commentForm').classList.add('is-hidden'); document.getElementById('commentBody').value='';">Cancel</button>
                             </div>
                         </form>
                     </div>
 
                     <!-- Comment prompt for non-logged-in users -->
-                    <div id="commentLoginPrompt" style="display: none; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #e8f4f8 0%, #f0f8fc 100%); border-radius: 12px; text-align: center; color: #1e3a5f; border-left: 4px solid #4a90e2; animation: slideUp 0.3s ease-out;">
-                        <p style="margin: 0 0 15px 0; font-weight: 600; font-size: 1.05rem;">📝 Log in to join the conversation</p>
-                        <button onclick="window.location.href='/login.html'" style="margin-top: 0; background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); color: #fff; padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(74, 144, 226, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(74, 144, 226, 0.2)';">Log In or Sign Up</button>
+                    <div id="commentLoginPrompt" class="comment-login-prompt is-hidden">
+                        <p class="comment-login-text" data-brand-copy="post.comments.loginPrompt">📝 Log in to join the conversation</p>
+                        <button onclick="window.location.href='/login.html'" class="comment-login-btn">Log In or Sign Up</button>
                     </div>
 
                     <!-- Comments List -->
-                    <div id="commentsList" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div id="commentsList" class="comments-list">
                         <!-- Comments will be inserted here -->
                     </div>
 
                     <!-- No comments message -->
-                    <div id="noComments" style="text-align: center; padding: 50px 30px; color: #95a5a6; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; animation: fadeIn 0.4s ease-out;">
-                        <span style="font-size: 2rem;">💭</span>
-                        <p style="margin-top: 10px; font-size: 1rem;">No comments yet. Be the first to share your thoughts!</p>
+                    <div id="noComments" class="no-comments">
+                        <span class="no-comments-icon">💭</span>
+                        <p class="no-comments-text">No comments yet. Be the first to share your thoughts!</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="error-wrapper" style="display: none;">
+        <div id="error-wrapper" class="is-hidden">
             <div class="error-container">
                 <div class="error-icon">⚠️</div>
                 <div class="error-title">Post Not Found</div>
                 <p class="error-text" id="errorMessage">The post you're looking for doesn't exist.</p>
-                <a href="/" class="error-back">← Back to Blog</a>
+                <a href="/" class="error-back" data-brand-copy="post.error.back">← Back to Stories</a>
             </div>
         </div>
 
@@ -1370,12 +2323,30 @@
                 return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)';
             }
 
+            function avatarKey(key) {
+                return Object.prototype.hasOwnProperty.call(AVATAR_PALETTE, key) ? key : 'default';
+            }
+
             let currentUser = null;
             let CURRENT_POST = null;
             let currentUserReaction = null;
             let notifications = [];
             let notifPoll = null;
             let notifPanelOpen = false;
+
+            function showElement(element) {
+                if (!element) return;
+                element.classList.remove('is-hidden');
+            }
+
+            function hideElement(element) {
+                if (!element) return;
+                element.classList.add('is-hidden');
+            }
+
+            function isElementVisible(element) {
+                return !!element && !element.classList.contains('is-hidden');
+            }
 
             // Get post ID from URL query parameter
             function getPostId() {
@@ -1451,6 +2422,73 @@
                 return escaped.replace(/@([a-zA-Z0-9._-]{3,32})/g, '<span class="mention">@$1</span>');
             }
 
+            function normalizeNewlines(raw = '') {
+                return (raw || '').toString().replace(/\r\n?/g, '\n');
+            }
+
+            function isPullQuoteParagraph(text = '') {
+                const trimmed = (text || '').trim();
+                if (trimmed.length < 48 || trimmed.length > 220) return false;
+                return (
+                    /^"[\s\S]+"$/.test(trimmed) ||
+                    /^“[\s\S]+”$/.test(trimmed) ||
+                    /^'[\s\S]+'$/.test(trimmed) ||
+                    /^‘[\s\S]+’$/.test(trimmed)
+                );
+            }
+
+            function stripOuterQuotes(text = '') {
+                return (text || '')
+                    .replace(/^["“'‘]\s*/, '')
+                    .replace(/\s*["”'’]$/, '')
+                    .trim();
+            }
+
+            function renderStoryBody(raw = '', options = {}) {
+                const readingMode = options.readingMode === true;
+                const source = normalizeNewlines(raw);
+                if (!source.trim()) return '';
+
+                const blocks = source
+                    .split(/\n{2,}/)
+                    .map((block) => block.trim())
+                    .filter(Boolean);
+
+                const html = [];
+                let pullQuotePlaced = false;
+
+                const renderInline = (value) => formatMentions(value).replace(/\n/g, '<br>');
+
+                for (const block of blocks) {
+                    const lines = block.split('\n');
+                    const allQuoteLines = lines.length > 0 && lines.every((line) => /^\s*>/.test(line));
+
+                    if (allQuoteLines) {
+                        const quoteText = lines
+                            .map((line) => line.replace(/^\s*>\s?/, ''))
+                            .join('\n')
+                            .trim();
+                        if (quoteText) {
+                            const quoteClass = readingMode ? 'reading-blockquote' : 'post-blockquote';
+                            html.push(`<blockquote class="${quoteClass}"><p>${renderInline(quoteText)}</p></blockquote>`);
+                            continue;
+                        }
+                    }
+
+                    if (!pullQuotePlaced && isPullQuoteParagraph(block)) {
+                        const pullClass = readingMode ? 'reading-pullquote' : 'post-pullquote';
+                        html.push(`<aside class="${pullClass}" aria-label="Pull quote">${renderInline(stripOuterQuotes(block))}</aside>`);
+                        pullQuotePlaced = true;
+                        continue;
+                    }
+
+                    const paragraphClass = readingMode ? 'reading-paragraph' : 'post-paragraph';
+                    html.push(`<p class="${paragraphClass}">${renderInline(block)}</p>`);
+                }
+
+                return html.join('');
+            }
+
             // Mention suggestions state
             let mentionTimeout = null;
             let currentMentionQuery = null;
@@ -1479,17 +2517,17 @@
             function renderMentionSuggestions(list, insertCb) {
                 if (!mentionBox) return;
                 if (!list.length) {
-                    mentionBox.innerHTML = '<div style="padding:10px; color:#7f8c8d;">No matches</div>';
+                    mentionBox.innerHTML = '<div class="mention-empty-state">No matches</div>';
                     mentionBox.classList.add('show');
                     return;
                 }
                 mentionBox.innerHTML = list.map(u => {
                     const initial = (u.username || 'U').charAt(0).toUpperCase();
-                    const bg = u.avatar ? avatarStyle(u.avatar) : avatarStyle('');
+                    const avatarToken = avatarKey(u.avatar || '');
                     const adminTag = u.is_admin ? '<span class="mention-suggestion-admin">ADMIN</span>' : '';
                     return `<div class="mention-suggestion" data-username="${escapeHtml(u.username)}">
-                        <span class="mention-suggestion-avatar" style="background:${bg}">${escapeHtml(initial)}</span>
-                        <div style="display:flex; flex-direction:column; gap:2px;">
+                        <span class="mention-suggestion-avatar" data-avatar="${avatarToken}">${escapeHtml(initial)}</span>
+                        <div class="mention-suggestion-meta">
                             <span class="mention-suggestion-name">@${escapeHtml(u.username)}</span>
                             ${adminTag}
                         </div>
@@ -1601,10 +2639,10 @@
                 if (!NOTIF_BADGE) return;
                 const unread = notifications.filter(n => !n.is_read).length;
                 if (unread > 0) {
-                    NOTIF_BADGE.style.display = 'inline-block';
+                    showElement(NOTIF_BADGE);
                     NOTIF_BADGE.textContent = unread > 99 ? '99+' : unread;
                 } else {
-                    NOTIF_BADGE.style.display = 'none';
+                    hideElement(NOTIF_BADGE);
                 }
             }
 
@@ -1620,11 +2658,11 @@
                 NOTIF_LIST.innerHTML = '';
 
                 if (!notifications.length) {
-                    if (NOTIF_EMPTY) NOTIF_EMPTY.style.display = 'block';
+                    showElement(NOTIF_EMPTY);
                     updateNotificationBadge();
                     return;
                 }
-                if (NOTIF_EMPTY) NOTIF_EMPTY.style.display = 'none';
+                hideElement(NOTIF_EMPTY);
 
                 const typeIcons = { flagged: '🚩', flag_removed: '✅', reaction: '👍', comment: '💬' };
                 const typePills = { flagged: 'Flagged', flag_removed: 'Flag removed', reaction: 'Reaction', comment: 'Comment' };
@@ -1732,11 +2770,12 @@
             function setNotificationAccess(user) {
                 if (!NOTIF_BTN) return;
                 if (user && user.userId && !user.isSuperAdmin) {
-                    NOTIF_BTN.style.display = 'inline-block';
+                    showElement(NOTIF_BTN);
                     startNotificationPolling();
                     fetchNotifications(true);
                 } else {
-                    NOTIF_BTN.style.display = 'none';
+                    hideElement(NOTIF_BTN);
+                    hideElement(NOTIF_BADGE);
                     toggleNotificationPanel(false);
                     notifications = [];
                     renderNotifications();
@@ -1788,14 +2827,14 @@
                 const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
                 const authorIsAdmin = post.author_is_admin === 1;
                 const authorInitial = authorDisplay.charAt(0).toUpperCase();
-                const authorAvatarBg = authorIsAdmin ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : avatarStyle(post.author_avatar || '');
+                const authorAvatarToken = avatarKey(post.author_avatar || '');
                 const canViewProfiles = viewer && viewer.isAdmin;
                 const shouldLinkAuthor = canViewProfiles && !isAdminPost && post.author_id;
                 const authorLabel = escapeHtml(authorDisplay);
                 const adminBadge = authorIsAdmin ? '<span class="admin-badge">Admin</span>' : '';
-                const authorChip = `<span class="avatar-chip" style="background:${authorAvatarBg}">${escapeHtml(authorInitial)}</span><span style="color:${authorIsAdmin ? '#7c3aed' : 'inherit'}">${authorLabel}${adminBadge}</span>`;
+                const authorChip = `<span class="avatar-chip${authorIsAdmin ? ' avatar-chip-admin-purple' : ''}" ${authorIsAdmin ? '' : `data-avatar="${authorAvatarToken}"`}>${escapeHtml(authorInitial)}</span><span class="author-chip-label${authorIsAdmin ? ' is-admin' : ''}">${authorLabel}${adminBadge}</span>`;
                 const authorMarkup = shouldLinkAuthor
-                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" style="display:flex; align-items:center; gap:8px; color:${authorIsAdmin ? '#7c3aed' : '#1e3a5f'}; font-weight:700; text-decoration:none;">${authorChip}</a>`
+                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" class="author-link${authorIsAdmin ? ' is-admin' : ''}">${authorChip}</a>`
                     : authorChip;
 
                 // Update title
@@ -1804,22 +2843,60 @@
 
                 // Show flag notice if post is flagged
                 if (post.is_flagged) {
-                    document.getElementById('flagNotice').style.display = 'block';
+                    showElement(document.getElementById('flagNotice'));
+                } else {
+                    hideElement(document.getElementById('flagNotice'));
                 }
 
                 // Update meta information
                 const postDateEl = document.getElementById('postDate');
+                const categoryLabel = post.category || 'Stories';
+                const categoryAccent = window.getPillarAccentKey ? window.getPillarAccentKey(categoryLabel) : 'stories';
                 postDateEl.textContent = formatRelative(post.created_at);
                 postDateEl.dataset.timestamp = post.created_at;
                 document.getElementById('wordCount').textContent = wordCount;
                 document.getElementById('readTime').textContent = readTime;
+                const categoryChip = document.getElementById('postCategory');
+                categoryChip.textContent = categoryLabel;
+                categoryChip.setAttribute('data-category', categoryLabel);
+                categoryChip.setAttribute('data-accent', categoryAccent);
+                const postContainer = document.querySelector('.post-container');
+                if (postContainer) {
+                    postContainer.setAttribute('data-category', categoryLabel);
+                    postContainer.setAttribute('data-accent', categoryAccent);
+                    postContainer.style.setProperty('--pillar-accent', `var(--pillar-${categoryAccent}, var(--brand-anchor))`);
+                }
+                const readingOverlayEl = document.getElementById('readingOverlay');
+                if (readingOverlayEl) {
+                    readingOverlayEl.setAttribute('data-pillar', categoryAccent);
+                }
                 document.getElementById('authorName').innerHTML = isAdminPost
-                    ? `<span style="display:flex; align-items:center; gap:8px; color:#1e3a5f; font-weight:700;"><span class="avatar-chip" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%)">👑</span><span>Admin</span></span>`
+                    ? `<span class="author-admin-chip"><span class="avatar-chip avatar-chip-admin">👑</span><span>Admin</span></span>`
                     : authorMarkup;
+
+                const credAuthorType = document.getElementById('credAuthorType');
+                const credReviewStatus = document.getElementById('credReviewStatus');
+                const credUpdatedAt = document.getElementById('credUpdatedAt');
+                if (credAuthorType) {
+                    credAuthorType.textContent = isAdminPost
+                        ? 'Editorial desk'
+                        : (authorIsAdmin ? 'Verified admin contributor' : 'Community contributor');
+                }
+                if (credReviewStatus) {
+                    credReviewStatus.textContent = post.is_flagged
+                        ? 'Flagged and under admin review'
+                        : 'Moderated discussion enabled';
+                }
+                if (credUpdatedAt) {
+                    const hasUpdate = post.updated_at && post.updated_at !== post.created_at;
+                    credUpdatedAt.textContent = hasUpdate
+                        ? `Updated ${formatDate(post.updated_at)}`
+                        : `Published ${formattedDate}`;
+                }
 
                 // Update body with mention highlighting
                 const postBody = document.getElementById('postBody');
-                postBody.innerHTML = formatMentions(post.body || '').replace(/\n/g, '<br>');
+                postBody.innerHTML = renderStoryBody(post.body || '');
 
                 // Update stats
                 document.getElementById('statWordCount').textContent = wordCount;
@@ -1829,7 +2906,7 @@
                 if (BOOKMARK_BTN) {
                     const canBookmark = viewer && viewer.userId && !viewer.isSuperAdmin;
                     if (canBookmark) {
-                        BOOKMARK_BTN.style.display = 'inline-block';
+                        showElement(BOOKMARK_BTN);
                         const isBookmarked = post.is_bookmarked === 1 || post.is_bookmarked === true;
                         BOOKMARK_BTN.classList.toggle('active', isBookmarked);
                         BOOKMARK_BTN.textContent = isBookmarked ? '🔖 Saved' : '🔖 Save';
@@ -1852,12 +2929,12 @@
                             }
                         };
                     } else {
-                        BOOKMARK_BTN.style.display = 'none';
+                        hideElement(BOOKMARK_BTN);
                     }
                 }
 
-                LOADING.style.display = 'none';
-                POST_WRAPPER.style.display = 'block';
+                hideElement(LOADING);
+                showElement(POST_WRAPPER);
                 CURRENT_POST = post;
                 if (READING_MODE_BTN) {
                     READING_MODE_BTN.classList.add('ready');
@@ -1923,13 +3000,11 @@
                 titleEl.textContent = title;
                 confirmBtn.textContent = confirmLabel;
 
-                overlay.style.display = 'flex';
                 requestAnimationFrame(() => overlay.classList.add('show'));
 
                 return new Promise((resolve) => {
                     const cleanup = (result) => {
                         overlay.classList.remove('show');
-                        setTimeout(() => { overlay.style.display = 'none'; }, 220);
                         confirmBtn.onclick = null;
                         cancelBtn.onclick = null;
                         overlay.onclick = null;
@@ -1965,11 +3040,11 @@
                 // Flag button (admin only)
                 if (canFlag) {
                     const flagBtn = document.getElementById('flagBtn');
-                    flagBtn.style.display = 'inline-block';
-                    flagBtn.textContent = document.getElementById('flagNotice').style.display === 'block' ? '✓ Unflag' : '🚩 Flag';
+                    showElement(flagBtn);
+                    flagBtn.textContent = isElementVisible(document.getElementById('flagNotice')) ? '✓ Unflag' : '🚩 Flag';
                     flagBtn.onclick = async (e) => {
                         e.preventDefault();
-                        const isFlagged = document.getElementById('flagNotice').style.display === 'block';
+                        const isFlagged = isElementVisible(document.getElementById('flagNotice'));
                         try {
                             const resp = await fetch(`/api/posts/${postId}/flag`, {
                                 method: 'PATCH',
@@ -1978,11 +3053,11 @@
                             });
                             if (resp.ok) {
                                 if (!isFlagged) {
-                                    document.getElementById('flagNotice').style.display = 'block';
+                                    showElement(document.getElementById('flagNotice'));
                                     flagBtn.textContent = '✓ Unflag';
                                     showToast('Post flagged', 'success', 1800);
                                 } else {
-                                    document.getElementById('flagNotice').style.display = 'none';
+                                    hideElement(document.getElementById('flagNotice'));
                                     flagBtn.textContent = '🚩 Flag';
                                     showToast('Post unflagged', 'success', 1200);
                                 }
@@ -2000,7 +3075,7 @@
                 // Edit button
                 if (canEdit) {
                     const editBtn = document.getElementById('editPostBtn');
-                    editBtn.style.display = 'inline-block';
+                    showElement(editBtn);
                     editBtn.onclick = (e) => {
                         e.preventDefault();
                         window.location.href = `/create-post.html?id=${postId}&edit=1`;
@@ -2010,7 +3085,7 @@
                 // Delete button
                 if (canDelete) {
                     const deleteBtn = document.getElementById('deletePostBtn');
-                    deleteBtn.style.display = 'inline-block';
+                    showElement(deleteBtn);
                     deleteBtn.onclick = async (e) => {
                         e.preventDefault();
                         const confirmed = await confirmAction('Delete this post? This action cannot be undone.', 'Delete post', 'Delete post?');
@@ -2035,8 +3110,8 @@
             // Show error message
             function showError(message) {
                 ERROR_MESSAGE.textContent = message;
-                LOADING.style.display = 'none';
-                ERROR_WRAPPER.style.display = 'block';
+                hideElement(LOADING);
+                showElement(ERROR_WRAPPER);
             }
 
             // Copy post link to clipboard
@@ -2099,22 +3174,8 @@
                 usefulBtn.classList.toggle('is-active-useful', userReaction === 'useful');
                 notusefulBtn.classList.toggle('is-active-notuseful', userReaction === 'notuseful');
 
-                if (userReaction === 'useful') {
-                    usefulBtn.style.borderColor = '#27ae60';
-                    usefulBtn.style.background = '#d4f1d4';
-                    notusefulBtn.style.borderColor = 'transparent';
-                    notusefulBtn.style.background = '#ecf0f1';
-                } else if (userReaction === 'notuseful') {
-                    notusefulBtn.style.borderColor = '#e74c3c';
-                    notusefulBtn.style.background = '#fde4e4';
-                    usefulBtn.style.borderColor = 'transparent';
-                    usefulBtn.style.background = '#ecf0f1';
-                } else {
-                    usefulBtn.style.borderColor = 'transparent';
-                    usefulBtn.style.background = '#ecf0f1';
-                    notusefulBtn.style.borderColor = 'transparent';
-                    notusefulBtn.style.background = '#ecf0f1';
-                }
+                usefulBtn.classList.toggle('is-neutral', userReaction !== 'useful');
+                notusefulBtn.classList.toggle('is-neutral', userReaction !== 'notuseful');
             }
 
             async function submitReaction(reactionType) {
@@ -2143,9 +3204,6 @@
                         // Smooth number update with animation
                         const usefulCountEl = document.getElementById('usefulCount');
                         const notusefulCountEl = document.getElementById('notusefulCount');
-                        
-                        usefulCountEl.style.transition = 'all 0.3s ease';
-                        notusefulCountEl.style.transition = 'all 0.3s ease';
                         
                         usefulCountEl.textContent = data.useful;
                         notusefulCountEl.textContent = data.notUseful;
@@ -2195,11 +3253,11 @@
 
                 if (comments.length === 0) {
                     commentsList.innerHTML = '';
-                    noComments.style.display = 'block';
+                    showElement(noComments);
                     return;
                 }
 
-                noComments.style.display = 'none';
+                hideElement(noComments);
                 commentsList.innerHTML = comments.map((comment, index) => {
                     const canEdit = currentUser && currentUser.userId === comment.user_id;
                     const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
@@ -2207,21 +3265,21 @@
                     const nameDisplay = comment.username || 'Unknown';
                     const safeName = escapeHtml(nameDisplay);
                     const nameMarkup = isAdminViewer
-                        ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" style="color:${isAdminComment ? '#7c3aed' : '#1e3a5f'}; font-weight:700; text-decoration:none;">${safeName}</a>`
-                        : `<span style="color:${isAdminComment ? '#7c3aed' : '#1e3a5f'}">${safeName}</span>`;
+                        ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" class="comment-author-link${isAdminComment ? ' is-admin' : ''}">${safeName}</a>`
+                        : `<span class="comment-author-text${isAdminComment ? ' is-admin' : ''}">${safeName}</span>`;
                     const adminBadgeMarkup = isAdminComment ? `<span class="admin-badge">Admin</span>` : '';
                     const avatarMarkup = isAdminComment
-                        ? `<span class="avatar-chip" style="background:linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)">${escapeHtml((comment.username || 'A').charAt(0).toUpperCase())}</span>`
-                        : `<span class="avatar-chip" style="background:${avatarStyle(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
+                        ? `<span class="avatar-chip avatar-chip-admin-purple">${escapeHtml((comment.username || 'A').charAt(0).toUpperCase())}</span>`
+                        : `<span class="avatar-chip" data-avatar="${avatarKey(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
                     return `
-                    <div class="comment-card comment-item" style="animation-delay: ${index * 0.05}s;">
+                    <div class="comment-card comment-item">
                         <div class="comment-meta">
-                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <div class="comment-identity">
                                 ${avatarMarkup}
                                 <div>
-                                    <strong style="color: #1e3a5f; font-size: 1rem;">${nameMarkup}</strong>${adminBadgeMarkup}
-                                    <span class="rel-time" data-timestamp="${comment.created_at}" style="color: #95a5a6; font-size: 0.85rem; margin-left: 10px; letter-spacing: 0.2px;">${formatRelative(comment.created_at)}</span>
-                                    ${comment.updated_at !== comment.created_at ? `<span style="color: #d4a574; font-size: 0.85rem; margin-left: 8px; font-style: italic;">(edited)</span>` : ''}
+                                    <strong class="comment-author-name">${nameMarkup}</strong>${adminBadgeMarkup}
+                                    <span class="rel-time" data-timestamp="${comment.created_at}">${formatRelative(comment.created_at)}</span>
+                                    ${comment.updated_at !== comment.created_at ? `<span class="comment-edited">(edited)</span>` : ''}
                                 </div>
                             </div>
                             ${ (canEdit || canDelete) ? `
@@ -2272,7 +3330,7 @@
 
                     if (response.ok) {
                         document.getElementById('commentBody').value = '';
-                        document.getElementById('commentForm').style.display = 'none';
+                        hideElement(document.getElementById('commentForm'));
                         submitBtn.textContent = '✓ Posted!';
                         showToast('✓ Comment posted successfully!', 'success', 2000);
                         
@@ -2302,13 +3360,13 @@
                     el.classList.remove('show');
                 });
                 document.querySelectorAll('.comment-body').forEach(el => {
-                    el.style.display = 'block';
+                    el.classList.remove('is-hidden');
                 });
 
                 const bodyEl = document.getElementById(`comment-body-${commentId}`);
                 const editEl = document.getElementById(`comment-edit-${commentId}`);
                 if (bodyEl && editEl) {
-                    bodyEl.style.display = 'none';
+                    bodyEl.classList.add('is-hidden');
                     editEl.classList.add('show');
                     const textarea = document.getElementById(`edit-text-${commentId}`);
                     if (textarea) {
@@ -2322,7 +3380,7 @@
                 const bodyEl = document.getElementById(`comment-body-${commentId}`);
                 const editEl = document.getElementById(`comment-edit-${commentId}`);
                 if (bodyEl && editEl) {
-                    bodyEl.style.display = 'block';
+                    bodyEl.classList.remove('is-hidden');
                     editEl.classList.remove('show');
                 }
             }
@@ -2397,7 +3455,7 @@
                     return;
                 }
 
-                LOADING.style.display = 'block';
+                showElement(LOADING);
                 const post = await fetchPost(postId);
 
                 if (post) {
@@ -2423,11 +3481,11 @@
                     const isAuthenticated = currentUser && (currentUser.userId || currentUser.isAdmin);
 
                     if (isAuthenticated) {
-                        usefulBtn.style.display = 'inline-block';
-                        notusefulBtn.style.display = 'inline-block';
-                        reactLoginPrompt.style.display = 'none';
-                        commentForm.style.display = 'block';
-                        commentLoginPrompt.style.display = 'none';
+                        showElement(usefulBtn);
+                        showElement(notusefulBtn);
+                        hideElement(reactLoginPrompt);
+                        showElement(commentForm);
+                        hideElement(commentLoginPrompt);
 
                         // Wire mention suggestions on comment box
                         attachMentionHandler(document.getElementById('commentBody'));
@@ -2435,37 +3493,12 @@
                         usefulBtn.onclick = () => submitReaction('useful');
                         notusefulBtn.onclick = () => submitReaction('notuseful');
 
-                        // Add "Comment" button to post
-                        const postActions = document.querySelector('.post-actions');
-                        if (postActions && !document.getElementById('commentBtn')) {
-                            const commentBtn = document.createElement('button');
-                            commentBtn.id = 'commentBtn';
-                            commentBtn.className = 'btn-home';
-                            commentBtn.style.background = 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
-                            commentBtn.style.transition = 'all 0.3s ease';
-                            commentBtn.textContent = '💬 Comment';
-                            commentBtn.onmouseover = function() {
-                                this.style.transform = 'translateY(-2px)';
-                                this.style.boxShadow = '0 6px 20px rgba(39, 174, 96, 0.3)';
-                            };
-                            commentBtn.onmouseout = function() {
-                                this.style.transform = 'translateY(0)';
-                                this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
-                            };
-                            commentBtn.onclick = () => {
-                                document.getElementById('commentForm').style.display = 'block';
-                                document.getElementById('commentBody').focus();
-                                // Smooth scroll to form
-                                document.getElementById('commentForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            };
-                            postActions.appendChild(commentBtn);
-                        }
                     } else {
-                        usefulBtn.style.display = 'none';
-                        notusefulBtn.style.display = 'none';
-                        reactLoginPrompt.style.display = 'inline-block';
-                        commentForm.style.display = 'none';
-                        commentLoginPrompt.style.display = 'block';
+                        hideElement(usefulBtn);
+                        hideElement(notusefulBtn);
+                        showElement(reactLoginPrompt);
+                        hideElement(commentForm);
+                        showElement(commentLoginPrompt);
                     }
                 }
             }
@@ -2509,25 +3542,6 @@
                 READING_OVERLAY.style.setProperty('--reading-line-height', readingSettings.lineHeight);
                 READING_OVERLAY.setAttribute('data-theme', readingSettings.theme);
 
-                // Theme color mappings
-                const themeColors = {
-                    light: { bg: '#ffffff', text: '#2c3e50', title: '#1e3a5f', meta: '#7f8c8d' },
-                    sepia: { bg: '#f5f1eb', text: '#5b4636', title: '#3d2914', meta: '#8b7355' },
-                    dark: { bg: '#1a1a2e', text: '#e0e0e0', title: '#ffffff', meta: '#888888' }
-                };
-                const colors = themeColors[readingSettings.theme] || themeColors.sepia;
-
-                // Update inline styles for reliability
-                const backdrop = READING_OVERLAY.querySelector('.reading-backdrop');
-                const content = READING_OVERLAY.querySelector('.reading-content');
-                const title = READING_OVERLAY.querySelector('.reading-title');
-                const meta = READING_OVERLAY.querySelector('.reading-meta');
-
-                if (backdrop) backdrop.style.background = colors.bg;
-                if (content) content.style.color = colors.text;
-                if (title) title.style.color = colors.title;
-                if (meta) meta.style.color = colors.meta;
-
                 // Update active theme button
                 document.querySelectorAll('#themeLight, #themeSepia, #themeDark').forEach(btn => {
                     btn.classList.remove('active');
@@ -2557,13 +3571,13 @@
                     <span>📝 ${wordCount} words</span>
                     <span>⏱️ ${readTime} min read</span>
                 `;
-                READING_BODY.textContent = body;
+                READING_BODY.innerHTML = renderStoryBody(body, { readingMode: true });
 
                 loadReadingSettings();
                 applyReadingSettings();
 
                 READING_OVERLAY.classList.add('active');
-                document.body.style.overflow = 'hidden';
+                document.body.classList.add('reading-mode-open');
 
                 // Reset scroll and progress
                 READING_CONTAINER.scrollTop = 0;
@@ -2573,7 +3587,7 @@
             // Close reading mode
             function closeReadingMode() {
                 READING_OVERLAY.classList.remove('active');
-                document.body.style.overflow = '';
+                document.body.classList.remove('reading-mode-open');
             }
 
             // Update progress bar
@@ -2608,11 +3622,6 @@
 
             // Wire up reading mode controls
             if (READING_MODE_BTN) {
-                READING_MODE_BTN.style.position = 'fixed';
-                READING_MODE_BTN.style.bottom = '30px';
-                READING_MODE_BTN.style.right = '30px';
-                READING_MODE_BTN.style.left = 'auto';
-                READING_MODE_BTN.style.top = 'auto';
                 READING_MODE_BTN.addEventListener('click', openReadingMode);
             }
 

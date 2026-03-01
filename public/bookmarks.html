@@ -4,17 +4,45 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bookmarks - Blog Hub</title>
+        <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
+            :root {
+                --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --color-primary-900: #0f172a;
+                --color-primary-800: #1d2e4a;
+                --color-accent-500: #c48a5a;
+                --color-accent-600: #a86c44;
+                --color-surface: #fcf9f4;
+                --color-surface-soft: #f3ede3;
+                --color-border-soft: #d8cebc;
+                --color-text-muted: #616b7b;
+                --gradient-bg-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+                --gradient-accent-main: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
+                --radius-sm: 10px;
+                --radius-md: 14px;
+                --radius-lg: 18px;
+                --radius-pill: 999px;
+                --shadow-1: 0 10px 24px rgba(10, 18, 33, 0.16);
+                --shadow-2: 0 20px 42px rgba(10, 18, 33, 0.2);
+                --shadow-3: 0 28px 56px rgba(10, 18, 33, 0.24);
+            }
+
             * { margin: 0; padding: 0; box-sizing: border-box; }
 
+            .is-hidden { display: none !important; }
+
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                font-family: var(--font-family-base);
+                background:
+                    radial-gradient(circle at 14% 12%, rgba(196, 138, 90, 0.22), transparent 42%),
+                    radial-gradient(circle at 90% 0%, rgba(244, 227, 202, 0.16), transparent 38%),
+                    var(--gradient-bg-main);
                 min-height: 100vh;
                 padding: 40px 20px;
-                color: #fff;
+                color: var(--color-surface);
             }
 
             .header {
@@ -55,7 +83,7 @@
             .pill {
                 background: rgba(255,255,255,0.16);
                 border: 1px solid rgba(255,255,255,0.22);
-                border-radius: 999px;
+                border-radius: var(--radius-pill);
                 padding: 8px 14px;
                 font-weight: 600;
                 letter-spacing: 0.3px;
@@ -64,13 +92,13 @@
 
             .toolbar button {
                 padding: 10px 18px;
-                border-radius: 10px;
+                border-radius: var(--radius-sm);
                 border: none;
                 cursor: pointer;
                 font-weight: 600;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
-                color: #fff;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+                background: var(--gradient-accent-main);
+                color: var(--color-surface);
+                box-shadow: var(--shadow-1);
                 transition: transform 0.2s ease, box-shadow 0.2s ease;
             }
 
@@ -88,18 +116,19 @@
             }
 
             .card {
-                background: #ffffff;
-                color: #1e3a5f;
-                border-radius: 14px;
+                background: var(--color-surface);
+                color: var(--color-primary-900);
+                border-radius: var(--radius-lg);
                 padding: 22px 24px;
-                box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+                box-shadow: var(--shadow-2);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 76%, white);
                 cursor: pointer;
                 transition: transform 0.2s ease, box-shadow 0.2s ease;
             }
 
             .card:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 20px 50px rgba(0,0,0,0.24);
+                box-shadow: var(--shadow-3);
             }
 
             .card-title {
@@ -112,15 +141,25 @@
                 display: flex;
                 gap: 12px;
                 flex-wrap: wrap;
-                color: #7f8c8d;
+                color: var(--color-text-muted);
                 font-size: 0.9rem;
                 margin-bottom: 10px;
+            }
+
+            .category-pill {
+                background: rgba(212, 165, 116, 0.16);
+                color: var(--color-primary-900);
+                border: 1px solid rgba(212, 165, 116, 0.35);
+                border-radius: var(--radius-pill);
+                padding: 2px 10px;
+                font-weight: 700;
             }
 
             .card-body {
                 color: #2c3e50;
                 font-size: 0.98rem;
                 line-height: 1.6;
+                max-width: 68ch;
             }
 
             .card-actions {
@@ -135,7 +174,7 @@
                 color: #c0392b;
                 border: 1px solid rgba(192,57,43,0.3);
                 padding: 6px 12px;
-                border-radius: 999px;
+                border-radius: var(--radius-pill);
                 font-weight: 600;
                 cursor: pointer;
                 transition: all 0.2s ease;
@@ -152,7 +191,11 @@
                 background: rgba(255,255,255,0.12);
                 border-radius: 16px;
                 text-align: center;
-                color: #fff;
+                color: var(--color-surface);
+            }
+
+            .empty-icon {
+                font-size:2.2rem;
             }
 
             .empty p {
@@ -166,7 +209,7 @@
             }
         </style>
     </head>
-    <body>
+    <body data-brand-page="bookmarks">
         <div class="header">
             <h1>🔖 Bookmarks</h1>
             <p class="header-subtitle">Your curated reading list</p>
@@ -175,13 +218,13 @@
         <div class="toolbar">
             <div class="left">
                 <span class="pill" id="bookmarkCount">0 saved</span>
-                <button onclick="navigateWithTransition('/')">← Back to Home</button>
+                <button data-brand-copy="bookmarks.back" onclick="navigateWithTransition('/')">← Back to Stories</button>
             </div>
         </div>
 
         <div id="cards" class="cards"></div>
-        <div id="emptyState" class="empty" style="display:none;">
-            <div style="font-size:2.2rem;">📚</div>
+        <div id="emptyState" class="empty is-hidden">
+            <div class="empty-icon">📚</div>
             <h3>No bookmarks yet</h3>
             <p>Save posts to build your premium reading list.</p>
         </div>
@@ -237,18 +280,21 @@
 
                     COUNT.textContent = `${rows.length} saved`;
                     if (!rows.length) {
-                        EMPTY.style.display = 'block';
+                        EMPTY.classList.remove('is-hidden');
                         CARDS.innerHTML = '';
                         return;
                     }
 
-                    EMPTY.style.display = 'none';
+                    EMPTY.classList.add('is-hidden');
                     CARDS.innerHTML = rows.map(row => {
                         const excerpt = truncateText((row.body || '').replace(/\n/g, ' '));
+                        const category = (row.category || 'Stories').toString();
+                        const categoryAccent = window.getPillarAccentKey ? window.getPillarAccentKey(category) : 'stories';
                         return `
                             <div class="card" data-id="${row.id}">
                                 <div class="card-title">${escapeHtml(row.title || '')}</div>
                                 <div class="card-meta">
+                                    <span class="category-pill" data-category="${escapeHtml(category)}" data-accent="${escapeHtml(categoryAccent)}">${escapeHtml(category)}</span>
                                     <span>📅 ${formatDate(row.created_at)}</span>
                                     <span>👤 ${escapeHtml(row.author_name || 'Unknown')}</span>
                                     <span>💬 ${row.comment_count || 0}</span>
@@ -279,7 +325,7 @@
                                 btn.closest('.card').remove();
                                 const remaining = CARDS.querySelectorAll('.card').length;
                                 COUNT.textContent = `${remaining} saved`;
-                                if (!remaining) EMPTY.style.display = 'block';
+                                if (!remaining) EMPTY.classList.remove('is-hidden');
                             }
                         });
                     });

@@ -4,24 +4,53 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Create New Post</title>
+            <link rel="stylesheet" href="/ui-primitives.css" />
             <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
+            :root {
+                --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --color-primary-900: #0f172a;
+                --color-primary-800: #1d2e4a;
+                --color-accent-500: #c48a5a;
+                --color-accent-600: #a86c44;
+                --color-surface: #fcf9f4;
+                --color-surface-soft: #f3ede3;
+                --color-border-soft: #d8cebc;
+                --color-text-primary: #1c2738;
+                --color-text-muted: #616b7b;
+                --gradient-bg-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+                --gradient-accent-main: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
+                --gradient-accent-hover: linear-gradient(145deg, #ddb286 0%, #c48a5a 100%);
+                --radius-sm: 10px;
+                --radius-md: 14px;
+                --shadow-1: 0 10px 24px rgba(10, 18, 33, 0.16);
+                --shadow-2: 0 24px 64px rgba(10, 18, 33, 0.32);
+            }
+
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
 
+            .is-hidden {
+                display: none !important;
+            }
+
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                font-family: var(--font-family-base);
+                background:
+                    radial-gradient(circle at 14% 12%, rgba(196, 138, 90, 0.2), transparent 42%),
+                    radial-gradient(circle at 90% 0%, rgba(244, 227, 202, 0.14), transparent 38%),
+                    var(--gradient-bg-main);
                 min-height: 100vh;
                 padding: 40px 20px;
             }
 
             h1 {
-                color: #ffffff;
+                color: var(--color-surface);
                 font-size: 2.5rem;
                 font-weight: 300;
                 letter-spacing: 1px;
@@ -31,38 +60,46 @@
             }
 
             form {
-                background: #ffffff;
+                background: var(--color-surface);
                 max-width: 700px;
                 margin: 0 auto;
-                padding: 50px;
-                border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                padding: 56px;
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-2);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 76%, white);
             }
 
             label {
                 display: block;
-                margin-bottom: 12px;
+                margin-bottom: 14px;
                 font-weight: 600;
-                color: #2c3e50;
+                color: var(--color-text-primary);
                 font-size: 1rem;
                 letter-spacing: 0.5px;
             }
 
+            .field-note {
+                color: #999;
+                font-size: 0.9rem;
+            }
+
             input[type="text"],
+            select,
             textarea {
                 width: 100%;
                 padding: 14px 16px;
-                margin-bottom: 24px;
+                margin-bottom: 0;
                 border: 2px solid #e8e8e8;
                 border-radius: 6px;
                 font-size: 1rem;
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                font-family: var(--font-family-base);
                 transition: all 0.3s ease;
                 background-color: #f8f9fa;
-                color: #2c3e50;
+                color: var(--color-text-primary);
             }
 
             input[type="text"]:focus,
+            select:focus,
             textarea:focus {
                 outline: none;
                 border-color: #d4a574;
@@ -72,14 +109,15 @@
 
             textarea {
                 resize: vertical;
-                min-height: 280px;
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                min-height: 300px;
+                font-family: var(--font-family-base);
+                line-height: 1.72;
             }
 
             button {
                 width: 100%;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
-                color: #ffffff;
+                background: var(--gradient-accent-main);
+                color: var(--color-surface);
                 padding: 14px 24px;
                 border: none;
                 border-radius: 6px;
@@ -92,7 +130,7 @@
             }
 
             button:hover {
-                background: linear-gradient(135deg, #e8b896 0%, #d4a574 100%);
+                background: var(--gradient-accent-hover);
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
             }
@@ -102,8 +140,8 @@
             }
 
             .message {
-                margin-top: 20px;
-                padding: 14px 16px;
+                margin-top: 24px;
+                padding: 16px;
                 border-radius: 6px;
                 font-weight: 600;
                 text-align: center;
@@ -128,6 +166,10 @@
                 background-color: #f8d7da;
                 color: #721c24;
                 border: 1px solid #f5c6cb;
+            }
+
+            .message.is-fading {
+                animation: fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             }
 
             /* Loading spinner */
@@ -175,25 +217,67 @@
             }
 
             .form-group {
-                margin-bottom: 24px;
+                margin-bottom: 28px;
             }
 
             .character-count {
                 font-size: 0.85rem;
-                color: #7f8c8d;
-                margin-top: 6px;
+                color: var(--color-text-muted);
+                margin-top: 8px;
                 text-align: right;
             }
 
             .form-header {
-                margin-bottom: 32px;
+                margin-bottom: 38px;
             }
 
             .form-subtitle {
-                color: #7f8c8d;
+                color: var(--color-text-muted);
                 font-size: 0.95rem;
-                margin-top: 8px;
+                margin-top: 10px;
                 text-align: center;
+                max-width: 62ch;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .verify-gate {
+                max-width:700px;
+                margin: 0 auto 30px;
+                background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+                border: 1px solid #f0c36d;
+                border-radius: 10px;
+                padding: 28px;
+                text-align: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+
+            .verify-gate-icon {
+                font-size: 1.2rem;
+                margin-bottom: 8px;
+            }
+
+            .verify-gate-title {
+                color: #856404;
+                font-weight: 600;
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            .verify-gate-text {
+                color: #856404;
+                font-size: 0.9rem;
+                margin-bottom: 16px;
+            }
+
+            .verify-gate-link {
+                display: inline-block;
+                background: var(--gradient-bg-main);
+                color: var(--color-surface);
+                padding: 10px 24px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
             }
 
             /* Toast Notifications */
@@ -206,11 +290,11 @@
             }
 
             .toast {
-                background: #ffffff;
+                background: var(--color-surface);
                 padding: 16px 20px;
                 border-radius: 8px;
                 margin-bottom: 12px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+                box-shadow: var(--shadow-1);
                 display: flex;
                 align-items: center;
                 gap: 12px;
@@ -274,25 +358,26 @@
             }
         </style>
     </head>
-    <body>
+    <body data-brand-page="create-post">
         <div class="toast-container" id="toastContainer"></div>
 
         <div class="form-header">
             <h1>Create New Post</h1>
-            <p class="form-subtitle">Share your thoughts with the world</p>
+            <p class="form-subtitle" data-brand-copy="create.subtitle">Share your thoughts with the world</p>
+            <p class="brand-trust-note" data-brand-copy="create.trust">Publishing standard: aim for honest context, one actionable takeaway, and language that supports thoughtful community discussion.</p>
         </div>
 
         <!-- Email verification reminder -->
-        <div id="verifyGate" style="display:none; max-width:700px; margin: 0 auto 24px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #f0c36d; border-radius: 10px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <p style="font-size: 1.2rem; margin-bottom: 8px;">📧</p>
-            <p style="color: #856404; font-weight: 600; font-size: 1rem; margin-bottom: 8px;">Verify Your Email (Optional for now)</p>
-            <p style="color: #856404; font-size: 0.9rem; margin-bottom: 16px;">You can verify now, or skip and continue posting.</p>
-            <a href="/verify-email.html" style="display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%); color: #fff; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Verify Email</a>
+        <div id="verifyGate" class="verify-gate is-hidden">
+            <p class="verify-gate-icon">📧</p>
+            <p class="verify-gate-title" data-brand-copy="create.verify.title">Verify Your Email (Optional for now)</p>
+            <p class="verify-gate-text">You can verify now, or skip and continue posting.</p>
+            <a href="/verify-email.html" class="verify-gate-link">Verify Email</a>
         </div>
 
         <form id="postForm" novalidate>
             <div class="form-group">
-                <label for="title">Post Title <span style="color:#999; font-size:0.9rem;">(Max 200 characters)</span></label>
+                <label for="title">Post Title <span class="field-note">(Max 200 characters)</span></label>
                 <input 
                     type="text" 
                     id="title" 
@@ -307,7 +392,7 @@
             </div>
 
             <div class="form-group">
-                <label for="body">Post Content <span style="color:#999; font-size:0.9rem;">(Max 10,000 characters)</span></label>
+                <label for="body">Post Content <span class="field-note">(Max 10,000 characters)</span></label>
                 <textarea 
                     id="body" 
                     name="body" 
@@ -323,8 +408,19 @@
             </div>
 
             <div class="form-group">
-                <label for="tags">Tags (comma-separated)</label>
-                <input type="text" id="tags" name="tags" placeholder="e.g. javascript, productivity" autocomplete="off" />
+                <label for="category" data-brand-copy="create.category.label">Category</label>
+                <select id="category" name="category" aria-label="Story category" required>
+                    <option value="Education">Education</option>
+                    <option value="Stories" selected>Stories</option>
+                    <option value="Mindset">Mindset</option>
+                    <option value="Lessons">Lessons</option>
+                </select>
+                <p class="field-note" data-brand-copy="create.category.note">Choose the primary category; add supporting tags below.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="tags" data-brand-copy="create.tags.label">Supporting tags (comma-separated)</label>
+                <input type="text" id="tags" name="tags" data-brand-placeholder="create.tags.placeholder" placeholder="e.g. reflection, study-routine" autocomplete="off" />
             </div>
 
             <button type="submit" id="submitBtn">
@@ -339,8 +435,46 @@
             const submitBtn = document.getElementById('submitBtn');
             const titleInput = document.getElementById('title');
             const bodyInput = document.getElementById('body');
+            const categoryInput = document.getElementById('category');
+            const tagsInput = document.getElementById('tags');
             const messageDiv = document.getElementById('message');
             const bodyCountSpan = document.getElementById('bodyCount');
+            const SUBMIT_INTENT_KEY = 'bloghub.submitIntent';
+            const SUBMIT_DRAFT_KEY = 'bloghub.submitDraft';
+
+            function persistDraftState() {
+                try {
+                    const draft = {
+                        title: titleInput.value || '',
+                        body: bodyInput.value || '',
+                        category: categoryInput && categoryInput.value ? categoryInput.value : 'Stories',
+                        tags: tagsInput && tagsInput.value ? tagsInput.value : '',
+                        savedAt: Date.now(),
+                    };
+                    localStorage.setItem(SUBMIT_DRAFT_KEY, JSON.stringify(draft));
+                } catch {}
+            }
+
+            function restoreDraftState() {
+                try {
+                    const raw = localStorage.getItem(SUBMIT_DRAFT_KEY);
+                    if (!raw) return;
+                    const draft = JSON.parse(raw);
+                    if (!draft || typeof draft !== 'object') return;
+                    if (!titleInput.value && draft.title) titleInput.value = String(draft.title);
+                    if (!bodyInput.value && draft.body) bodyInput.value = String(draft.body);
+                    if (categoryInput && draft.category) categoryInput.value = String(draft.category);
+                    if (tagsInput && !tagsInput.value && draft.tags) tagsInput.value = String(draft.tags);
+                    bodyCountSpan.textContent = String((bodyInput.value || '').length);
+                } catch {}
+            }
+
+            function clearSubmitIntentState() {
+                try {
+                    localStorage.removeItem(SUBMIT_INTENT_KEY);
+                    localStorage.removeItem(SUBMIT_DRAFT_KEY);
+                } catch {}
+            }
 
             // Toast notification system
             function showToast(message, type = 'info', duration = 3000) {
@@ -365,14 +499,14 @@
                 
                 const closeBtn = toast.querySelector('.toast-close');
                 closeBtn.addEventListener('click', () => {
-                    toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    toast.classList.add('is-exiting');
                     setTimeout(() => toast.remove(), 300);
                 });
                 
                 if (duration > 0) {
                     setTimeout(() => {
                         if (toast.parentElement) {
-                            toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
+                            toast.classList.add('is-exiting');
                             setTimeout(() => toast.remove(), 300);
                         }
                     }, duration);
@@ -384,7 +518,11 @@
             // Update character count
             bodyInput.addEventListener('input', function() {
                 bodyCountSpan.textContent = this.value.length;
+                persistDraftState();
             });
+            titleInput.addEventListener('input', persistDraftState);
+            if (categoryInput) categoryInput.addEventListener('change', persistDraftState);
+            if (tagsInput) tagsInput.addEventListener('input', persistDraftState);
 
             // Admin/User access check
             async function checkAdminAccess() {
@@ -397,18 +535,18 @@
                             // Show email verification reminder for non-admin users (non-blocking)
                             if (!user.isAdmin && user.emailVerified === false) {
                                 const gate = document.getElementById('verifyGate');
-                                if (gate) gate.style.display = 'block';
+                                if (gate) gate.classList.remove('is-hidden');
                             }
                             return true;
                         }
-                        window.location.href = '/login.html?return=/create-post.html';
+                        window.location.href = '/login.html?returnTo=/create-post.html';
                         return false;
                     }
-                    window.location.href = '/login.html?return=/create-post.html';
+                    window.location.href = '/login.html?returnTo=/create-post.html';
                     return false;
                 } catch (error) {
                     console.error('Auth check failed:', error);
-                    window.location.href = '/login.html?return=/create-post.html';
+                    window.location.href = '/login.html?returnTo=/create-post.html';
                     return false;
                 }
             }
@@ -417,15 +555,14 @@
             function showMessage(text, type = 'error') {
                 messageDiv.textContent = text;
                 messageDiv.className = `message ${type}`;
-                messageDiv.style.opacity = '1';
+                messageDiv.classList.remove('is-fading');
 
                 if (type === 'success') {
                     setTimeout(() => {
-                        messageDiv.style.animation = 'fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                        messageDiv.classList.add('is-fading');
                         setTimeout(() => {
                             messageDiv.textContent = '';
                             messageDiv.className = 'message';
-                            messageDiv.style.animation = '';
                         }, 400);
                     }, 3000);
                 }
@@ -477,7 +614,7 @@
 
                 const title = titleInput.value.trim();
                 const body = bodyInput.value.trim();
-                    const tagsInput = document.getElementById('tags');
+                const category = categoryInput ? (categoryInput.value || 'Stories') : 'Stories';
                     const tags = (tagsInput && tagsInput.value) ? tagsInput.value.split(',').map(s=>s.trim()).filter(Boolean) : [];
                 const isEdit = getQueryParam('edit') === '1' || getQueryParam('id');
                 const postId = getQueryParam('id');
@@ -497,12 +634,13 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ title, body, tags })
+                        body: JSON.stringify({ title, body, category, tags })
                     });
 
                     if (response.ok) {
                         const result = await response.json();
                         showToast(isEdit ? 'Post updated successfully!' : 'Post created successfully!', 'success', 1500);
+                        clearSubmitIntentState();
                         postForm.reset();
                         bodyCountSpan.textContent = '0';
 
@@ -539,6 +677,10 @@
                 const id = params.get('id');
                 const edit = params.get('edit') === '1' || !!id;
 
+                if (!edit) {
+                    restoreDraftState();
+                }
+
                 if (edit && id) {
                     // fetch post data
                     try {
@@ -547,8 +689,10 @@
                             const post = await resp.json();
                             titleInput.value = post.title;
                             bodyInput.value = post.body;
+                            if (categoryInput) categoryInput.value = post.category || 'Stories';
                             if (post.tags && Array.isArray(post.tags)) {
-                                document.getElementById('tags').value = post.tags.join(', ');
+                                const filteredTags = post.tags.filter((tag) => tag !== (post.category || 'Stories'));
+                                document.getElementById('tags').value = filteredTags.join(', ');
                             } else if (post.tags) {
                                 document.getElementById('tags').value = post.tags.toString();
                             }

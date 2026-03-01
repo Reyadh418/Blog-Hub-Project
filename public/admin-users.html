@@ -4,14 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Users - Admin</title>
+    <link rel="stylesheet" href="/ui-primitives.css" />
     <script src="/csrf.js"></script>
+    <script src="/brand-expression.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-            background: radial-gradient(circle at 20% 20%, rgba(212,165,116,0.18), transparent 28%),
-                        radial-gradient(circle at 80% 0%, rgba(30,58,95,0.18), transparent 32%),
-                        linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+            font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+            background: radial-gradient(circle at 20% 20%, rgba(196,138,90,0.18), transparent 28%),
+                        radial-gradient(circle at 80% 0%, rgba(29,46,74,0.18), transparent 32%),
+                        linear-gradient(145deg, #f7f2e9 0%, #ece4d7 100%);
             min-height: 100vh;
             padding: 30px 16px 60px;
         }
@@ -24,7 +26,7 @@
             gap: 16px;
         }
         .nav-title {
-            color: #1e3a5f;
+            color: #1d2e4a;
             font-size: 1.4rem;
             font-weight: 700;
             letter-spacing: 0.6px;
@@ -41,15 +43,15 @@
         }
         .btn:hover { transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
-        .primary { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%); color:#fff; }
-        .ghost { background: #fff; color:#1e3a5f; border:1px solid #e0e6ee; }
+        .primary { background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%); color:#fff; }
+        .ghost { background: #fcf9f4; color:#1d2e4a; border:1px solid #d8cebc; }
 
         .card {
-            background: #fff;
+            background: #fcf9f4;
             border-radius: 14px;
             padding: 20px 22px;
             box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-            border: 1px solid #e8edf2;
+            border: 1px solid #d8cebc;
             max-width: 1100px;
             margin: 0 auto;
         }
@@ -116,11 +118,37 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.12);
             flex-shrink: 0;
         }
+        .avatar-chip[data-avatar='aurora'] { background: linear-gradient(135deg, #5efce8 0%, #736efe 100%); }
+        .avatar-chip[data-avatar='sunset'] { background: linear-gradient(135deg, #f83600 0%, #f9d423 100%); }
+        .avatar-chip[data-avatar='wave'] { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+        .avatar-chip[data-avatar='forest'] { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .avatar-chip[data-avatar='midnight'] { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+        .avatar-chip[data-avatar='plum'] { background: linear-gradient(135deg, #cc2b5e 0%, #753a88 100%); }
+        .avatar-chip[data-avatar='citrus'] { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+        .avatar-chip[data-avatar='ember'] { background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%); }
+        .avatar-chip[data-avatar='mint'] { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); }
+        .avatar-chip[data-avatar='default'] { background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%); }
         .user-meta { display:flex; flex-direction:column; gap:4px; }
-        .user-name { color:#1e3a5f; font-weight:700; letter-spacing:0.2px; }
-        .user-username { color:#d4a574; font-weight:700; }
+        .user-name { color:#1d2e4a; font-weight:700; letter-spacing:0.2px; }
+        .user-username { color:#c48a5a; font-weight:700; }
         .user-email { color:#6b7280; font-size:0.9rem; }
+        .user-meta-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+        .meta-pill {
+            background:#eef2f7;
+            color:#52606d;
+            border-radius:999px;
+            padding:4px 10px;
+            font-weight:700;
+            font-size:0.78rem;
+            border:1px solid #e0e6ee;
+        }
+        .meta-pill.role-admin {
+            background: linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(124,58,237,0.2) 100%);
+            border-color: rgba(124,58,237,0.35);
+            color: #6d28d9;
+        }
         .empty { text-align:center; padding:40px 12px; color:#6b7280; }
+        .is-hidden { display:none; }
 
         .toast-container { position:fixed; top:20px; right:20px; z-index:10000; max-width:400px; }
         .toast { background:#fff; padding:14px 16px; border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,0.18); display:flex; gap:10px; align-items:center; margin-bottom:10px; }
@@ -128,6 +156,7 @@
         .toast.error{border-left:4px solid #f44336; }
         .toast .toast-icon { font-weight:700; }
         .toast .toast-message { flex:1; }
+        .toast-close { cursor: pointer; }
 
         @media (max-width: 640px) {
             .navbar { flex-direction: column; align-items: flex-start; }
@@ -136,13 +165,13 @@
         }
     </style>
 </head>
-<body>
+<body data-brand-page="admin-users">
     <div class="toast-container" id="toastContainer"></div>
     <div class="navbar">
         <div class="nav-title">👥 Registered Users</div>
         <div class="nav-actions">
             <button class="btn ghost" onclick="window.location.href='/admin-profile.html'">← Admin Home</button>
-            <button class="btn primary" onclick="window.location.href='/'">🏠 Blog</button>
+            <button class="btn primary" data-brand-copy="adminUsers.home" onclick="window.location.href='/'">🏠 Stories</button>
         </div>
     </div>
 
@@ -155,7 +184,7 @@
             <span class="pill" id="userCountPill">Users: 0</span>
         </div>
         <div class="list" id="usersList"></div>
-        <div class="empty" id="emptyState" style="display:none;">No users found.</div>
+        <div class="empty is-hidden" id="emptyState">No users found.</div>
     </div>
 
 <script>
@@ -170,7 +199,8 @@ const AVATAR_PALETTE = {
     ember: 'linear-gradient(135deg, #e65c00 0%, #f9d423 100%)',
     mint: 'linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%)',
 };
-function avatarStyle(key) { return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)'; }
+function avatarStyle(key) { return AVATAR_PALETTE[key] || 'linear-gradient(145deg, #d0a273 0%, #b2774a 100%)'; }
+function avatarKey(key) { return Object.prototype.hasOwnProperty.call(AVATAR_PALETTE, key) ? key : 'default'; }
 
 const usersList = document.getElementById('usersList');
 const emptyState = document.getElementById('emptyState');
@@ -183,7 +213,7 @@ function showToast(message, type='info', duration=2600) {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     const icons = { success:'✓', error:'✕', info:'ℹ', warning:'⚠' };
-    toast.innerHTML = `<span class="toast-icon">${icons[type]||icons.info}</span><span class="toast-message">${message}</span><span class="toast-close" style="cursor:pointer;">×</span>`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type]||icons.info}</span><span class="toast-message">${message}</span><span class="toast-close">×</span>`;
     container.appendChild(toast);
     toast.querySelector('.toast-close').onclick = () => toast.remove();
     if (duration>0) setTimeout(()=>toast.remove(), duration);
@@ -204,22 +234,29 @@ async function fetchUsers(search='') {
 function renderUsers(users) {
     usersList.innerHTML = '';
     if (!users || users.length === 0) {
-        emptyState.style.display = 'block';
+        emptyState.classList.remove('is-hidden');
         userCountPill.textContent = 'Users: 0';
         return;
     }
-    emptyState.style.display = 'none';
+    emptyState.classList.add('is-hidden');
     userCountPill.textContent = `Users: ${users.length}`;
     users.forEach(user => {
         const initial = (user.username || 'U').charAt(0).toUpperCase();
+        const isAdmin = user.isAdmin || user.is_admin === 1;
+        const roleLabel = isAdmin ? 'Admin' : 'Member';
+        const joinedText = user.created_at ? `Joined ${formatDate(user.created_at)}` : 'Joined —';
         const card = document.createElement('div');
         card.className = 'user-card';
         card.innerHTML = `
-            <div class="avatar-chip" style="background:${avatarStyle(user.avatar || '')}">${initial}</div>
+            <div class="avatar-chip" data-avatar="${avatarKey(user.avatar || '')}">${initial}</div>
             <div class="user-meta">
                 <span class="user-name">${escapeHtml(user.full_name || user.username || '')}</span>
                 <span class="user-username">@${escapeHtml(user.username || '')}</span>
                 <span class="user-email">${escapeHtml(user.email || '')}</span>
+                <div class="user-meta-row">
+                    <span class="meta-pill ${isAdmin ? 'role-admin' : ''}">${roleLabel}</span>
+                    <span class="meta-pill">${escapeHtml(joinedText)}</span>
+                </div>
             </div>
         `;
         card.addEventListener('click', () => {
@@ -227,6 +264,11 @@ function renderUsers(users) {
         });
         usersList.appendChild(card);
     });
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function escapeHtml(str='') {

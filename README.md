@@ -2,6 +2,14 @@
 
 Lightweight Express + PostgreSQL blog playground with session auth, admin moderation, comments, reactions, notifications, and basic hardening. Built to be hacked on: no frontend frameworks, plain HTML/CSS/JS, and a single Node server you can read end to end.
 
+## Publication identity
+- Mission: Practical ideas and real stories that help people think clearly and grow consistently.
+- Content pillars: Mindset, Life Lessons, Discipline, Real Stories, Career.
+- Public navigation: Explore, Topics, About, Submit Story.
+
+## Rebuild progress tracker
+- Track implementation status for the 5-phase rebuild roadmap in `ROADMAP_PROGRESS.md`.
+
 ## Highlights
 - Self-hosted blog with registration/login and session-based auth.
 - Create, edit, and delete posts; users manage their own content, admin can manage all and post as `@admin`.
@@ -86,6 +94,19 @@ Environment variables:
 
 ## Support
 Offered as-is. For production, add backups, logging, HTTPS termination, and stronger monitoring/rate limiting as needed.
+
+## Contributing
+- Fork, create a feature branch, and keep changes scoped and reviewable.
+- Install deps with `npm install`, set a local `DATABASE_URL`, and run `npm start` to verify behavior.
+- Include repro steps in PR descriptions; avoid committing secrets or real credentials.
+- Prefer small PRs that touch minimal files; add brief comments only where logic is non-obvious.
+
+## Troubleshooting
+- Server will not start: confirm `DATABASE_URL` is set and reachable; ensure `PORT` is free.
+- Session/cookie issues behind a proxy: set `TRUST_PROXY=1` and ensure `SESSION_SECRET` is 16+ chars.
+- CSRF errors: make sure the client fetches the token via `public/csrf.js` and sends it with write requests.
+- Rate-limited locally: restart the server to clear in-memory counters; avoid rapid repeat POSTs.
+- Admin login trouble: if the bootstrap admin is unknown, set `ADMIN_RESET_ON_BOOT=1` with new `ADMIN_PASSWORD`, restart once, then unset it.
 
 ## Visuals
 

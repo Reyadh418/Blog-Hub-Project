@@ -4,26 +4,100 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>User Profile - Blog Hub</title>
+        <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
+            :root {
+                --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                --color-primary-900: #0f172a;
+                --color-primary-800: #1d2e4a;
+
+            @media (max-width: 768px) {
+                .navbar-content {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 12px;
+                }
+
+                .navbar-actions {
+                    width: 100%;
+                    justify-content: flex-start;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+
+                .navbar-brand,
+                .navbar-actions a,
+                .navbar-actions button,
+                .action-btn,
+                .avatar-toggle,
+                .avatar-primary,
+                .avatar-secondary,
+                .form-actions button,
+                .edit-actions button {
+                    min-height: 44px;
+                }
+
+                .action-btn,
+                .avatar-primary,
+                .avatar-secondary,
+                .form-actions button,
+                .edit-actions button {
+                    justify-content: center;
+                }
+
+                .profile-actions,
+                .form-actions,
+                .edit-actions {
+                    width: 100%;
+                    gap: 10px;
+                }
+
+                .profile-actions .action-btn,
+                .form-actions button,
+                .edit-actions button {
+                    flex: 1;
+                }
+            }
+                --color-accent-500: #c48a5a;
+                --color-accent-600: #a86c44;
+                --color-surface: #fcf9f4;
+                --color-surface-soft: #f3ede3;
+                --color-border-soft: #d8cebc;
+                --color-text-primary: #1c2738;
+                --color-text-muted: #616b7b;
+                --gradient-bg-main: linear-gradient(145deg, #f7f2e9 0%, #ece4d7 100%);
+                --gradient-primary-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
+                --gradient-accent-main: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
+                --radius-sm: 10px;
+                --radius-md: 14px;
+                --shadow-1: 0 10px 24px rgba(10, 18, 33, 0.12);
+                --shadow-2: 0 20px 44px rgba(10, 18, 33, 0.2);
+            }
+
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
 
+            .is-hidden {
+                display: none !important;
+            }
+
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+                font-family: var(--font-family-base);
+                background: var(--gradient-bg-main);
                 min-height: 100vh;
                 padding: 40px 20px;
             }
 
             .navbar {
-                background: #1e3a5f;
+                background: var(--color-primary-900);
                 padding: 16px 0;
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 8px 24px rgba(10, 18, 33, 0.2);
                 margin-bottom: 40px;
             }
 
@@ -57,7 +131,7 @@
 
             .navbar-actions a,
             .navbar-actions button {
-                color: #d4a574;
+                color: #e7c9ab;
                 text-decoration: none;
                 font-weight: 600;
                 font-size: 0.95rem;
@@ -69,7 +143,7 @@
 
             .navbar-actions a:hover,
             .navbar-actions button:hover {
-                color: #e8b896;
+                color: #f2dbc5;
             }
 
             .container {
@@ -108,11 +182,11 @@
             }
 
             .profile-header {
-                background: #ffffff;
-                border-radius: 12px;
-                padding: 40px;
-                margin-bottom: 40px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                background: var(--color-surface);
+                border-radius: var(--radius-md);
+                padding: 46px;
+                margin-bottom: 48px;
+                box-shadow: var(--shadow-1);
                 text-align: center;
             }
 
@@ -120,17 +194,21 @@
                 width: 120px;
                 height: 120px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                background: var(--gradient-accent-main);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 3rem;
-                margin: 0 auto 24px;
-                color: #ffffff;
+                margin: 0 auto 28px;
+                color: var(--color-surface);
                 box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
                 cursor: pointer;
                 position: relative;
                 overflow: hidden;
+            }
+
+            .profile-avatar.is-readonly {
+                cursor: default;
             }
 
             .profile-avatar::after {
@@ -160,17 +238,42 @@
                 text-transform: uppercase;
             }
 
+            .avatar-chip[data-avatar='aurora'], .profile-avatar[data-avatar='aurora'] { background: linear-gradient(135deg, #5efce8 0%, #736efe 100%); }
+            .avatar-chip[data-avatar='sunset'], .profile-avatar[data-avatar='sunset'] { background: linear-gradient(135deg, #f83600 0%, #f9d423 100%); }
+            .avatar-chip[data-avatar='wave'], .profile-avatar[data-avatar='wave'] { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+            .avatar-chip[data-avatar='forest'], .profile-avatar[data-avatar='forest'] { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+            .avatar-chip[data-avatar='midnight'], .profile-avatar[data-avatar='midnight'] { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+            .avatar-chip[data-avatar='plum'], .profile-avatar[data-avatar='plum'] { background: linear-gradient(135deg, #cc2b5e 0%, #753a88 100%); }
+            .avatar-chip[data-avatar='citrus'], .profile-avatar[data-avatar='citrus'] { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+            .avatar-chip[data-avatar='ember'], .profile-avatar[data-avatar='ember'] { background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%); }
+            .avatar-chip[data-avatar='mint'], .profile-avatar[data-avatar='mint'] { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); }
+            .avatar-chip[data-avatar='default'], .profile-avatar[data-avatar='default'] { background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%); }
+
+            .comments-section {
+                margin-top: 24px;
+            }
+
             /* Avatar modal */
             .avatar-modal-backdrop {
                 position: fixed;
                 inset: 0;
                 background: rgba(20, 33, 61, 0.55);
                 backdrop-filter: blur(6px);
-                display: none;
+                display: flex;
                 align-items: center;
                 justify-content: center;
                 z-index: 12000;
                 padding: 20px;
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.22s ease;
+            }
+
+            .avatar-modal-backdrop.is-open {
+                visibility: visible;
+                opacity: 1;
+                pointer-events: all;
             }
 
             .avatar-modal {
@@ -199,6 +302,9 @@
                 grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
                 gap: 14px;
                 margin: 16px 0 12px 0;
+            }
+
+            .avatar-options.is-hidden {
                 display: none;
             }
 
@@ -266,7 +372,7 @@
             }
 
             .profile-name {
-                color: #1e3a5f;
+                color: var(--color-primary-900);
                 font-size: 2rem;
                 font-weight: 600;
                 margin-bottom: 8px;
@@ -274,7 +380,7 @@
             }
 
             .profile-username {
-                color: #d4a574;
+                color: var(--color-accent-500);
                 font-size: 1.1rem;
                 font-weight: 500;
                 margin-bottom: 16px;
@@ -282,9 +388,9 @@
 
             .profile-info {
                 background: #f8f9fa;
-                padding: 16px 24px;
+                padding: 18px 24px;
                 border-radius: 8px;
-                margin-bottom: 24px;
+                margin-bottom: 28px;
                 font-size: 0.95rem;
                 color: #555;
             }
@@ -292,20 +398,20 @@
             .profile-bio {
                 color: #555;
                 font-size: 1rem;
-                line-height: 1.6;
-                margin-bottom: 24px;
+                line-height: 1.72;
+                margin-bottom: 30px;
                 font-weight: 300;
-                max-width: 600px;
+                max-width: 66ch;
                 margin-left: auto;
                 margin-right: auto;
             }
 
             .profile-actions {
                 display: flex;
-                gap: 16px;
+                gap: 18px;
                 justify-content: center;
                 flex-wrap: wrap;
-                margin-top: 24px;
+                margin-top: 30px;
             }
 
             button.action-btn {
@@ -359,8 +465,8 @@
             .edit-form {
                 background: #ffffff;
                 border-radius: 12px;
-                padding: 40px;
-                margin-bottom: 40px;
+                padding: 46px;
+                margin-bottom: 48px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                 display: none;
             }
@@ -370,7 +476,7 @@
             }
 
             .form-group {
-                margin-bottom: 24px;
+                margin-bottom: 28px;
             }
 
             label {
@@ -389,7 +495,7 @@
                 border: 2px solid #e8e8e8;
                 border-radius: 6px;
                 font-size: 1rem;
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+                font-family: var(--font-family-base);
                 transition: all 0.3s ease;
                 background-color: #f8f9fa;
                 color: #2c3e50;
@@ -410,7 +516,8 @@
 
             .form-actions {
                 display: flex;
-                gap: 12px;
+                gap: 14px;
+                margin-top: 6px;
             }
 
             .form-actions button {
@@ -443,26 +550,26 @@
             }
 
             .posts-section {
-                background: #ffffff;
-                border-radius: 12px;
-                padding: 40px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                background: var(--color-surface);
+                border-radius: var(--radius-md);
+                padding: 44px;
+                box-shadow: var(--shadow-1);
             }
 
             .posts-title {
                 color: #1e3a5f;
                 font-size: 1.8rem;
                 font-weight: 600;
-                margin-bottom: 32px;
-                padding-bottom: 16px;
+                margin-bottom: 36px;
+                padding-bottom: 18px;
                 border-bottom: 2px solid #e8e8e8;
             }
 
             .post-card {
-                padding: 24px;
+                padding: 26px;
                 border: 1px solid #e8e8e8;
                 border-radius: 8px;
-                margin-bottom: 20px;
+                margin-bottom: 24px;
                 transition: all 0.3s ease;
                 cursor: pointer;
             }
@@ -485,13 +592,25 @@
                 line-height: 1.6;
                 margin-bottom: 16px;
                 font-size: 0.95rem;
+                max-width: 68ch;
             }
 
             .post-meta {
                 font-size: 0.85rem;
                 color: #999;
                 display: flex;
-                gap: 16px;
+                gap: 20px;
+                row-gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .post-category-pill {
+                background: rgba(212, 165, 116, 0.16);
+                color: #1e3a5f;
+                border: 1px solid rgba(212, 165, 116, 0.35);
+                border-radius: 999px;
+                padding: 2px 10px;
+                font-weight: 700;
             }
 
             .empty-posts {
@@ -505,7 +624,7 @@
                 margin-bottom: 16px;
             }
 
-            #message {
+            .message {
                 margin-bottom: 20px;
                 padding: 14px 16px;
                 border-radius: 6px;
@@ -516,19 +635,46 @@
                 animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             }
 
-            #message.error {
+            .message.error {
                 background-color: #f8d7da;
                 color: #721c24;
                 border: 1px solid #f5c6cb;
                 display: block;
             }
 
-            #message.success {
+            .message.success {
                 background-color: #d4edda;
                 color: #155724;
                 border: 1px solid #c3e6cb;
                 display: block;
             }
+
+            .verify-banner {
+                background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+                border: 1px solid #f0c36d;
+                border-radius: 10px;
+                padding: 14px 24px;
+                text-align: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                margin-bottom: 20px;
+            }
+
+            .verify-icon { font-size: 1.1rem; }
+            .verify-text-strong { color: #856404; font-weight: 600; font-size: 0.95rem; }
+            .verify-text { color: #856404; font-size: 0.9rem; }
+            .verify-link { color: var(--color-primary-900); font-weight: 700; text-decoration: underline; margin-left: 8px; font-size: 0.9rem; }
+
+            .error-actions { text-align: center; }
+            .error-link { color: var(--color-accent-500); text-decoration: none; font-weight: 600; }
+
+            .post-author-inline { display:flex; align-items:center; gap:8px; color:var(--color-accent-500); font-weight:600; }
+            .comment-card { cursor: default; }
+            .comment-title-row { margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+            .comment-excerpt { color:#2c3e50; margin-bottom:8px; }
+            .comment-meta { border-top:none; padding-top:0; }
+            .comment-date { color:#95a5a6; }
+            .comment-edited { color: var(--color-accent-500); }
+            .comment-post-link { color:#4a90e2; font-weight:700; }
 
             @keyframes slideIn {
                 from {
@@ -592,42 +738,43 @@
             @media (max-width: 600px) { .toast-container { right: 10px; left: 10px; max-width: none; } }
         </style>
     </head>
-    <body>
+    <body data-brand-page="profile">
         <div class="toast-container" id="toastContainer"></div>
 
         <div class="navbar">
             <div class="navbar-content">
-                <a href="/">📝 Blog Hub</a>
+                <a href="/" data-brand-copy="profile.nav.brand">📝 Stories Hub</a>
                 <div class="navbar-actions">
-                    <a href="/create-post.html">New Post</a>
+                    <a href="/create-post.html" data-brand-copy="profile.nav.newStory">New Story</a>
                     <button id="logoutBtn">Logout</button>
                 </div>
             </div>
         </div>
 
         <div class="container">
-            <div id="message" role="alert"></div>
+            <div id="message" class="message" role="alert"></div>
 
             <!-- Email verification banner -->
-            <div id="verifyBanner" style="display:none; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #f0c36d; border-radius: 10px; padding: 14px 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
-                <span style="font-size: 1.1rem;">📧</span>
-                <span style="color: #856404; font-weight: 600; font-size: 0.95rem;">Your email is not verified.</span>
-                <span style="color: #856404; font-size: 0.9rem;">Some features are limited until you verify.</span>
-                <a href="/verify-email.html" style="color: #1e3a5f; font-weight: 700; text-decoration: underline; margin-left: 8px; font-size: 0.9rem;">Verify Now</a>
+            <div id="verifyBanner" class="verify-banner is-hidden">
+                <span class="verify-icon">📧</span>
+                <span class="verify-text-strong">Your email is not verified.</span>
+                <span class="verify-text">Some features are limited until you verify.</span>
+                <a href="/verify-email.html" class="verify-link">Verify Now</a>
             </div>
 
             <div id="loadingContainer" class="loading">
                 <div class="spinner"></div>
-                <p>Loading profile...</p>
+                <p data-brand-copy="profile.loading">Loading profile...</p>
             </div>
 
-            <div id="profileContainer" style="display: none;">
+            <div id="profileContainer" class="is-hidden">
                 <div class="profile-header">
                     <div class="profile-avatar" id="profileAvatar">👤</div>
                     <h1 class="profile-name" id="profileName"></h1>
                     <p class="profile-username" id="profileUsername"></p>
                     <div class="profile-info" id="profileEmail"></div>
                     <p class="profile-bio" id="profileBio"></p>
+                    <p class="brand-trust-note" data-brand-copy="profile.trust">Author trust signal: profiles highlight real contribution history so readers can follow consistent voices and thoughtful growth.</p>
                     <div class="profile-actions">
                         <button class="action-btn edit-btn" onclick="location.href='/edit-profile.html'">Edit Profile</button>
                     </div>
@@ -642,10 +789,10 @@
             <!-- Avatar modal -->
             <div class="avatar-modal-backdrop" id="avatarModal">
                 <div class="avatar-modal">
-                    <h3>Choose your avatar</h3>
-                    <p>Pick a premium badge. Changes apply instantly after confirm.</p>
+                    <h3 data-brand-copy="profile.avatar.title">Choose your avatar</h3>
+                    <p data-brand-copy="profile.avatar.subtitle">Pick a premium badge. Changes apply instantly after confirm.</p>
                     <button id="avatarToggle" class="avatar-toggle">Update avatar</button>
-                    <div class="avatar-options" id="avatarOptions"></div>
+                    <div class="avatar-options is-hidden" id="avatarOptions"></div>
                     <div class="avatar-modal-actions">
                         <button id="avatarConfirm" class="avatar-primary">Confirm</button>
                         <button id="avatarCancel" class="avatar-secondary">Cancel</button>
@@ -653,10 +800,10 @@
                 </div>
             </div>
 
-            <div id="errorContainer" style="display: none;">
+            <div id="errorContainer" class="is-hidden">
                 <div class="error" id="errorMessage"></div>
-                <div style="text-align: center;">
-                    <a href="/login.html" style="color: #d4a574; text-decoration: none; font-weight: 600;">← Back to Login</a>
+                <div class="error-actions">
+                    <a href="/login.html" class="error-link">← Back to Login</a>
                 </div>
             </div>
         </div>
@@ -676,11 +823,11 @@
                 container.appendChild(toast);
                 const closeBtn = toast.querySelector('.toast-close');
                 closeBtn.addEventListener('click', () => {
-                    toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    toast.classList.add('is-exiting');
                     setTimeout(() => toast.remove(), 300);
                 });
                 if (duration > 0) {
-                    setTimeout(() => { if (toast.parentElement) { toast.style.animation = 'slideIn 0.3s reverse cubic-bezier(0.34, 1.56, 0.64, 1)'; setTimeout(() => toast.remove(), 300); } }, duration);
+                    setTimeout(() => { if (toast.parentElement) { toast.classList.add('is-exiting'); setTimeout(() => toast.remove(), 300); } }, duration);
                 }
                 return toast;
             }
@@ -702,7 +849,11 @@
             };
 
             function avatarStyle(key) {
-                return AVATAR_PALETTE[key] || 'linear-gradient(135deg, #d4a574 0%, #b8956a 100%)';
+                return AVATAR_PALETTE[key] || 'linear-gradient(145deg, #d0a273 0%, #b2774a 100%)';
+            }
+
+            function avatarKey(key) {
+                return Object.prototype.hasOwnProperty.call(AVATAR_PALETTE, key) ? key : 'default';
             }
 
             const messageDiv = document.getElementById('message');
@@ -722,35 +873,45 @@
             const params = new URLSearchParams(window.location.search);
             profileUserId = params.get('id');
 
-            function setAvatarCircle(el, avatarKey, fallbackText) {
+            function setAvatarCircle(el, avatarToken, fallbackText) {
                 if (!el) return;
-                el.style.background = avatarStyle(avatarKey);
+                el.dataset.avatar = avatarKey(avatarToken);
                 el.textContent = (fallbackText || '👤').substring(0, 2).toUpperCase();
+            }
+
+            function showElement(element) {
+                if (!element) return;
+                element.classList.remove('is-hidden');
+            }
+
+            function hideElement(element) {
+                if (!element) return;
+                element.classList.add('is-hidden');
             }
 
             function openAvatarModal() {
                 if (!avatarModal) return;
-                avatarModal.style.display = 'flex';
+                avatarModal.classList.add('is-open');
                 renderAvatarOptions();
             }
 
             function closeAvatarModal() {
                 if (!avatarModal) return;
-                avatarModal.style.display = 'none';
+                avatarModal.classList.remove('is-open');
                 const grid = document.querySelector('.avatar-options');
-                if (grid) grid.style.display = 'none';
+                if (grid) grid.classList.add('is-hidden');
             }
 
             function renderAvatarOptions() {
                 if (!avatarOptionsEl) return;
                 avatarOptionsEl.innerHTML = '';
-                avatarOptionsEl.style.display = 'grid';
+                avatarOptionsEl.classList.remove('is-hidden');
                 Object.keys(AVATAR_PALETTE).forEach((key) => {
                     const option = document.createElement('div');
                     option.className = 'avatar-option' + (selectedAvatar === key ? ' selected' : '');
                     option.dataset.avatar = key;
                     option.innerHTML = `
-                        <div class="avatar-chip" style="background:${avatarStyle(key)}">${key[0].toUpperCase()}</div>
+                        <div class="avatar-chip" data-avatar="${avatarKey(key)}">${key[0].toUpperCase()}</div>
                         <span>${key}</span>
                     `;
                     option.addEventListener('click', () => {
@@ -801,18 +962,18 @@
                     // Flatten the response data since API returns flat object, not nested
                     displayProfile(profileData);
                     
-                    loadingContainer.style.display = 'none';
-                    profileContainer.style.display = 'block';
+                    hideElement(loadingContainer);
+                    profileContainer.classList.remove('is-hidden');
 
                     // Show verification banner for unverified users
                     if (currentUser.emailVerified === false && !currentUser.isAdmin) {
                         const banner = document.getElementById('verifyBanner');
-                        if (banner) banner.style.display = 'block';
+                        showElement(banner);
                     }
                 } catch (error) {
                     console.error('Load profile error:', error);
-                    loadingContainer.style.display = 'none';
-                    errorContainer.style.display = 'block';
+                    hideElement(loadingContainer);
+                    errorContainer.classList.remove('is-hidden');
                     document.getElementById('errorMessage').textContent = 'Could not load profile. Please log in again.';
                 }
             }
@@ -830,11 +991,11 @@
 
                 // Show edit button only if viewing own profile
                 if (!profileUserId || profileUserId == myUserId) {
-                    profileAvatar.style.cursor = 'pointer';
+                    profileAvatar.classList.remove('is-readonly');
                 } else {
                     // Hide edit button for other users
-                    document.querySelector('.action-btn.edit-btn').style.display = 'none';
-                    profileAvatar.style.cursor = 'default';
+                    hideElement(document.querySelector('.action-btn.edit-btn'));
+                    profileAvatar.classList.add('is-readonly');
                     profileAvatar.removeEventListener('click', openAvatarModal);
                 }
 
@@ -842,19 +1003,24 @@
                 if (user.posts && user.posts.length > 0) {
                     document.getElementById('postsCount').textContent = `${user.posts.length} ${user.posts.length === 1 ? 'Post' : 'Posts'}`;
                     postsContainer.innerHTML = user.posts
-                        .map(post => `
+                        .map(post => {
+                            const categoryLabel = post.category || 'Stories';
+                            const categoryAccent = window.getPillarAccentKey ? window.getPillarAccentKey(categoryLabel) : 'stories';
+                            return `
                             <div class="post-card" onclick="window.location.href='/post.html?id=${post.id}'">
                                 <h3 class="post-title">${escapeHtml(post.title)}</h3>
                                 <p class="post-excerpt">${escapeHtml(post.body.substring(0, 150))}${post.body.length > 150 ? '...' : ''}</p>
                                 <div class="post-meta">
+                                    <span class="post-category-pill" data-category="${escapeHtml(categoryLabel)}" data-accent="${escapeHtml(categoryAccent)}">${escapeHtml(categoryLabel)}</span>
                                     <span>📅 ${new Date(post.created_at).toLocaleDateString()}</span>
-                                    <span style="display:flex; align-items:center; gap:8px; color:#d4a574; font-weight:600;">
-                                        <span class="avatar-chip" style="background:${avatarStyle(user.avatar)}">${escapeHtml(user.username[0] || 'U')}</span>
+                                    <span class="post-author-inline">
+                                        <span class="avatar-chip" data-avatar="${avatarKey(user.avatar || '')}">${escapeHtml(user.username[0] || 'U')}</span>
                                         ${escapeHtml(user.username)}
                                     </span>
                                 </div>
                             </div>
-                        `)
+                        `;
+                        })
                         .join('');
                 } else {
                     document.getElementById('postsCount').textContent = 'No posts yet';
@@ -869,8 +1035,7 @@
                 if (!section) {
                     section = document.createElement('div');
                     section.id = 'commentsSection';
-                    section.className = 'posts-section';
-                    section.style.marginTop = '24px';
+                    section.className = 'posts-section comments-section';
                     section.innerHTML = `
                         <h2 class="posts-title" id="commentsCount">Comments (0)</h2>
                         <div id="commentsContainer"></div>
@@ -887,16 +1052,16 @@
                 }
 
                 commentsContainer.innerHTML = comments.map(c => `
-                    <div class="post-card" style="cursor:default;">
-                        <div class="post-title" style="margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-                            <span style="background:${avatarStyle(selectedAvatar)};" class="avatar-chip">${(currentUser?.username||'U')[0]?.toUpperCase?.()||'U'}</span>
+                    <div class="post-card comment-card">
+                        <div class="post-title comment-title-row">
+                            <span class="avatar-chip" data-avatar="${avatarKey(selectedAvatar)}">${(currentUser?.username||'U')[0]?.toUpperCase?.()||'U'}</span>
                             <span>${escapeHtml(c.post_title || 'Post')}</span>
                         </div>
-                        <div class="post-excerpt" style="color:#2c3e50; margin-bottom:8px;">${escapeHtml(c.body.substring(0, 180))}${c.body.length>180?'...':''}</div>
-                        <div class="post-meta" style="border-top:none; padding-top:0;">
-                            <span style="color:#95a5a6;">${new Date(c.created_at).toLocaleString()}</span>
-                            ${c.updated_at !== c.created_at ? '<span style="color:#d4a574;">(edited)</span>' : ''}
-                            <a href="/post.html?id=${c.post_id}" style="color:#4a90e2; font-weight:700;">View post →</a>
+                        <div class="post-excerpt comment-excerpt">${escapeHtml(c.body.substring(0, 180))}${c.body.length>180?'...':''}</div>
+                        <div class="post-meta comment-meta">
+                            <span class="comment-date">${new Date(c.created_at).toLocaleString()}</span>
+                            ${c.updated_at !== c.created_at ? '<span class="comment-edited">(edited)</span>' : ''}
+                            <a href="/post.html?id=${c.post_id}" class="comment-post-link">View post →</a>
                         </div>
                     </div>
                 `).join('');
@@ -931,9 +1096,10 @@
             if (avatarToggle) {
                 avatarToggle.addEventListener('click', () => {
                     if (!avatarOptionsEl) return;
-                    const visible = avatarOptionsEl.style.display === 'grid';
-                    avatarOptionsEl.style.display = visible ? 'none' : 'grid';
-                    if (!visible) renderAvatarOptions();
+                    const visible = !avatarOptionsEl.classList.contains('is-hidden');
+                    avatarOptionsEl.classList.toggle('is-hidden', visible);
+                    if (visible) return;
+                    renderAvatarOptions();
                 });
             }
 
@@ -967,8 +1133,7 @@
                 function showMessage(text, type = 'error') {
                     // Deprecated: use toasts for inline feedback, keep for backward compatibility
                     messageDiv.textContent = text;
-                    messageDiv.className = type;
-                    messageDiv.style.display = 'block';
+                    messageDiv.className = `message ${type}`;
                 }
 
             function escapeHtml(text) {

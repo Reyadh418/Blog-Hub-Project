@@ -4,7 +4,9 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Admin Dashboard - Blog Hub</title>
+        <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
+        <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js"></script>
         <style>
             * {
@@ -14,16 +16,16 @@
             }
 
             body {
-                font-family: 'Segoe UI', Trebuchet MS, sans-serif;
-                background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+                font-family: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
+                background: linear-gradient(145deg, #f7f2e9 0%, #ece4d7 100%);
                 min-height: 100vh;
                 padding: 40px 20px;
             }
 
             .navbar {
-                background: #1e3a5f;
+                background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
                 padding: 16px 0;
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 8px 24px rgba(10, 18, 33, 0.2);
                 margin-bottom: 40px;
             }
 
@@ -57,7 +59,7 @@
 
             .navbar-actions a,
             .navbar-actions button {
-                color: #d4a574;
+                color: #e7c9ab;
                 text-decoration: none;
                 font-weight: 600;
                 font-size: 0.95rem;
@@ -69,7 +71,7 @@
 
             .navbar-actions a:hover,
             .navbar-actions button:hover {
-                color: #e8b896;
+                color: #f2dbc5;
             }
 
             .container {
@@ -81,6 +83,10 @@
                 text-align: center;
                 padding: 60px 20px;
                 color: #666;
+            }
+
+            .is-hidden {
+                display: none !important;
             }
 
             .spinner {
@@ -99,18 +105,18 @@
             }
 
             .profile-header {
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
                 border-radius: 12px;
                 padding: 60px 40px;
                 margin-bottom: 40px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 20px 44px rgba(10, 18, 33, 0.24);
                 text-align: center;
                 color: #ffffff;
             }
 
             .admin-badge {
                 display: inline-block;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
                 color: #ffffff;
                 padding: 8px 20px;
                 border-radius: 20px;
@@ -124,7 +130,7 @@
                 width: 140px;
                 height: 140px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+                background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -149,6 +155,15 @@
                 font-weight: 300;
                 letter-spacing: 0.3px;
                 margin-bottom: 30px;
+                max-width: 62ch;
+                margin-left: auto;
+                margin-right: auto;
+                line-height: 1.62;
+            }
+
+            .profile-subtitle-current {
+                margin-top: 8px;
+                font-size: 0.95rem;
             }
 
             .perks-section {
@@ -166,6 +181,10 @@
                 margin-bottom: 32px;
                 padding-bottom: 16px;
                 border-bottom: 2px solid #e8e8e8;
+            }
+
+            .section-title-compact {
+                margin-bottom: 18px;
             }
 
             .perks-grid {
@@ -243,6 +262,7 @@
                 color: #666;
                 font-size: 0.95rem;
                 line-height: 1.6;
+                max-width: 62ch;
             }
 
             .action-buttons {
@@ -286,7 +306,13 @@
             }
 
             .manage-btn {
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                color: #ffffff;
                 box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            }
+
+            .is-initially-hidden {
+                display: none;
             }
 
             .manage-btn:hover {
@@ -398,6 +424,120 @@
                 font-size: 0.9rem;
             }
 
+            .author-verify-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 32px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                margin-bottom: 32px;
+                border: 1px solid #e8e8e8;
+            }
+
+            .verify-search-row {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                margin-top: 8px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+            }
+
+            .verify-search-input {
+                flex: 1;
+                min-width: 220px;
+                padding: 11px 14px;
+                border: 1px solid #dcdcdc;
+                border-radius: 8px;
+                font-size: 0.95rem;
+            }
+
+            .verify-refresh-btn {
+                border: 1px solid #e0e0e0;
+                background: #f8f8f8;
+                color: #2c3e50;
+                padding: 11px 14px;
+                border-radius: 8px;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+            .verify-results {
+                display: grid;
+                gap: 10px;
+            }
+
+            .verify-row {
+                border: 1px solid #ececec;
+                border-radius: 10px;
+                padding: 12px;
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+                background: linear-gradient(135deg, #fcfcfc 0%, #fff 100%);
+            }
+
+            .verify-author-meta {
+                display: grid;
+                gap: 4px;
+            }
+
+            .verify-author-name {
+                font-weight: 700;
+                color: #1e3a5f;
+            }
+
+            .verify-author-sub {
+                font-size: 0.86rem;
+                color: #6b7280;
+            }
+
+            .verify-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 0.74rem;
+                font-weight: 800;
+                letter-spacing: 0.4px;
+                text-transform: uppercase;
+                border: 1px solid transparent;
+            }
+
+            .verify-status.admin { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+            .verify-status.verified { background: #ecfdf3; color: #166534; border-color: #86efac; }
+            .verify-status.community { background: #fff7ed; color: #9a3412; border-color: #fdba74; }
+            .verify-status.unverified { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+
+            .verify-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .verify-btn {
+                border: none;
+                border-radius: 8px;
+                padding: 10px 12px;
+                font-size: 0.84rem;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+            .verify-btn.set {
+                background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                color: #fff;
+            }
+
+            .verify-btn.clear {
+                background: #f4f4f5;
+                color: #3f3f46;
+                border: 1px solid #e4e4e7;
+            }
+
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -423,6 +563,9 @@
                 color: #666;
                 font-size: 0.95rem;
                 font-weight: 500;
+            }
+            .stat-label.is-clickable {
+                cursor: pointer;
             }
 
             @media (max-width: 768px) {
@@ -464,13 +607,13 @@
 
         </style>
     </head>
-    <body>
+    <body data-brand-page="admin-profile">
         <div class="toast-container" id="toastContainer"></div>
         <div class="navbar">
                 <div class="navbar-content">
-                <a href="/">📝 Blog Hub</a>
+                <a href="/" data-brand-copy="admin.nav.brand">📝 Stories Hub</a>
                 <div class="navbar-actions">
-                    <a href="/create-post.html">New Post</a>
+                    <a href="/create-post.html" data-brand-copy="admin.nav.newStory">New Story</a>
                     <button id="logoutBtn">Logout</button>
                 </div>
             </div>
@@ -482,17 +625,17 @@
                 <p>Loading admin dashboard...</p>
             </div>
 
-            <div id="profileContainer" style="display: none;">
+            <div id="profileContainer" class="is-hidden">
                 <div class="profile-header">
                     <div class="admin-badge">👑 ADMINISTRATOR</div>
                     <div class="profile-avatar">🔐</div>
                     <h1 class="profile-title">Admin Dashboard</h1>
                     <p class="profile-subtitle">The Guardians of Content Quality</p>
-                    <p class="profile-subtitle" style="margin-top:8px; font-size:0.95rem;">Current username: <span id="currentAdminUsername">—</span></p>
+                    <p class="profile-subtitle profile-subtitle-current">Current username: <span id="currentAdminUsername">—</span></p>
                 </div>
 
                 <div class="credentials-section">
-                    <h2 class="section-title" style="margin-bottom:18px;">Secure Admin Credentials</h2>
+                    <h2 class="section-title section-title-compact">Secure Admin Credentials</h2>
                     <form id="adminCredentialsForm" class="credential-form">
                         <label>Current password
                             <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" autocomplete="current-password" required />
@@ -514,6 +657,16 @@
                     </form>
                 </div>
 
+                <div class="author-verify-section">
+                    <h2 class="section-title section-title-compact">Author Verification</h2>
+                    <p class="form-hint">Assign trust status for non-admin authors. Rule set: Admin (admins), Verified (admin-verified), Community (email-verified but not admin-verified), Unverified (email not verified).</p>
+                    <div class="verify-search-row">
+                        <input id="verifySearchInput" class="verify-search-input" type="search" placeholder="Search author by username or email" />
+                        <button id="verifyRefreshBtn" class="verify-refresh-btn" type="button">Refresh</button>
+                    </div>
+                    <div id="verifyResults" class="verify-results"></div>
+                </div>
+
                 <div class="stats-section">
                     <h2 class="section-title">Dashboard Stats</h2>
                     <div class="stats-grid">
@@ -523,7 +676,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="totalUsers">0</div>
-                            <div class="stat-label" id="totalUsersLabel" style="cursor:pointer;">Registered Users</div>
+                            <div class="stat-label is-clickable" id="totalUsersLabel">Registered Users</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="adminRole">1</div>
@@ -605,9 +758,9 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button class="action-btn create-btn" onclick="location.href='/create-post.html'">✎ Create New Post</button>
-                    <button class="action-btn manage-btn" id="manageAdminsBtn" onclick="location.href='/admin-management.html'" style="display:none; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">👑 Manage Admins</button>
-                    <button class="action-btn home-btn" onclick="location.href='/'">🏠 Back to Blog</button>
+                    <button class="action-btn create-btn" onclick="location.href='/create-post.html'">✎ Create Story</button>
+                    <button class="action-btn manage-btn is-initially-hidden" id="manageAdminsBtn" onclick="location.href='/admin-management.html'">👑 Manage Admins</button>
+                    <button class="action-btn home-btn" data-brand-copy="admin.home.back" onclick="location.href='/'">🏠 Back to Stories</button>
                 </div>
             </div>
         </div>
@@ -630,6 +783,12 @@
                 if (close) close.addEventListener('click', () => toast.remove());
                 if (duration > 0) setTimeout(() => { if (toast.parentElement) toast.remove(); }, duration);
             }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text || '';
+                return div.innerHTML;
+            }
             const loadingContainer = document.getElementById('loadingContainer');
             const profileContainer = document.getElementById('profileContainer');
             const newUsernameInput = document.getElementById('newUsername');
@@ -638,7 +797,85 @@
             const confirmPasswordInput = document.getElementById('confirmPassword');
             const resetFormButton = document.getElementById('resetForm');
             const adminCredentialsForm = document.getElementById('adminCredentialsForm');
+            const verifySearchInput = document.getElementById('verifySearchInput');
+            const verifyRefreshBtn = document.getElementById('verifyRefreshBtn');
+            const verifyResults = document.getElementById('verifyResults');
             let cachedAdminUsername = '';
+            let verifySearchDebounce = null;
+
+            function computeAuthorTrust(author) {
+                if (!author.emailVerified) return { key: 'unverified', label: 'Unverified' };
+                if (author.authorVerified) return { key: 'verified', label: 'Verified' };
+                return { key: 'community', label: 'Community' };
+            }
+
+            async function csrfHeader() {
+                const csrfResp = await fetch('/api/auth/csrf');
+                const csrfData = await csrfResp.json().catch(() => ({}));
+                return { 'x-csrf-token': csrfData.token || '' };
+            }
+
+            function renderVerifyRows(authors) {
+                if (!verifyResults) return;
+                if (!authors.length) {
+                    verifyResults.innerHTML = '<div class="verify-row"><div class="verify-author-sub">No authors found for this filter.</div></div>';
+                    return;
+                }
+
+                verifyResults.innerHTML = authors.map((author) => {
+                    const trust = computeAuthorTrust(author);
+                    const statusMeta = author.authorVerified && author.verifiedByAdminUsername
+                        ? `Verified by @${escapeHtml(author.verifiedByAdminUsername)}`
+                        : (author.emailVerified ? 'Eligible for verification' : 'Email not verified');
+                    return `
+                        <div class="verify-row" data-author-id="${author.id}">
+                            <div class="verify-author-meta">
+                                <div class="verify-author-name">@${escapeHtml(author.username)} <span class="verify-status ${trust.key}">${trust.label}</span></div>
+                                <div class="verify-author-sub">${escapeHtml(author.email)} · ${statusMeta}</div>
+                            </div>
+                            <div class="verify-actions">
+                                <button class="verify-btn set" data-action="verify" ${author.emailVerified ? '' : 'disabled'}>Mark Verified</button>
+                                <button class="verify-btn clear" data-action="clear">Set Community</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function loadAuthorVerificationList(search = '') {
+                try {
+                    const response = await fetch(`/api/admin/authors?search=${encodeURIComponent(search)}`);
+                    const authors = response.ok ? await response.json() : [];
+                    renderVerifyRows(Array.isArray(authors) ? authors : []);
+                } catch (err) {
+                    console.error('Failed to load author verification list', err);
+                    if (verifyResults) verifyResults.innerHTML = '<div class="verify-row"><div class="verify-author-sub">Unable to load authors right now.</div></div>';
+                }
+            }
+
+            async function updateAuthorVerification(authorId, verified) {
+                try {
+                    const extraHeaders = await csrfHeader();
+                    const response = await fetch(`/api/admin/authors/${authorId}/verification`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...extraHeaders,
+                        },
+                        body: JSON.stringify({ verified }),
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(data.error || 'Could not update author verification', 'error');
+                        return;
+                    }
+                    showToast(verified ? 'Author marked as Verified' : 'Author moved to Community', 'success', 1700);
+                    await loadAuthorVerificationList((verifySearchInput?.value || '').trim());
+                } catch (err) {
+                    console.error('Verification update failed', err);
+                    showToast('Could not update author verification', 'error');
+                }
+            }
 
             // Load admin dashboard
             async function loadAdminDashboard() {
@@ -671,8 +908,10 @@
                         // Show Manage Admins button for super admins
                         if (profile.isSuperAdmin) {
                             const manageBtn = document.getElementById('manageAdminsBtn');
-                            if (manageBtn) manageBtn.style.display = 'inline-flex';
+                            if (manageBtn) manageBtn.classList.remove('is-initially-hidden');
                         }
+
+                        await loadAuthorVerificationList();
                     }
 
                     // Load stats
@@ -686,8 +925,8 @@
                     document.getElementById('totalPosts').textContent = posts.length;
                     document.getElementById('totalUsers').textContent = usersCountData.count;
                     
-                    loadingContainer.style.display = 'none';
-                    profileContainer.style.display = 'block';
+                    loadingContainer.classList.add('is-hidden');
+                    profileContainer.classList.remove('is-hidden');
                 } catch (error) {
                     console.error('Load dashboard error:', error);
                     window.location.href = '/login.html';
@@ -766,6 +1005,34 @@
                         console.error('Credentials update error:', err);
                         showToast('Unable to update credentials', 'error');
                     }
+                });
+            }
+
+            if (verifySearchInput) {
+                verifySearchInput.addEventListener('input', () => {
+                    if (verifySearchDebounce) clearTimeout(verifySearchDebounce);
+                    verifySearchDebounce = setTimeout(() => {
+                        loadAuthorVerificationList(verifySearchInput.value.trim());
+                    }, 260);
+                });
+            }
+
+            if (verifyRefreshBtn) {
+                verifyRefreshBtn.addEventListener('click', () => {
+                    loadAuthorVerificationList((verifySearchInput?.value || '').trim());
+                });
+            }
+
+            if (verifyResults) {
+                verifyResults.addEventListener('click', async (event) => {
+                    const button = event.target.closest('button.verify-btn');
+                    if (!button) return;
+                    const row = button.closest('.verify-row');
+                    if (!row) return;
+                    const authorId = Number(row.dataset.authorId);
+                    if (!authorId) return;
+                    const action = button.dataset.action;
+                    await updateAuthorVerification(authorId, action === 'verify');
                 });
             }
 
