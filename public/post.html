@@ -10,6 +10,7 @@
         <script src="/page-transitions.js?v=20260302"></script>
         <script src="/text-formatting.js?v=20260302"></script>
         <script src="/post-trust.js?v=20260302"></script>
+        <script src="/time-formatting.js?v=20260302"></script>
         <style>
             :root {
                 --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
@@ -93,6 +94,70 @@
                 row-gap: 10px;
                 flex-wrap: wrap;
                 margin-top: 6px;
+            }
+
+            .story-topbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 8px;
+            }
+
+            .story-date {
+                color: var(--color-text-muted);
+                font-size: 0.95rem;
+                font-weight: 700;
+                letter-spacing: 0.25px;
+            }
+
+            .story-actions-wrap {
+                position: relative;
+                flex-shrink: 0;
+            }
+
+            .story-menu-btn {
+                width: 36px;
+                height: 36px;
+                border-radius: 999px;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: #fffdf9;
+                color: var(--color-text-muted);
+                padding: 0;
+                font-size: 1.2rem;
+                line-height: 1;
+                box-shadow: 0 4px 14px rgba(13, 20, 33, 0.12);
+                transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
+            }
+
+            .story-menu-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 8px 18px rgba(13, 20, 33, 0.16);
+                color: var(--color-text-primary);
+            }
+
+            .story-menu-btn[aria-expanded='true'] {
+                color: var(--color-text-primary);
+            }
+
+            .story-actions-menu {
+                display: none;
+                position: absolute;
+                top: calc(100% + 8px);
+                right: 0;
+                z-index: 40;
+                min-width: 176px;
+                padding: 10px;
+                border-radius: var(--radius-md);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: linear-gradient(180deg, #fffdf9 0%, #f8f2e9 100%);
+                box-shadow: 0 20px 35px rgba(12, 20, 34, 0.2);
+                gap: 8px;
+                flex-direction: column;
+            }
+
+            .story-actions-wrap.show-actions .story-actions-menu {
+                display: flex;
             }
 
             .meta-item {
@@ -1591,6 +1656,10 @@
                     width: 100%;
                 }
 
+                .story-actions-menu {
+                    min-width: 168px;
+                }
+
                 .post-action-btn {
                     flex: 1 1 calc(50% - 6px);
                     justify-content: center;
@@ -1721,6 +1790,58 @@
                 );
                 color: #ffffff;
                 border-color: transparent;
+            }
+
+            .story-actions-menu .btn-home,
+            .story-actions-menu .btn-bookmark {
+                width: 100%;
+                min-width: 0;
+                min-height: 40px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 10px;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: #fffdf9;
+                color: var(--color-text-primary);
+                box-shadow: none;
+                font-size: 0.9rem;
+                font-weight: 600;
+                letter-spacing: 0.2px;
+                transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+            }
+
+            .story-actions-menu .btn-home:hover,
+            .story-actions-menu .btn-bookmark:hover {
+                transform: translateY(-1px);
+                background: #f7efe3;
+                border-color: rgba(212, 165, 116, 0.45);
+            }
+
+            .story-actions-menu .btn-home.delete {
+                color: #b42318;
+                border-color: rgba(228, 98, 84, 0.35);
+                background: rgba(244, 91, 75, 0.08);
+            }
+
+            .story-actions-menu .btn-home.flag {
+                color: #d97706;
+                border-color: rgba(217, 119, 6, 0.34);
+                background: rgba(245, 158, 11, 0.08);
+            }
+
+            .story-actions-menu .btn-home.flag.flagged {
+                color: #15803d;
+                border-color: rgba(22, 163, 74, 0.34);
+                background: rgba(22, 163, 74, 0.08);
+            }
+
+            .story-actions-menu .btn-bookmark.active {
+                background: rgba(212, 165, 116, 0.16);
+                color: #8a5c33;
+                border-color: rgba(212, 165, 116, 0.45);
             }
 
             .error-container {
@@ -2321,15 +2442,24 @@
             <div class="post-container">
                 <div class="post-header">
                     <h1 id="postTitle"></h1>
+                    <div class="story-topbar">
+                        <div class="story-date">📅 <span id="postDate"></span></div>
+                        <div id="storyActionsWrap" class="story-actions-wrap is-hidden">
+                            <button id="storyMenuBtn" class="story-menu-btn" type="button" aria-label="Post actions" aria-expanded="false">⋯</button>
+                            <div id="storyActionsMenu" class="story-actions-menu" role="menu" aria-label="Post actions menu">
+                                <button id="bookmarkBtn" class="btn-bookmark is-hidden" type="button">🔖 Save</button>
+                                <button id="editPostBtn" class="btn-home edit is-hidden" type="button">✎ Edit</button>
+                                <button id="deletePostBtn" class="btn-home delete is-hidden" type="button">🗑 Delete</button>
+                                <button id="flagBtn" class="btn-home flag is-hidden" type="button">🚩 Flag</button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="flagNotice" class="flag-notice is-hidden">
                         🚩 This post has been flagged by an administrator
                     </div>
                     <div class="post-meta">
                         <div class="meta-item">
                             <span class="category-chip" id="postCategory">Stories</span>
-                        </div>
-                        <div class="meta-item">
-                            📅 <span id="postDate"></span>
                         </div>
                         <div class="meta-item">
                                 <span id="authorName">Unknown</span>
@@ -2377,10 +2507,6 @@
                     </div>
                     <div class="post-actions">
                         <button class="btn-copy" onclick="copyPostLink()" id="copyBtn">📋 Copy Link</button>
-                        <button id="bookmarkBtn" class="btn-bookmark is-hidden">🔖 Save</button>
-                        <button id="flagBtn" class="btn-home is-hidden">🚩 Flag</button>
-                        <button id="editPostBtn" class="btn-home is-hidden">✎ Edit</button>
-                        <button id="deletePostBtn" class="btn-home is-hidden">🗑 Delete</button>
                         <button class="btn-home" onclick="location.href='/'">🏠 Back Home</button>
                     </div>
                 </div>
@@ -2460,6 +2586,8 @@
             const NOTIF_REFRESH = document.getElementById('notifRefresh');
             const NOTIF_CLOSE = document.getElementById('notifClose');
             const BOOKMARK_BTN = document.getElementById('bookmarkBtn');
+            const STORY_ACTIONS_WRAP = document.getElementById('storyActionsWrap');
+            const STORY_MENU_BTN = document.getElementById('storyMenuBtn');
 
             const AVATAR_PALETTE = {
                 aurora: 'linear-gradient(135deg, #5efce8 0%, #736efe 100%)',
@@ -2511,6 +2639,21 @@
                 return !!element && !element.classList.contains('is-hidden');
             }
 
+            function closeStoryActionsMenu() {
+                if (!STORY_ACTIONS_WRAP || !STORY_MENU_BTN) return;
+                STORY_ACTIONS_WRAP.classList.remove('show-actions');
+                STORY_MENU_BTN.setAttribute('aria-expanded', 'false');
+            }
+
+            function updateStoryActionsMenuVisibility() {
+                if (!STORY_ACTIONS_WRAP) return;
+                const hasVisibleAction = ['bookmarkBtn', 'flagBtn', 'editPostBtn', 'deletePostBtn']
+                    .map((id) => document.getElementById(id))
+                    .some((element) => isElementVisible(element));
+                STORY_ACTIONS_WRAP.classList.toggle('is-hidden', !hasVisibleAction);
+                if (!hasVisibleAction) closeStoryActionsMenu();
+            }
+
             // Get post ID from URL query parameter
             function getPostId() {
                 const params = new URLSearchParams(window.location.search);
@@ -2527,44 +2670,20 @@
                 return Math.max(1, Math.ceil(wordCount / 200));
             }
 
-            // Format date nicely
-            function parseUtc(dateString='') {
-                if (!dateString) return Date.now();
-                // Treat DB timestamps (UTC) as UTC by appending Z if missing
-                return new Date(dateString.includes('Z') ? dateString : `${dateString}Z`).getTime();
-            }
-
             function formatDate(dateString) {
-                const date = new Date(parseUtc(dateString));
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                return date.toLocaleDateString('en-US', options);
+                return window.TimeFormatting
+                    ? window.TimeFormatting.formatDate(dateString, { year: 'numeric', month: 'long', day: 'numeric' })
+                    : new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             }
 
             function formatRelative(dateString) {
-                const now = Date.now();
-                const then = parseUtc(dateString);
-                const diffSec = Math.max(0, Math.floor((now - then) / 1000));
-                if (diffSec < 5) return 'now';
-                if (diffSec < 60) return `${diffSec}s ago`;
-                const diffMin = Math.floor(diffSec / 60);
-                if (diffMin < 60) return `${diffMin}m ago`;
-                const diffHr = Math.floor(diffMin / 60);
-                if (diffHr < 24) return `${diffHr}h ago`;
-                return formatDate(dateString);
+                return window.TimeFormatting
+                    ? window.TimeFormatting.formatRelative(dateString, { year: 'numeric', month: 'long', day: 'numeric' })
+                    : formatDate(dateString);
             }
 
             function timeAgo(dateString) {
-                const now = new Date();
-                const then = new Date(dateString);
-                const diff = Math.max(0, now - then);
-                const mins = Math.floor(diff / 60000);
-                if (mins < 1) return 'Just now';
-                if (mins < 60) return `${mins}m ago`;
-                const hours = Math.floor(mins / 60);
-                if (hours < 24) return `${hours}h ago`;
-                const days = Math.floor(hours / 24);
-                if (days < 7) return `${days}d ago`;
-                return formatDate(dateString);
+                return formatRelative(dateString);
             }
 
             // Escape HTML to prevent XSS
@@ -2931,14 +3050,35 @@
             if (NOTIF_BTN) NOTIF_BTN.addEventListener('click', () => toggleNotificationPanel());
             if (NOTIF_REFRESH) NOTIF_REFRESH.addEventListener('click', () => fetchNotifications());
             if (NOTIF_CLOSE) NOTIF_CLOSE.addEventListener('click', () => toggleNotificationPanel(false));
+
+            if (STORY_MENU_BTN && STORY_ACTIONS_WRAP) {
+                STORY_MENU_BTN.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const willOpen = !STORY_ACTIONS_WRAP.classList.contains('show-actions');
+                    closeStoryActionsMenu();
+                    STORY_ACTIONS_WRAP.classList.toggle('show-actions', willOpen);
+                    STORY_MENU_BTN.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                });
+            }
+
             document.addEventListener('click', (e) => {
                 if (!notifPanelOpen) return;
                 const withinPanel = NOTIF_PANEL && NOTIF_PANEL.contains(e.target);
                 const withinBtn = NOTIF_BTN && NOTIF_BTN.contains(e.target);
                 if (!withinPanel && !withinBtn) toggleNotificationPanel(false);
             });
+
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('#storyActionsWrap')) return;
+                closeStoryActionsMenu();
+            });
+
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && notifPanelOpen) toggleNotificationPanel(false);
+                if (e.key === 'Escape') {
+                    if (notifPanelOpen) toggleNotificationPanel(false);
+                    closeStoryActionsMenu();
+                }
             });
 
             // Fetch post by ID
@@ -3072,6 +3212,7 @@
                         BOOKMARK_BTN.classList.toggle('active', isBookmarked);
                         BOOKMARK_BTN.textContent = isBookmarked ? '🔖 Saved' : '🔖 Save';
                         BOOKMARK_BTN.onclick = async () => {
+                            closeStoryActionsMenu();
                             try {
                                 const resp = await fetch(`/api/posts/${post.id}/bookmark`, { method: 'POST' });
                                 if (resp.ok) {
@@ -3092,6 +3233,7 @@
                     } else {
                         hideElement(BOOKMARK_BTN);
                     }
+                    updateStoryActionsMenuVisibility();
                 }
 
                 hideElement(LOADING);
@@ -3203,8 +3345,10 @@
                     const flagBtn = document.getElementById('flagBtn');
                     showElement(flagBtn);
                     flagBtn.textContent = isElementVisible(document.getElementById('flagNotice')) ? '✓ Unflag' : '🚩 Flag';
+                    flagBtn.classList.toggle('flagged', isElementVisible(document.getElementById('flagNotice')));
                     flagBtn.onclick = async (e) => {
                         e.preventDefault();
+                        closeStoryActionsMenu();
                         const isFlagged = isElementVisible(document.getElementById('flagNotice'));
                         try {
                             const resp = await fetch(`/api/posts/${postId}/flag`, {
@@ -3216,10 +3360,12 @@
                                 if (!isFlagged) {
                                     showElement(document.getElementById('flagNotice'));
                                     flagBtn.textContent = '✓ Unflag';
+                                    flagBtn.classList.add('flagged');
                                     showToast('Post flagged', 'success', 1800);
                                 } else {
                                     hideElement(document.getElementById('flagNotice'));
                                     flagBtn.textContent = '🚩 Flag';
+                                    flagBtn.classList.remove('flagged');
                                     showToast('Post unflagged', 'success', 1200);
                                 }
                             } else {
@@ -3239,6 +3385,7 @@
                     showElement(editBtn);
                     editBtn.onclick = (e) => {
                         e.preventDefault();
+                        closeStoryActionsMenu();
                         window.location.href = `/create-post.html?id=${postId}&edit=1`;
                     };
                 }
@@ -3249,6 +3396,7 @@
                     showElement(deleteBtn);
                     deleteBtn.onclick = async (e) => {
                         e.preventDefault();
+                        closeStoryActionsMenu();
                         const confirmed = await confirmAction('Delete this post? This action cannot be undone.', 'Delete post', 'Delete post?');
                         if (!confirmed) return;
                         try {
@@ -3265,6 +3413,8 @@
                         }
                     };
                 }
+
+                updateStoryActionsMenuVisibility();
             }
 
 

@@ -10,6 +10,7 @@
         <script src="/page-transitions.js?v=20260302"></script>
         <script src="/text-formatting.js?v=20260302"></script>
         <script src="/post-trust.js?v=20260302"></script>
+        <script src="/time-formatting.js?v=20260302"></script>
         <style>
             :root {
                 --space-1: 4px;
@@ -2334,8 +2335,8 @@
                 const items = Array.isArray(posts) ? [...posts] : [];
                 if (CURRENT_SORT === 'time_desc') {
                     return items.sort((a, b) => {
-                        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-                        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        const aTime = a.created_at ? window.TimeFormatting.parseServerTimestamp(a.created_at) : 0;
+                        const bTime = b.created_at ? window.TimeFormatting.parseServerTimestamp(b.created_at) : 0;
                         if (bTime !== aTime) return bTime - aTime;
                         return sortValueNumber(b.id) - sortValueNumber(a.id);
                     });
@@ -2480,23 +2481,15 @@
 
             // Format date nicely
             function formatDate(dateString) {
-                const date = new Date(dateString);
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return date.toLocaleDateString('en-US', options);
+                return window.TimeFormatting
+                    ? window.TimeFormatting.formatDate(dateString, { year: 'numeric', month: 'short', day: 'numeric' })
+                    : new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
             }
 
             function timeAgo(dateString) {
-                const now = new Date();
-                const then = new Date(dateString);
-                const diff = Math.max(0, now - then);
-                const mins = Math.floor(diff / 60000);
-                if (mins < 1) return 'Just now';
-                if (mins < 60) return `${mins}m ago`;
-                const hours = Math.floor(mins / 60);
-                if (hours < 24) return `${hours}h ago`;
-                const days = Math.floor(hours / 24);
-                if (days < 7) return `${days}d ago`;
-                return formatDate(dateString);
+                return window.TimeFormatting
+                    ? window.TimeFormatting.formatRelative(dateString, { year: 'numeric', month: 'short', day: 'numeric' })
+                    : formatDate(dateString);
             }
 
             // Count words in text

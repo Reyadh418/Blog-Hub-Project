@@ -1569,9 +1569,8 @@ app.get("/api/posts/:id", async (req, res, next) => {
   }
 });
 
-// Update a post (admin only)
 // Edit a post with permission checks
-// Admin can only edit their own posts (author_id IS NULL)
+// Admin can edit: (a) their own authored posts, or (b) legacy admin posts with NULL author_id
 // Users can only edit their own posts (author_id = userId)
 app.put("/api/posts/:id", async (req, res, next) => {
   try {
@@ -1588,8 +1587,8 @@ app.put("/api/posts/:id", async (req, res, next) => {
 
     // Permission checks
     if (req.session.isAdmin) {
-      // Admin can only edit posts they created (author_id IS NULL)
-      if (post.author_id !== null) {
+      // Admin can edit their own authored posts and legacy NULL-author admin posts
+      if (post.author_id !== null && post.author_id !== req.session.userId) {
         return res.status(403).json({ error: "Admin can only edit their own posts" });
       }
     } else {

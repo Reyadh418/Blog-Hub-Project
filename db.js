@@ -1,5 +1,18 @@
 require('dotenv').config();
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+const PG_TIMESTAMP_OID = 1114;
+const PG_TIMESTAMPTZ_OID = 1184;
+
+types.setTypeParser(PG_TIMESTAMP_OID, (value) => {
+  if (!value) return null;
+  return new Date(value.includes('T') ? `${value}Z` : `${value.replace(' ', 'T')}Z`);
+});
+
+types.setTypeParser(PG_TIMESTAMPTZ_OID, (value) => {
+  if (!value) return null;
+  return new Date(value);
+});
 
 const DATABASE_URL = (process.env.DATABASE_URL || '').toString().trim();
 
