@@ -212,6 +212,128 @@
                 color: #e74c3c;
             }
 
+            /* Password Change Section */
+            .password-section {
+                margin-top: 8px;
+                margin-bottom: 28px;
+                border-top: 2px solid color-mix(in srgb, var(--color-border-soft) 60%, white);
+                padding-top: 28px;
+            }
+
+            .password-section-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 6px;
+            }
+
+            .password-section-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--color-primary-900);
+                letter-spacing: 0.3px;
+            }
+
+            .password-section-hint {
+                font-size: 0.85rem;
+                color: var(--color-text-muted);
+                margin-bottom: 22px;
+                line-height: 1.5;
+            }
+
+            .password-toggle-btn {
+                width: auto !important;
+                padding: 8px 16px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.88rem !important;
+                background: transparent !important;
+                color: var(--color-accent-500) !important;
+                border: 1px solid var(--color-border-soft) !important;
+                box-shadow: none !important;
+                cursor: pointer;
+                font-weight: 600;
+            }
+
+            .password-toggle-btn:hover {
+                background: var(--color-surface-soft) !important;
+                box-shadow: none !important;
+                transform: none !important;
+            }
+
+            .password-fields {
+                display: grid;
+                gap: 22px;
+            }
+
+            .password-fields.is-collapsed {
+                display: none;
+            }
+
+            input[type="password"] {
+                width: 100%;
+                padding: 14px 16px;
+                border: 2px solid #e8e8e8;
+                border-radius: 6px;
+                font-size: 1rem;
+                font-family: var(--font-family-base);
+                transition: all 0.3s ease;
+                background-color: #f8f9fa;
+                color: var(--color-text-primary);
+            }
+
+            input[type="password"]:focus {
+                outline: none;
+                border-color: #d4a574;
+                background-color: #ffffff;
+                box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
+            }
+
+            /* Strength Meter */
+            .strength-meter {
+                margin-top: 8px;
+            }
+
+            .strength-bar-track {
+                height: 6px;
+                border-radius: 999px;
+                background: #e8e8e8;
+                overflow: hidden;
+            }
+
+            .strength-bar-fill {
+                height: 100%;
+                border-radius: 999px;
+                width: 0%;
+                transition: width 0.3s ease, background 0.3s ease;
+            }
+
+            .strength-bar-fill[data-level="0"] { width: 0%; background: #e8e8e8; }
+            .strength-bar-fill[data-level="1"] { width: 25%; background: #ef4444; }
+            .strength-bar-fill[data-level="2"] { width: 50%; background: #f59e0b; }
+            .strength-bar-fill[data-level="3"] { width: 75%; background: #22c55e; }
+            .strength-bar-fill[data-level="4"] { width: 100%; background: #16a34a; }
+
+            .strength-label {
+                font-size: 0.82rem;
+                font-weight: 600;
+                margin-top: 4px;
+                min-height: 1.2em;
+            }
+
+            .strength-label[data-level="0"] { color: var(--color-text-muted); }
+            .strength-label[data-level="1"] { color: #ef4444; }
+            .strength-label[data-level="2"] { color: #f59e0b; }
+            .strength-label[data-level="3"] { color: #22c55e; }
+            .strength-label[data-level="4"] { color: #16a34a; }
+
+            .field-error {
+                font-size: 0.82rem;
+                color: #ef4444;
+                font-weight: 600;
+                margin-top: 4px;
+                min-height: 1.2em;
+            }
+
             button {
                 width: 100%;
                 background: var(--gradient-accent-main);
@@ -587,6 +709,57 @@
                         <div class="word-counter" id="wordCounter">0 / 111 words</div>
                     </div>
 
+                    <div class="password-section" id="passwordSection">
+                        <div class="password-section-header">
+                            <span class="password-section-title">🔒 Change Password</span>
+                        </div>
+                        <p class="password-section-hint">Leave these fields empty if you don't want to change your password.</p>
+
+                        <button type="button" class="password-toggle-btn" id="passwordToggleBtn">Show password fields</button>
+
+                        <div class="password-fields is-collapsed" id="passwordFields">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="oldPassword">Current Password</label>
+                                <input
+                                    type="password"
+                                    id="oldPassword"
+                                    placeholder="Enter your current password"
+                                    autocomplete="current-password"
+                                />
+                                <div class="input-hint">Required to authorise a password change</div>
+                                <div class="field-error" id="oldPasswordError"></div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="newPassword">New Password</label>
+                                <input
+                                    type="password"
+                                    id="newPassword"
+                                    placeholder="Minimum 6 characters"
+                                    autocomplete="new-password"
+                                />
+                                <div class="strength-meter" id="strengthMeter">
+                                    <div class="strength-bar-track">
+                                        <div class="strength-bar-fill" id="strengthBarFill" data-level="0"></div>
+                                    </div>
+                                    <div class="strength-label" id="strengthLabel" data-level="0"></div>
+                                </div>
+                                <div class="field-error" id="newPasswordError"></div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="confirmNewPassword">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    id="confirmNewPassword"
+                                    placeholder="Re-type new password"
+                                    autocomplete="new-password"
+                                />
+                                <div class="field-error" id="confirmPasswordError"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit" id="submitBtn">
                         <span id="btnText">Save Changes</span>
                     </button>
@@ -768,6 +941,7 @@
                 e.preventDefault();
 
                 if (!validateForm()) return;
+                if (!validatePasswordFields()) return;
 
                 submitBtn.disabled = true;
                 const originalText = btnText.textContent;
@@ -778,6 +952,7 @@
                     const email = document.getElementById('email').value.trim().toLowerCase();
                     const bio = document.getElementById('bio').value.trim();
 
+                    // Update profile info
                     const response = await fetch('/api/auth/profile', {
                         method: 'PUT',
                         headers: {
@@ -792,16 +967,44 @@
 
                     const result = await response.json();
 
-                    if (response.ok) {
-                        showToast('Profile updated successfully!', 'success', 1500);
-                        setTimeout(() => {
-                            window.location.href = window.currentProfilePage || '/profile.html';
-                        }, 800);
-                    } else {
+                    if (!response.ok) {
                         showToast(result.error || 'Update failed. Please try again.', 'error');
                         submitBtn.disabled = false;
                         btnText.textContent = originalText;
+                        return;
                     }
+
+                    // If password fields are filled, also change password
+                    const oldPw = (oldPasswordInput.value || '').trim();
+                    const newPw = (newPasswordInput.value || '').trim();
+                    const confirmPw = (confirmNewPasswordInput.value || '').trim();
+                    const wantsPasswordChange = oldPw && newPw && confirmPw;
+
+                    if (wantsPasswordChange) {
+                        const pwResponse = await fetch('/api/auth/change-password', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                oldPassword: oldPw,
+                                newPassword: newPw,
+                                confirmPassword: confirmPw,
+                            }),
+                        });
+
+                        const pwResult = await pwResponse.json();
+
+                        if (!pwResponse.ok) {
+                            showToast(pwResult.error || 'Password update failed', 'error');
+                            submitBtn.disabled = false;
+                            btnText.textContent = originalText;
+                            return;
+                        }
+                    }
+
+                    showToast(wantsPasswordChange ? 'Profile and password updated!' : 'Profile updated successfully!', 'success', 1500);
+                    setTimeout(() => {
+                        window.location.href = window.currentProfilePage || '/profile.html';
+                    }, 800);
                 } catch (error) {
                     console.error('Update error:', error);
                     showToast('Error: ' + error.message, 'error');
@@ -809,6 +1012,121 @@
                     btnText.textContent = originalText;
                 }
             });
+
+            // ---------- Password Section ----------
+            const passwordToggleBtn = document.getElementById('passwordToggleBtn');
+            const passwordFields = document.getElementById('passwordFields');
+            const oldPasswordInput = document.getElementById('oldPassword');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+            const strengthBarFill = document.getElementById('strengthBarFill');
+            const strengthLabel = document.getElementById('strengthLabel');
+            const oldPasswordError = document.getElementById('oldPasswordError');
+            const newPasswordError = document.getElementById('newPasswordError');
+            const confirmPasswordError = document.getElementById('confirmPasswordError');
+            let passwordFieldsVisible = false;
+
+            passwordToggleBtn.addEventListener('click', () => {
+                passwordFieldsVisible = !passwordFieldsVisible;
+                passwordFields.classList.toggle('is-collapsed', !passwordFieldsVisible);
+                passwordToggleBtn.textContent = passwordFieldsVisible ? 'Hide password fields' : 'Show password fields';
+                if (!passwordFieldsVisible) {
+                    // Clear fields when collapsing
+                    oldPasswordInput.value = '';
+                    newPasswordInput.value = '';
+                    confirmNewPasswordInput.value = '';
+                    updateStrengthMeter('');
+                    oldPasswordError.textContent = '';
+                    newPasswordError.textContent = '';
+                    confirmPasswordError.textContent = '';
+                }
+            });
+
+            function getPasswordStrength(pw) {
+                if (!pw) return { level: 0, text: '' };
+                let score = 0;
+                if (pw.length >= 6) score++;
+                if (pw.length >= 10) score++;
+                if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+                if (/\d/.test(pw)) score++;
+                if (/[^A-Za-z0-9]/.test(pw)) score++;
+                if (score <= 1) return { level: 1, text: 'Weak' };
+                if (score === 2) return { level: 2, text: 'Fair' };
+                if (score === 3) return { level: 3, text: 'Good' };
+                return { level: 4, text: 'Strong' };
+            }
+
+            function updateStrengthMeter(pw) {
+                const { level, text } = getPasswordStrength(pw);
+                strengthBarFill.setAttribute('data-level', level);
+                strengthLabel.setAttribute('data-level', level);
+                strengthLabel.textContent = text;
+            }
+
+            newPasswordInput.addEventListener('input', () => {
+                const pw = newPasswordInput.value;
+                updateStrengthMeter(pw);
+                if (pw && pw.length < 6) {
+                    newPasswordError.textContent = 'Must be at least 6 characters';
+                } else {
+                    newPasswordError.textContent = '';
+                }
+                // Re-validate confirm field if it has content
+                if (confirmNewPasswordInput.value) {
+                    confirmPasswordError.textContent = pw !== confirmNewPasswordInput.value ? 'Passwords do not match' : '';
+                }
+            });
+
+            confirmNewPasswordInput.addEventListener('input', () => {
+                const pw = newPasswordInput.value;
+                const cpw = confirmNewPasswordInput.value;
+                confirmPasswordError.textContent = (cpw && pw !== cpw) ? 'Passwords do not match' : '';
+            });
+
+            function validatePasswordFields() {
+                const oldPw = (oldPasswordInput.value || '').trim();
+                const newPw = (newPasswordInput.value || '').trim();
+                const confirmPw = (confirmNewPasswordInput.value || '').trim();
+
+                // If no password fields filled, nothing to change — valid
+                if (!oldPw && !newPw && !confirmPw) return true;
+
+                let valid = true;
+
+                if (!oldPw) {
+                    oldPasswordError.textContent = 'Current password is required to change your password';
+                    oldPasswordInput.focus();
+                    valid = false;
+                } else {
+                    oldPasswordError.textContent = '';
+                }
+
+                if (!newPw) {
+                    newPasswordError.textContent = 'Enter your new password';
+                    if (valid) newPasswordInput.focus();
+                    valid = false;
+                } else if (newPw.length < 6) {
+                    newPasswordError.textContent = 'Must be at least 6 characters';
+                    if (valid) newPasswordInput.focus();
+                    valid = false;
+                } else {
+                    newPasswordError.textContent = '';
+                }
+
+                if (!confirmPw) {
+                    confirmPasswordError.textContent = 'Please confirm your new password';
+                    if (valid) confirmNewPasswordInput.focus();
+                    valid = false;
+                } else if (newPw !== confirmPw) {
+                    confirmPasswordError.textContent = 'Passwords do not match';
+                    if (valid) confirmNewPasswordInput.focus();
+                    valid = false;
+                } else {
+                    confirmPasswordError.textContent = '';
+                }
+
+                return valid;
+            }
 
             // Load profile on page load
             loadProfile();

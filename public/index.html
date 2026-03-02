@@ -540,7 +540,7 @@
             }
 
             .is-hidden {
-                display: none;
+                display: none !important;
             }
 
             .btn-accent {
@@ -742,6 +742,7 @@
             }
 
             .account-menu-btn {
+                position: relative;
                 border-radius: var(--radius-pill);
                 padding: 8px 16px 8px 10px;
                 display: inline-flex;
@@ -750,6 +751,32 @@
                 background: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
                 color: var(--color-text-primary);
                 font-weight: 700;
+                overflow: visible;
+            }
+
+            .account-menu-btn::before {
+                display: none;
+            }
+
+            .account-trigger-badge {
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                min-width: 22px;
+                height: 22px;
+                padding: 0 6px;
+                border-radius: 999px;
+                border: 2px solid #fff;
+                background: linear-gradient(135deg, #f83600 0%, #f9d423 100%);
+                color: #fff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.72rem;
+                font-weight: 800;
+                line-height: 1;
+                box-shadow: 0 8px 18px rgba(14, 22, 36, 0.26);
+                z-index: 2;
             }
 
             .account-avatar {
@@ -769,11 +796,11 @@
                 position: absolute;
                 top: calc(100% + 10px);
                 right: 0;
-                width: 230px;
-                border-radius: var(--radius-md);
-                background: var(--color-surface);
-                box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
-                border: 1px solid #e5e7eb;
+                width: 250px;
+                border-radius: 16px;
+                background: linear-gradient(180deg, #fffdf9 0%, #f8f2e9 100%);
+                box-shadow: 0 20px 36px rgba(12, 20, 34, 0.24);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
                 padding: 10px;
                 display: none;
                 z-index: 13000;
@@ -785,15 +812,28 @@
 
             .account-item {
                 width: 100%;
-                border: none;
-                background: transparent;
-                border-radius: var(--radius-sm);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: #fffdf9;
+                border-radius: 12px;
                 text-align: left;
                 color: var(--color-text-primary);
                 font-weight: 700;
                 padding: 10px 12px;
                 box-shadow: none;
                 transform: none;
+                display: inline-flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 8px;
+                transition: transform var(--duration-fast) var(--ease-standard),
+                            background var(--duration-fast) var(--ease-standard),
+                            border-color var(--duration-fast) var(--ease-standard),
+                            box-shadow var(--duration-fast) var(--ease-standard);
+            }
+
+            .account-item:last-child {
+                margin-bottom: 0;
             }
 
             .account-item::before {
@@ -801,27 +841,47 @@
             }
 
             .account-item:hover {
-                background: #f1f5f9;
-                box-shadow: none;
-                transform: none;
+                background: #f7efe3;
+                border-color: rgba(212, 165, 116, 0.45);
+                box-shadow: 0 8px 18px rgba(12, 20, 34, 0.08);
+                transform: translateY(-1px);
             }
 
             .account-item.btn-success {
-                background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-                color: var(--color-surface);
+                color: #15803d;
+                border-color: rgba(22, 163, 74, 0.34);
+                background: rgba(22, 163, 74, 0.08);
             }
 
             .account-item.btn-success:hover {
-                background: linear-gradient(135deg, #52be80 0%, #27ae60 100%);
+                background: rgba(22, 163, 74, 0.14);
             }
 
             .account-item.btn-danger {
-                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-                color: var(--color-surface);
+                color: #b42318;
+                border-color: rgba(228, 98, 84, 0.35);
+                background: rgba(244, 91, 75, 0.08);
             }
 
             .account-item.btn-danger:hover {
-                background: linear-gradient(135deg, #ec7063 0%, #e74c3c 100%);
+                background: rgba(244, 91, 75, 0.14);
+            }
+
+            .account-item-badge {
+                min-width: 22px;
+                height: 22px;
+                padding: 0 6px;
+                border-radius: 999px;
+                background: linear-gradient(135deg, #f83600 0%, #f9d423 100%);
+                color: #fff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.72rem;
+                font-weight: 800;
+                line-height: 1;
+                box-shadow: 0 5px 12px rgba(13, 20, 33, 0.2);
+                margin-left: auto;
             }
 
             .posts-container {
@@ -958,7 +1018,12 @@
             .post-menu-btn {
                 width: 36px;
                 height: 36px;
-                border-radius: 999px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                aspect-ratio: 1 / 1;
+                padding: 0;
+                border-radius: 50%;
                 border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
                 background: #fffdf9;
                 color: var(--color-text-muted);
@@ -989,7 +1054,7 @@
                 z-index: 30;
                 min-width: 176px;
                 padding: 10px;
-                border-radius: var(--radius-md);
+                border-radius: 14px;
                 border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
                 background: linear-gradient(180deg, #fffdf9 0%, #f8f2e9 100%);
                 box-shadow: 0 20px 35px rgba(12, 20, 34, 0.2);
@@ -1993,10 +2058,11 @@
                         <button id="accountMenuBtn" class="account-menu-btn" aria-haspopup="menu" aria-expanded="false">
                             <span class="account-avatar" id="accountAvatar">U</span>
                             <span id="accountLabel">Account</span>
+                            <span id="accountMenuBadge" class="account-trigger-badge is-hidden">0</span>
                         </button>
                         <div id="accountMenu" class="account-menu" role="menu" aria-label="Account menu">
                             <button class="account-item" id="accountCreatePostBtn" role="menuitem">✎ Create Story</button>
-                            <button class="account-item" id="accountNotificationsBtn" role="menuitem">🔔 Notifications</button>
+                            <button class="account-item" id="accountNotificationsBtn" role="menuitem">🔔 Notifications <span id="accountNotifBadge" class="account-item-badge is-hidden">0</span></button>
                             <button class="account-item" id="bookmarks-btn" role="menuitem">🔖 Bookmarks</button>
                             <button class="account-item btn-success" id="profile-btn" role="menuitem">👤 Profile</button>
                             <button class="account-item btn-danger" id="logout-btn" role="menuitem">🚪 Log Out</button>
@@ -2040,6 +2106,8 @@
             const ACCOUNT_MENU = document.getElementById('accountMenu');
             const ACCOUNT_CREATE_POST_BTN = document.getElementById('accountCreatePostBtn');
             const ACCOUNT_NOTIF_BTN = document.getElementById('accountNotificationsBtn');
+            const ACCOUNT_MENU_BADGE = document.getElementById('accountMenuBadge');
+            const ACCOUNT_NOTIF_BADGE = document.getElementById('accountNotifBadge');
             const ACCOUNT_LABEL = document.getElementById('accountLabel');
             const ACCOUNT_AVATAR = document.getElementById('accountAvatar');
             const SUBMIT_STORY_BTN = document.getElementById('submitStoryBtn');
@@ -2250,6 +2318,7 @@
                 accountMenuOpen = force !== undefined ? force : !accountMenuOpen;
                 ACCOUNT_MENU.classList.toggle('show', accountMenuOpen);
                 ACCOUNT_MENU_BTN.setAttribute('aria-expanded', accountMenuOpen ? 'true' : 'false');
+                updateNotificationBadge();
             }
 
             function handleSubmitStoryClick() {
@@ -2968,13 +3037,35 @@
             }
 
             function updateNotificationBadge() {
-                if (!NOTIF_BADGE) return;
-                const unread = NOTIFICATIONS.filter(n => !n.is_read).length;
-                if (unread > 0) {
+                const unread = NOTIFICATIONS.reduce((count, notification) => {
+                    const readValue = Number(notification && notification.is_read);
+                    const isRead = Number.isFinite(readValue) ? readValue === 1 : !!(notification && notification.is_read);
+                    return isRead ? count : count + 1;
+                }, 0);
+                const badgeText = unread > 9 ? '9+' : String(unread);
+
+                if (NOTIF_BADGE) hideElement(NOTIF_BADGE);
+                if (ACCOUNT_MENU_BADGE) hideElement(ACCOUNT_MENU_BADGE);
+                if (ACCOUNT_NOTIF_BADGE) hideElement(ACCOUNT_NOTIF_BADGE);
+
+                if (unread < 1 || !notificationsAllowed()) return;
+
+                if (NOTIF_BADGE && isElementVisible(NOTIF_BTN)) {
+                    NOTIF_BADGE.textContent = badgeText;
                     showElement(NOTIF_BADGE);
-                    NOTIF_BADGE.textContent = unread > 99 ? '99+' : unread;
-                } else {
-                    hideElement(NOTIF_BADGE);
+                }
+
+                if (accountMenuOpen) {
+                    if (ACCOUNT_NOTIF_BADGE && isElementVisible(ACCOUNT_NOTIF_BTN)) {
+                        ACCOUNT_NOTIF_BADGE.textContent = badgeText;
+                        showElement(ACCOUNT_NOTIF_BADGE);
+                    }
+                    return;
+                }
+
+                if (ACCOUNT_MENU_BADGE && isElementVisible(ACCOUNT_MENU_WRAP)) {
+                    ACCOUNT_MENU_BADGE.textContent = badgeText;
+                    showElement(ACCOUNT_MENU_BADGE);
                 }
             }
 

@@ -1450,6 +1450,38 @@ app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
   }
 });
 
+// Change password for regular users / promoted admins (requires old password)
+app.put("/api/auth/change-password", requireAuth, async (req, res, next) => {
+  try {
+    const oldPassword = (req.body.oldPassword || "").toString();
+    const newPassword = (req.body.newPassword || "").toString();
+    const confirmPassword = (req.body.confirmPassword || "").toString();
+
+    if (!oldPassword) return res.status(400).json({ error: "Current password is required" });
+    if (!newPassword) return res.status(400).json({ error: "New password is required" });
+    if (newPassword.length < 6) return res.status(400).json({ error: "New password must be at least 6 characters" });
+    if (newPassword !== confirmPassword) return res.status(400).json({ error: "New passwords do not match" });
+
+    // Super admins use the admin credentials page instead
+    if (req.session.isSuperAdmin) {
+      return res.status(403).json({ error: "Super Admins should use the admin credentials page" });
+    }
+
+    const user = await dbGet("SELECT id, password_hash FROM users WHERE id = ?", [req.session.userId]);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await verifyPassword(oldPassword, user.password_hash, user.id);
+    if (!valid) return res.status(401).json({ error: "Current password is incorrect" });
+
+    const newHash = await hashPassword(newPassword);
+    await dbRun("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, user.id]);
+
+    res.json({ ok: true, message: "Password updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.get("/api/posts", async (req, res, next) => {
   try {
     const userId = req.session.userId || null;

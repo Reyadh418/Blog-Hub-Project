@@ -637,27 +637,10 @@
                     <p class="profile-subtitle profile-subtitle-current">Current username: <span id="currentAdminUsername">—</span></p>
                 </div>
 
-                <div class="credentials-section">
+                <div class="credentials-section" style="text-align:center;">
                     <h2 class="section-title section-title-compact">Secure Admin Credentials</h2>
-                    <form id="adminCredentialsForm" class="credential-form">
-                        <label>Current password
-                            <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" autocomplete="current-password" required />
-                        </label>
-                        <label>New username
-                            <input type="text" id="newUsername" name="newUsername" placeholder="Keep or change admin username" autocomplete="username" />
-                        </label>
-                        <label>New password
-                            <input type="password" id="newPassword" name="newPassword" placeholder="Leave blank to keep existing" autocomplete="new-password" />
-                        </label>
-                        <label>Confirm new password
-                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-type new password" autocomplete="new-password" />
-                        </label>
-                        <div class="form-actions">
-                            <button type="submit" class="save-btn">Save changes</button>
-                            <button type="button" class="reset-btn" id="resetForm">Reset</button>
-                            <span class="form-hint">Current password is required to change username or password.</span>
-                        </div>
-                    </form>
+                    <p class="form-hint" style="margin-bottom:18px;">Update your admin username or password from the dedicated credentials page.</p>
+                    <button class="action-btn manage-btn" onclick="location.href='/admin-credential-update.html'" style="display:inline-flex;align-items:center;gap:8px;">🔑 Update Credentials</button>
                 </div>
 
                 <div class="author-verify-section">
@@ -689,73 +672,73 @@
                 </div>
 
                 <div class="perks-section">
-                    <h2 class="section-title">Admin Perks & Privileges</h2>
+                    <h2 class="section-title">Super Admin Perks & Privileges</h2>
                     <div class="perks-grid">
                         <div class="perk-card">
+                            <div class="perk-icon">👑</div>
+                            <div class="perk-title">Admin Team Management</div>
+                            <div class="perk-description">Promote users to admin, demote promoted admins, and transfer the Super Admin role — exclusive to your rank.</div>
+                        </div>
+                        <div class="perk-card">
                             <div class="perk-icon">✍️</div>
-                            <div class="perk-title">Unlimited Posting</div>
-                            <div class="perk-description">Create, edit, and delete posts without limits. Full control over all blog content.</div>
+                            <div class="perk-title">Content Creation & Editing</div>
+                            <div class="perk-description">Create new stories, edit your own posts, and edit legacy admin posts. Full authoring control.</div>
                         </div>
                         <div class="perk-card">
                             <div class="perk-icon">🛡️</div>
                             <div class="perk-title">Content Moderation</div>
-                            <div class="perk-description">Review, edit, or delete any user post to maintain quality standards and community guidelines.</div>
+                            <div class="perk-description">Delete any post or comment, flag or unflag content to maintain quality and community safety.</div>
                         </div>
                         <div class="perk-card">
-                            <div class="perk-icon">👥</div>
-                            <div class="perk-title">User Management</div>
-                            <div class="perk-description">View user profiles, monitor account activity, and manage community members effectively.</div>
-                        </div>
-                        <div class="perk-card">
-                            <div class="perk-icon">🔑</div>
-                            <div class="perk-title">Platform Access</div>
-                            <div class="perk-description">Full access to all admin features and dashboard statistics for better platform insights.</div>
-                        </div>
-                        <div class="perk-card">
-                            <div class="perk-icon">⚡</div>
-                            <div class="perk-title">Priority Publishing</div>
-                            <div class="perk-description">Your posts get featured and prioritized on the platform for maximum visibility.</div>
+                            <div class="perk-icon">✅</div>
+                            <div class="perk-title">Author Verification</div>
+                            <div class="perk-description">Grant or revoke Verified trust status for community authors, shaping platform credibility.</div>
                         </div>
                         <div class="perk-card">
                             <div class="perk-icon">📊</div>
-                            <div class="perk-title">Advanced Analytics</div>
-                            <div class="perk-description">Access detailed stats on posts, user engagement, and platform performance metrics.</div>
+                            <div class="perk-title">Dashboard & Analytics</div>
+                            <div class="perk-description">View total posts, registered users, admin count, and the full audit trail of admin actions.</div>
+                        </div>
+                        <div class="perk-card">
+                            <div class="perk-icon">🔑</div>
+                            <div class="perk-title">Credential Management</div>
+                            <div class="perk-description">Update your admin username and password from a dedicated secure page — an exclusive Super Admin tool.</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="perks-section">
-                    <h2 class="section-title">Admin Responsibilities</h2>
+                    <h2 class="section-title">Super Admin Responsibilities</h2>
                     <div class="responsibilities-grid">
                         <div class="responsibility-card">
-                            <div class="responsibility-icon">📋</div>
-                            <div class="responsibility-title">Content Review</div>
-                            <div class="responsibility-description">Regularly review user submissions for quality, originality, and compliance with community standards.</div>
+                            <div class="responsibility-icon">🔍</div>
+                            <div class="responsibility-title">Content Review & Moderation</div>
+                            <div class="responsibility-description">Review flagged content, delete rule-breaking posts and comments, and keep discussions on-topic and respectful.</div>
                         </div>
                         <div class="responsibility-card">
-                            <div class="responsibility-icon">🚨</div>
-                            <div class="responsibility-title">Community Safety</div>
-                            <div class="responsibility-description">Maintain a safe, respectful environment by moderating inappropriate content and managing disputes.</div>
+                            <div class="responsibility-icon">👥</div>
+                            <div class="responsibility-title">Admin Team Oversight</div>
+                            <div class="responsibility-description">Carefully promote trustworthy users to admin, demote misusing admins, and keep the team accountable.</div>
                         </div>
                         <div class="responsibility-card">
-                            <div class="responsibility-icon">❌</div>
-                            <div class="responsibility-title">Fair Enforcement</div>
-                            <div class="responsibility-description">Apply community guidelines fairly and consistently to all users without bias or favoritism.</div>
+                            <div class="responsibility-icon">✅</div>
+                            <div class="responsibility-title">Author Trust Management</div>
+                            <div class="responsibility-description">Verify credible authors, revoke verification from those who violate standards, and maintain trust integrity.</div>
                         </div>
                         <div class="responsibility-card">
-                            <div class="responsibility-icon">💬</div>
-                            <div class="responsibility-title">User Support</div>
-                            <div class="responsibility-description">Respond to user inquiries, provide assistance, and help resolve platform-related issues promptly.</div>
+                            <div class="responsibility-icon">🔐</div>
+                            <div class="responsibility-title">Credential Security</div>
+                            <div class="responsibility-description">Keep your Super Admin credentials safe. You are the only one who can update them — treat this with care.</div>
                         </div>
                         <div class="responsibility-card">
                             <div class="responsibility-icon">📈</div>
-                            <div class="responsibility-title">Platform Monitoring</div>
-                            <div class="responsibility-description">Monitor platform health, track analytics, and identify areas for improvement and optimization.</div>
+                            <div class="responsibility-title">Platform Health Monitoring</div>
+                            <div class="responsibility-description">Track post counts, user registrations, and the audit trail to spot issues early and keep the platform growing.</div>
                         </div>
                         <div class="responsibility-card">
-                            <div class="responsibility-icon">📣</div>
-                            <div class="responsibility-title">Community Building</div>
-                            <div class="responsibility-description">Foster positive community interactions, encourage quality contributions, and celebrate great content.</div>
+                            <div class="responsibility-icon">⚖️</div>
+                            <div class="responsibility-title">Fair & Consistent Enforcement</div>
+                            <div class="responsibility-description">Apply community guidelines without bias. Every moderation action should be transparent and proportional.</div>
                         </div>
                     </div>
                 </div>
@@ -794,17 +777,11 @@
             }
             const loadingContainer = document.getElementById('loadingContainer');
             const profileContainer = document.getElementById('profileContainer');
-            const newUsernameInput = document.getElementById('newUsername');
-            const currentPasswordInput = document.getElementById('currentPassword');
-            const newPasswordInput = document.getElementById('newPassword');
-            const confirmPasswordInput = document.getElementById('confirmPassword');
-            const resetFormButton = document.getElementById('resetForm');
-            const adminCredentialsForm = document.getElementById('adminCredentialsForm');
+            let cachedAdminUsername = '';
+            let verifySearchDebounce = null;
             const verifySearchInput = document.getElementById('verifySearchInput');
             const verifyRefreshBtn = document.getElementById('verifyRefreshBtn');
             const verifyResults = document.getElementById('verifyResults');
-            let cachedAdminUsername = '';
-            let verifySearchDebounce = null;
 
             function computeAuthorTrust(author) {
                 if (!author.emailVerified) return { key: 'unverified', label: 'Unverified' };
@@ -909,7 +886,6 @@
                         const profile = await adminProfileResponse.json();
                         cachedAdminUsername = profile.username;
                         document.getElementById('currentAdminUsername').textContent = profile.username;
-                        if (newUsernameInput) newUsernameInput.value = profile.username;
                         
                         // Show Manage Admins button for super admins
                         if (profile.isSuperAdmin) {
@@ -937,81 +913,6 @@
                     console.error('Load dashboard error:', error);
                     window.location.href = '/login.html';
                 }
-            }
-
-            function resetCredentialsForm() {
-                if (newUsernameInput) newUsernameInput.value = cachedAdminUsername;
-                if (currentPasswordInput) currentPasswordInput.value = '';
-                if (newPasswordInput) newPasswordInput.value = '';
-                if (confirmPasswordInput) confirmPasswordInput.value = '';
-            }
-
-            if (resetFormButton) {
-                resetFormButton.addEventListener('click', () => {
-                    resetCredentialsForm();
-                    showToast('Form reset', 'info', 1400);
-                });
-            }
-
-            if (adminCredentialsForm) {
-                adminCredentialsForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const currentPassword = (currentPasswordInput?.value || '').trim();
-                    const newUsername = (newUsernameInput?.value || '').trim();
-                    const newPassword = (newPasswordInput?.value || '').trim();
-                    const confirmPassword = (confirmPasswordInput?.value || '').trim();
-
-                    if (!currentPassword) {
-                        showToast('Enter your current password', 'error');
-                        return;
-                    }
-
-                    if (newPassword && newPassword.length < 6) {
-                        showToast('New password must be at least 6 characters', 'error');
-                        return;
-                    }
-
-                    if (newPassword && newPassword !== confirmPassword) {
-                        showToast('New passwords do not match', 'error');
-                        return;
-                    }
-
-                    const usernameChanged = newUsername && newUsername !== cachedAdminUsername;
-                    const passwordChanged = Boolean(newPassword);
-
-                    if (!usernameChanged && !passwordChanged) {
-                        showToast('Nothing to update', 'warning');
-                        return;
-                    }
-
-                    const payload = { currentPassword };
-                    if (usernameChanged) payload.newUsername = newUsername;
-                    if (passwordChanged) payload.newPassword = newPassword;
-
-                    try {
-                        const response = await fetch('/api/admin/credentials', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                        });
-
-                        const result = await response.json();
-                        if (!response.ok) {
-                            const message = result && result.error ? result.error : 'Update failed';
-                            showToast(message, 'error');
-                            return;
-                        }
-
-                        cachedAdminUsername = result.username || newUsername || cachedAdminUsername;
-                        document.getElementById('currentAdminUsername').textContent = cachedAdminUsername;
-                        if (newUsernameInput) newUsernameInput.value = cachedAdminUsername;
-                        resetCredentialsForm();
-                        showToast('Admin credentials updated', 'success', 2000);
-                    } catch (err) {
-                        console.error('Credentials update error:', err);
-                        showToast('Unable to update credentials', 'error');
-                    }
-                });
             }
 
             if (verifySearchInput) {
