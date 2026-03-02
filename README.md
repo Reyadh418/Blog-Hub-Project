@@ -44,7 +44,7 @@ The server listens on http://localhost:3000. Provide a valid `DATABASE_URL` and 
 
 ## Usage
 - Users: register, log in, write/edit/delete their own posts; comment and react; view notifications.
-- Admin: toggle Admin mode on `/login.html`, post as `@admin`, flag/unflag or delete any post, list users.
+- Admin: sign in through the same `/login.html` flow (admin accounts are recognized automatically), post as `@admin`, flag/unflag or delete any post, list users.
 - Profiles: update basic info and avatar from `/profile.html` or `/edit-profile.html`.
 
 ## Configuration

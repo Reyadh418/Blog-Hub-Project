@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/ui-primitives.css" />
     <script src="/csrf.js"></script>
     <script src="/brand-expression.js"></script>
+    <script src="/page-transitions.js?v=20260302"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -163,6 +164,107 @@
             .nav-actions { width:100%; justify-content:flex-start; flex-wrap: wrap; }
             .list { grid-template-columns: 1fr; }
         }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+            border-radius: 11px;
+            letter-spacing: 0.35px;
+            transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background 220ms ease;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.42) 50%, transparent 100%);
+            transition: left 420ms ease;
+        }
+
+        .btn:hover::before { left: 115%; }
+
+        .search-box {
+            background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,243,236,0.92) 100%);
+            border-color: color-mix(in srgb, #d8cebc 72%, white);
+            transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, border-color 220ms ease;
+        }
+
+        .search-box:focus-within {
+            transform: translateY(-1px);
+            border-color: rgba(196, 138, 90, 0.48);
+            box-shadow: 0 12px 24px rgba(24, 40, 67, 0.12), 0 0 0 3px rgba(196, 138, 90, 0.16);
+        }
+
+        .card {
+            background: linear-gradient(160deg, color-mix(in srgb, #fcf9f4 96%, white) 0%, #fcf9f4 100%);
+        }
+
+        :root {
+            --motion-fast: 220ms;
+            --motion-shine: 420ms;
+            --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --motion-standard: ease;
+            --control-radius: 11px;
+            --input-radius: 12px;
+            --control-letter: 0.45px;
+        }
+
+        button,
+        .submit-btn,
+        .verify-btn,
+        .resend-btn,
+        .skip-btn,
+        .continue-btn,
+        .toggle-btn,
+        .form-actions button,
+        .edit-actions button,
+        .navbar-actions button,
+        .toolbar button,
+        .btn,
+        .action-btn {
+            border-radius: var(--control-radius) !important;
+            letter-spacing: var(--control-letter);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="search"],
+        select,
+        textarea,
+        .field-wrap,
+        .field-input,
+        .search-box {
+            border-radius: var(--input-radius);
+        }
+
+        .btn,
+        .user-card,
+        .search-box,
+        .search-box input {
+            transition:
+                transform var(--motion-fast) var(--motion-ease),
+                box-shadow var(--motion-fast) var(--motion-standard),
+                background var(--motion-fast) var(--motion-standard),
+                border-color var(--motion-fast) var(--motion-standard),
+                color var(--motion-fast) var(--motion-standard);
+        }
+
+        .btn::before {
+            transition: left var(--motion-shine) var(--motion-standard);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn,
+            .search-box,
+            .user-card {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 <body data-brand-page="admin-users">
@@ -170,8 +272,8 @@
     <div class="navbar">
         <div class="nav-title">👥 Registered Users</div>
         <div class="nav-actions">
-            <button class="btn ghost" onclick="window.location.href='/admin-profile.html'">← Admin Home</button>
-            <button class="btn primary" data-brand-copy="adminUsers.home" onclick="window.location.href='/'">🏠 Stories</button>
+            <button class="btn ghost" onclick="navigateWithTransition('/admin-profile.html')">← Admin Home</button>
+            <button class="btn primary" data-brand-copy="adminUsers.home" onclick="navigateWithTransition('/')">🏠 Stories</button>
         </div>
     </div>
 
@@ -201,6 +303,14 @@ const AVATAR_PALETTE = {
 };
 function avatarStyle(key) { return AVATAR_PALETTE[key] || 'linear-gradient(145deg, #d0a273 0%, #b2774a 100%)'; }
 function avatarKey(key) { return Object.prototype.hasOwnProperty.call(AVATAR_PALETTE, key) ? key : 'default'; }
+
+function safeNavigate(url) {
+    if (typeof window.navigateWithTransition === 'function') {
+        window.navigateWithTransition(url);
+        return;
+    }
+    window.location.href = url;
+}
 
 const usersList = document.getElementById('usersList');
 const emptyState = document.getElementById('emptyState');
@@ -260,7 +370,7 @@ function renderUsers(users) {
             </div>
         `;
         card.addEventListener('click', () => {
-            window.location.href = `/view-profile.html?id=${user.id}`;
+            safeNavigate(`/view-profile.html?id=${user.id}`);
         });
         usersList.appendChild(card);
     });
@@ -280,11 +390,11 @@ async function init() {
     try {
         const me = await fetch('/api/auth/me').then(r=>r.json());
         if (!me.isAdmin) {
-            window.location.href = '/login.html';
+            safeNavigate('/login.html');
             return;
         }
     } catch (err) {
-        window.location.href = '/login.html';
+        safeNavigate('/login.html');
         return;
     }
     const users = await fetchUsers('');

@@ -7,7 +7,9 @@
         <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
         <script src="/brand-expression.js"></script>
-        <script src="/page-transitions.js"></script>
+        <script src="/page-transitions.js?v=20260302"></script>
+        <script src="/text-formatting.js?v=20260302"></script>
+        <script src="/post-trust.js?v=20260302"></script>
         <style>
             :root {
                 --space-1: 4px;
@@ -550,12 +552,13 @@
             }
 
             .btn-admin {
-                background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+                background: var(--gradient-accent-main);
                 color: var(--color-surface);
+                border-radius: var(--radius-sm);
             }
 
             .btn-admin:hover {
-                background: linear-gradient(135deg, #5fa3f5 0%, #4a90e2 100%);
+                background: var(--gradient-accent-hover);
             }
 
             .btn-success {
@@ -577,8 +580,13 @@
             }
 
             .btn-register {
-                background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%);
+                background: var(--gradient-accent-main);
                 color: var(--color-surface);
+                border-radius: var(--radius-sm);
+            }
+
+            .btn-register:hover {
+                background: var(--gradient-accent-hover);
             }
 
             .btn-neutral {
@@ -902,10 +910,15 @@
                 box-shadow: 0 24px 44px rgba(12, 20, 34, 0.22);
             }
 
-            .post-header {
+            .post-topbar {
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-start;
+                margin-bottom: 10px;
+            }
+
+            .post-header {
+                display: block;
                 margin-bottom: 16px;
             }
 
@@ -930,8 +943,61 @@
                 color: var(--color-text-muted);
                 font-size: 0.85rem;
                 white-space: nowrap;
-                margin-left: 16px;
-                font-weight: 500;
+                margin-left: 0;
+                font-weight: 700;
+                letter-spacing: 0.2px;
+            }
+
+            .post-actions-wrap {
+                position: relative;
+                margin-left: 12px;
+                flex-shrink: 0;
+            }
+
+            .post-menu-btn {
+                width: 36px;
+                height: 36px;
+                border-radius: 999px;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: #fffdf9;
+                color: var(--color-text-muted);
+                font-size: 1.2rem;
+                line-height: 1;
+                cursor: pointer;
+                box-shadow: 0 4px 14px rgba(13, 20, 33, 0.12);
+                transition: transform var(--duration-fast) var(--ease-standard),
+                            box-shadow var(--duration-fast) var(--ease-standard),
+                            color var(--duration-fast) var(--ease-standard);
+            }
+
+            .post-menu-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 8px 18px rgba(13, 20, 33, 0.16);
+                color: var(--color-text-primary);
+            }
+
+            .post-menu-btn[aria-expanded='true'] {
+                color: var(--color-text-primary);
+            }
+
+            .post-actions-menu {
+                display: none;
+                position: absolute;
+                top: calc(100% + 8px);
+                right: 0;
+                z-index: 30;
+                min-width: 176px;
+                padding: 10px;
+                border-radius: var(--radius-md);
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: linear-gradient(180deg, #fffdf9 0%, #f8f2e9 100%);
+                box-shadow: 0 20px 35px rgba(12, 20, 34, 0.2);
+                gap: 8px;
+                flex-direction: column;
+            }
+
+            .post-actions-wrap.show-actions .post-actions-menu {
+                display: flex;
             }
 
             .post-divider {
@@ -1244,6 +1310,60 @@
                 animation: bookmarkPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             }
 
+            .post-actions-menu .admin-btn,
+            .post-actions-menu .bookmark-btn {
+                width: 100%;
+                min-width: 0;
+                min-height: 40px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 10px;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 78%, white);
+                background: #fffdf9;
+                color: var(--color-text-primary);
+                font-weight: 600;
+                font-size: 0.9rem;
+                box-shadow: none;
+                transition: transform var(--duration-fast) var(--ease-standard),
+                            background var(--duration-fast) var(--ease-standard),
+                            border-color var(--duration-fast) var(--ease-standard);
+            }
+
+            .post-actions-menu .admin-btn:hover,
+            .post-actions-menu .bookmark-btn:hover {
+                transform: translateY(-1px);
+                background: #f7efe3;
+                border-color: rgba(212, 165, 116, 0.45);
+            }
+
+            .post-actions-menu .admin-btn.delete {
+                color: #b42318;
+                border-color: rgba(228, 98, 84, 0.35);
+                background: rgba(244, 91, 75, 0.08);
+            }
+
+            .post-actions-menu .admin-btn.flag {
+                color: #d97706;
+                border-color: rgba(217, 119, 6, 0.34);
+                background: rgba(245, 158, 11, 0.08);
+            }
+
+            .post-actions-menu .admin-btn.flag.flagged {
+                color: #15803d;
+                border-color: rgba(22, 163, 74, 0.34);
+                background: rgba(22, 163, 74, 0.08);
+            }
+
+            .post-actions-menu .bookmark-btn.active {
+                background: rgba(212, 165, 116, 0.16);
+                color: #8a5c33;
+                border-color: rgba(212, 165, 116, 0.45);
+                box-shadow: none;
+            }
+
             @keyframes bookmarkPulse {
                 0% { transform: scale(0.92); }
                 40% { transform: scale(1.12); }
@@ -1418,12 +1538,6 @@
                     gap: 10px;
                 }
 
-                .admin-controls {
-                    width: 100%;
-                    margin-left: 0;
-                    justify-content: flex-start;
-                }
-
                 .admin-btn,
                 .reaction-chip,
                 .bookmark-btn {
@@ -1444,9 +1558,17 @@
                     flex-direction: column;
                 }
 
+                .post-topbar {
+                    align-items: center;
+                }
+
                 .post-date {
                     margin-left: 0;
-                    margin-top: 8px;
+                    margin-top: 0;
+                }
+
+                .post-actions-menu {
+                    min-width: 168px;
                 }
             }
 
@@ -1745,78 +1867,11 @@
             }
 
             /* ========== PAGE TRANSITIONS ========== */
-            .page-transition-overlay {
-                position: fixed;
-                inset: 0;
-                z-index: 99999;
-                pointer-events: none;
-                background: var(--gradient-bg-main);
-                opacity: 0;
-                transition: opacity var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .page-transition-overlay.active {
-                opacity: 1;
-                pointer-events: all;
-            }
-
-            .page-transition-overlay .transition-content {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                text-align: center;
-                color: #ffffff;
-            }
-
-            .page-transition-overlay .transition-spinner {
-                width: 40px;
-                height: 40px;
-                border: 3px solid rgba(255, 255, 255, 0.2);
-                border-top-color: #d4a574;
-                border-radius: 50%;
-                animation: transitionSpin 0.8s linear infinite;
-                margin: 0 auto 16px;
-            }
-
-            .page-transition-overlay .transition-text {
-                font-size: 1rem;
-                font-weight: 500;
-                letter-spacing: 1px;
-                opacity: 0.9;
-            }
-
-            @keyframes transitionSpin {
-                to { transform: rotate(360deg); }
-            }
-
-            /* Page enter animation */
-            body {
-                animation: pageEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            }
-
-            @keyframes pageEnter {
-                from {
-                    opacity: 0;
-                    transform: translateY(12px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
+            /* Styles injected by page-transitions.js */
         </style>
     </head>
     <body data-brand-page="index">
         <a class="skip-link" href="#posts-container">Skip to stories</a>
-        <!-- Page Transition Overlay -->
-        <div class="page-transition-overlay" id="pageTransitionOverlay">
-            <div class="transition-content">
-                <div class="transition-spinner"></div>
-                <div class="transition-text">Loading...</div>
-            </div>
-        </div>
-
         <div class="toast-container" id="toastContainer"></div>
 
         <div class="notification-panel" id="notificationPanel" aria-live="polite">
@@ -1860,7 +1915,7 @@
             <button class="pillar-chip" data-category="Lessons" data-brand-copy="index.category.lessons">Lessons</button>
         </div>
 
-        <div class="content-grid">
+        <main id="main-content" class="content-grid" role="main">
             <aside class="topics-sidebar" id="storiesSidebar" aria-label="Stories sidebar">
                 <div class="topics-sidebar-title" data-brand-copy="index.nav.stories">Stories</div>
                 <button class="pillar-chip" data-category="Education" data-brand-copy="index.category.education">Education</button>
@@ -1954,11 +2009,11 @@
                         <p>Loading stories...</p>
                     </div>
                     <div id="search-info" class="search-info is-hidden"></div>
-                    <div id="posts-container"></div>
+                    <div id="posts-container" aria-live="polite"></div>
                     <div id="error-container"></div>
                 </div>
             </div>
-        </div>
+        </main>
 
         <script>
             // Constants
@@ -2007,6 +2062,22 @@
             function showElement(element) {
                 if (!element) return;
                 element.classList.remove('is-hidden');
+            }
+
+            function applyMediaPerformanceHints(root = document) {
+                if (!root || typeof root.querySelectorAll !== 'function') return;
+                root.querySelectorAll('img').forEach((image) => {
+                    if (!image.hasAttribute('loading')) image.setAttribute('loading', 'lazy');
+                    if (!image.hasAttribute('decoding')) image.setAttribute('decoding', 'async');
+                });
+            }
+
+            function prefersReducedMotion() {
+                try {
+                    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                } catch (_) {
+                    return false;
+                }
             }
 
             function hideElement(element) {
@@ -2161,8 +2232,16 @@
                 }
                 const featured = posts[0];
                 FEATURED_STORY_TITLE.textContent = featured.title || 'Untitled Story';
-                FEATURED_STORY_EXCERPT.textContent = truncateText((featured.body || '').replace(/\n/g, ' '), 210);
+                FEATURED_STORY_EXCERPT.textContent = window.TextFormatting ? window.TextFormatting.excerpt(featured.body || '', 210) : truncateText((featured.body || '').replace(/\n/g, ' '), 210);
                 FEATURED_STORY_CARD.onclick = () => navigateWithTransition(`/post.html?id=${featured.id}`);
+            }
+
+            function closePostActionMenus() {
+                document.querySelectorAll('.post-actions-wrap.show-actions').forEach((wrap) => {
+                    wrap.classList.remove('show-actions');
+                    const trigger = wrap.querySelector('.post-menu-btn');
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                });
             }
 
             function toggleAccountMenu(force) {
@@ -2353,7 +2432,10 @@
             });
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeSortMenu();
+                if (e.key === 'Escape') {
+                    closeSortMenu();
+                    closePostActionMenus();
+                }
             });
 
             // Fetch current user
@@ -2451,14 +2533,20 @@
 
                 posts.forEach(post => {
                     const wordCount = countWords(post.body);
-                    const excerpt = truncateText(post.body, 200);
+                    const excerpt = window.TextFormatting ? window.TextFormatting.excerpt(post.body, 200) : truncateText(post.body, 200);
                     const date = post.created_at ? formatDate(post.created_at) : '';
                     const postUrl = `/post.html?id=${post.id}`;
                     const authorDisplay = post.author_name || 'Unknown';
-                    const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
-                    const authorIsAdmin = post.author_is_admin === 1;
-                    const authorEmailVerified = post.author_email_verified === 1 || post.author_email_verified === true;
-                    const authorVerifiedByAdmin = post.author_is_verified_by_admin === 1 || post.author_is_verified_by_admin === true;
+                    const authorState = window.PostTrust
+                        ? window.PostTrust.getPostAuthorState(post)
+                        : {
+                            isAdminPost: post.is_admin_post === 1 || post.author_id === null,
+                            authorIsAdmin: post.author_is_admin === 1 || post.author_is_admin === true,
+                            authorEmailVerified: post.author_email_verified === 1 || post.author_email_verified === true,
+                            authorVerifiedByAdmin: post.author_is_verified_by_admin === 1 || post.author_is_verified_by_admin === true,
+                        };
+                    const isAdminPost = authorState.isAdminPost;
+                    const authorIsAdmin = authorState.authorIsAdmin;
                     const authorInitial = (authorDisplay || 'U').toString().charAt(0).toUpperCase();
                     const authorAvatarKey = avatarKey(post.author_avatar || '');
                     const postCategory = (post.category || '').toString().trim() || 'Stories';
@@ -2472,7 +2560,7 @@
                     let canFlag = false;
 
                     if (CURRENT_USER.isAdmin) {
-                      canEdit = post.author_id === null; // Admin can only edit own posts
+                      canEdit = post.author_id === CURRENT_USER.userId; // Admin can edit own posts
                       canDelete = true; // Admin can delete any post
                       canFlag = true; // Admin can flag any post
                     } else if (CURRENT_USER.userId) {
@@ -2480,18 +2568,20 @@
                       canDelete = post.author_id === CURRENT_USER.userId; // User can only delete own
                     }
 
-                    const trustBadge = (() => {
-                        if (isAdminPost || authorIsAdmin) {
-                            return { text: 'Admin', className: 'admin' };
-                        }
-                        if (!authorEmailVerified) {
-                            return { text: 'Unverified', className: 'unverified' };
-                        }
-                        if (authorVerifiedByAdmin) {
-                            return { text: 'Verified', className: 'verified' };
-                        }
-                        return { text: 'Community', className: 'community' };
-                    })();
+                    const trustBadge = window.PostTrust
+                        ? window.PostTrust.resolveTrustBadge(post)
+                        : (() => {
+                            if (isAdminPost || authorIsAdmin) {
+                                return { text: 'Admin', className: 'admin' };
+                            }
+                            if (!authorState.authorEmailVerified) {
+                                return { text: 'Unverified', className: 'unverified' };
+                            }
+                            if (authorState.authorVerifiedByAdmin) {
+                                return { text: 'Verified', className: 'verified' };
+                            }
+                            return { text: 'Community', className: 'community' };
+                        })();
 
                     const postElement = document.createElement('article');
                     postElement.className = 'post';
@@ -2499,9 +2589,22 @@
                       postElement.classList.add('is-flagged');
                     }
                     postElement.innerHTML = `
+                        <div class="post-topbar">
+                            ${date ? `<span class="post-date">${date}</span>` : '<span></span>'}
+                            ${canBookmark || canEdit || canDelete || canFlag ? `
+                                <div class="post-actions-wrap">
+                                    <button type="button" class="post-menu-btn" aria-label="Post actions" aria-expanded="false">⋯</button>
+                                    <div class="post-actions-menu" role="menu" aria-label="Post actions menu">
+                                        ${canBookmark ? `<span class="bookmark-btn post-action-btn ${isBookmarked ? 'active' : ''}" role="button" tabindex="0" aria-label="${isBookmarked ? 'Remove bookmark' : 'Save bookmark'}" data-id="${post.id}" aria-pressed="${isBookmarked ? 'true' : 'false'}">${isBookmarked ? '✅ Saved' : '🔖 Save'}</span>` : ''}
+                                        ${canEdit ? `<button class="admin-btn post-action-btn edit" data-id="${post.id}">✎ Edit</button>` : ''}
+                                        ${canDelete ? `<button class="admin-btn post-action-btn delete" data-id="${post.id}">🗑 Delete</button>` : ''}
+                                        ${canFlag ? `<button class="admin-btn post-action-btn flag" data-id="${post.id}" data-flagged="${post.is_flagged ? 1 : 0}">${post.is_flagged ? '✓ Unflag' : '🚩 Flag'}</button>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
                         <div class="post-header">
                             <h2>${escapeHtml(post.title)}${post.is_flagged ? ' 🚩 FLAGGED' : ''}</h2>
-                            ${date ? `<span class="post-date">${date}</span>` : ''}
                         </div>
                         <div class="post-divider"></div>
                         <p class="post-excerpt">${escapeHtml(excerpt)}</p>
@@ -2525,21 +2628,27 @@
                                 <span class="comment-count">💬 ${post.comment_count || 0}</span>
                                 <span class="reaction-chip useful reaction-useful-btn" role="button" tabindex="0" aria-label="Mark post as useful" data-id="${post.id}">👍 <span class="reaction-count">${post.useful_count || 0}</span></span>
                                 <span class="reaction-chip notuseful reaction-notuseful-btn" role="button" tabindex="0" aria-label="Mark post as not useful" data-id="${post.id}">👎 <span class="reaction-count">${post.notuseful_count || 0}</span></span>
-                                ${canBookmark ? `<span class="bookmark-btn ${isBookmarked ? 'active' : ''}" role="button" tabindex="0" aria-label="${isBookmarked ? 'Remove bookmark' : 'Save bookmark'}" data-id="${post.id}" aria-pressed="${isBookmarked ? 'true' : 'false'}">${isBookmarked ? '✅ Saved' : '🔖 Save'}</span>` : ''}
                                 <span class="read-more-link">→ Read More</span>
                             </div>
-                            ${canEdit || canDelete || canFlag ? `<div class="admin-controls">
-                                ${canEdit ? `<button class="admin-btn edit" data-id="${post.id}">✎ Edit</button>` : ''}
-                                ${canDelete ? `<button class="admin-btn delete" data-id="${post.id}">🗑 Delete</button>` : ''}
-                                ${canFlag ? `<button class="admin-btn flag" data-id="${post.id}" data-flagged="${post.is_flagged ? 1 : 0}">${post.is_flagged ? '✓ Unflag' : '🚩 Flag'}</button>` : ''}
-                            </div>` : ''}
                         </div>
                     `;
+
+                    const postActionsWrap = postElement.querySelector('.post-actions-wrap');
+                    const postMenuBtn = postElement.querySelector('.post-menu-btn');
+                    if (postActionsWrap && postMenuBtn) {
+                        postMenuBtn.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            const willOpen = !postActionsWrap.classList.contains('show-actions');
+                            closePostActionMenus();
+                            postActionsWrap.classList.toggle('show-actions', willOpen);
+                            postMenuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                        });
+                    }
 
                     // Click anywhere on post to view
                     postElement.addEventListener('click', (e) => {
                         // if clicked an admin button, don't navigate
-                        if (e.target.closest('.admin-btn') || e.target.closest('.bookmark-btn')) return;
+                        if (e.target.closest('.admin-btn') || e.target.closest('.bookmark-btn') || e.target.closest('.post-actions-wrap')) return;
                         navigateWithTransition(postUrl);
                     });
 
@@ -2549,6 +2658,7 @@
                     if (editBtn) {
                         editBtn.addEventListener('click', (ev) => {
                             ev.stopPropagation();
+                            closePostActionMenus();
                             const id = ev.currentTarget.getAttribute('data-id');
                             navigateWithTransition(`/create-post.html?id=${id}&edit=1`);
                         });
@@ -2559,6 +2669,7 @@
                     if (deleteBtn) {
                         deleteBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
+                            closePostActionMenus();
                             const id = ev.currentTarget.getAttribute('data-id');
                             const confirmed = await confirmAction('Delete this post? This action cannot be undone.', 'Delete post', 'Delete post?');
                             if (!confirmed) return;
@@ -2587,6 +2698,7 @@
                         
                         flagBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
+                            closePostActionMenus();
                             const btn = ev.currentTarget;
                             const id = btn.getAttribute('data-id');
                             const currentFlagged = parseInt(btn.getAttribute('data-flagged'));
@@ -2751,6 +2863,7 @@
                         bookmarkBtn.addEventListener('click', async function(ev) {
                             ev.stopPropagation();
                             ev.preventDefault();
+                            closePostActionMenus();
                             const btn = this;
                             const id = btn.getAttribute('data-id');
                             
@@ -3105,6 +3218,11 @@
                 toggleAccountMenu(false);
             });
 
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.post-actions-wrap')) return;
+                closePostActionMenus();
+            });
+
             // Update auth buttons display
             function updateAuthButtons(user) {
                 const isSuperAdmin = !!user.isSuperAdmin;
@@ -3189,6 +3307,7 @@
             // Initialize page
             async function initializePage() {
                 try {
+                    applyMediaPerformanceHints(document);
                     const user = await fetchCurrentUser();
                     CURRENT_USER = user || { isAdmin: false, userId: null };
                     updateAuthButtons(CURRENT_USER);
@@ -3220,48 +3339,6 @@
 
             // Load page when DOM is ready
             window.addEventListener('load', initializePage);
-
-            // ========== SMOOTH PAGE TRANSITIONS ==========
-            const PAGE_TRANSITION_OVERLAY = document.getElementById('pageTransitionOverlay');
-
-            function navigateWithTransition(url) {
-                if (!PAGE_TRANSITION_OVERLAY) {
-                    window.location.href = url;
-                    return;
-                }
-                PAGE_TRANSITION_OVERLAY.classList.add('active');
-                setTimeout(() => {
-                    window.location.href = url;
-                }, 280);
-            }
-
-            // Intercept internal link clicks for smooth transitions
-            document.addEventListener('click', (e) => {
-                const link = e.target.closest('a[href]');
-                if (!link) return;
-
-                const href = link.getAttribute('href');
-                if (!href) return;
-
-                // Skip external links, anchors, javascript:, mailto:, tel:
-                if (href.startsWith('http') || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-
-                // Skip links with target="_blank"
-                if (link.target === '_blank') return;
-
-                e.preventDefault();
-                navigateWithTransition(href);
-            });
-
-            // Handle browser back/forward with transition
-            window.addEventListener('pageshow', (e) => {
-                if (e.persisted && PAGE_TRANSITION_OVERLAY) {
-                    PAGE_TRANSITION_OVERLAY.classList.remove('active');
-                }
-            });
-
-            // Expose for programmatic navigation
-            window.navigateWithTransition = navigateWithTransition;
         </script>
     </body>
 </html>

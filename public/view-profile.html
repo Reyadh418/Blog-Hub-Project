@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="/ui-primitives.css" />
     <script src="/csrf.js"></script>
     <script src="/brand-expression.js"></script>
+    <script src="/page-transitions.js?v=20260302"></script>
+    <script src="/text-formatting.js?v=20260302"></script>
     <style>
         :root {
             --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
@@ -85,6 +87,37 @@
         .email { color:#52606d; margin-bottom: 6px; }
         .bio { color:#2c3e50; line-height:1.6; }
 
+        .bio .profile-bio-paragraph,
+        .bio .profile-bio-list,
+        .bio .profile-bio-quote,
+        .bio .profile-bio-code,
+        .bio .profile-bio-heading {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .bio .profile-bio-list { padding-left: 1.2rem; }
+
+        .bio .profile-bio-heading {
+            font-size: 1.02rem;
+            color: #2e3a4e;
+            font-weight: 700;
+        }
+
+        .bio .profile-bio-quote {
+            border-left: 3px solid rgba(196, 138, 90, 0.5);
+            padding-left: 10px;
+            color: #4b5563;
+        }
+
+        .bio .profile-bio-code {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #e5d9c8;
+            background: #f7f2ea;
+            overflow-x: auto;
+        }
+
         .meta-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
         .pill { background:#eef2f7; border:1px solid #e0e6ee; border-radius:999px; padding:8px 12px; font-weight:700; color:#52606d; }
 
@@ -136,6 +169,105 @@
         @media (max-width: 640px) {
             .header { grid-template-columns: 1fr; justify-items: center; text-align:center; }
         }
+
+        .card {
+            background: linear-gradient(160deg, color-mix(in srgb, var(--color-surface) 96%, white) 0%, var(--color-surface) 100%);
+        }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+            border-radius: 11px;
+            transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background 220ms ease;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.42) 50%, transparent 100%);
+            transition: left 420ms ease;
+        }
+
+        .btn:hover::before { left: 115%; }
+
+        .link {
+            color: var(--color-accent-500);
+            transition: color 180ms ease;
+        }
+
+        .link:hover {
+            color: #a86c44;
+        }
+
+        :root {
+            --motion-fast: 220ms;
+            --motion-shine: 420ms;
+            --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --motion-standard: ease;
+            --control-radius: 11px;
+            --input-radius: 12px;
+            --control-letter: 0.45px;
+        }
+
+        button,
+        .submit-btn,
+        .verify-btn,
+        .resend-btn,
+        .skip-btn,
+        .continue-btn,
+        .toggle-btn,
+        .form-actions button,
+        .edit-actions button,
+        .navbar-actions button,
+        .toolbar button,
+        .btn,
+        .action-btn {
+            border-radius: var(--control-radius) !important;
+            letter-spacing: var(--control-letter);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="search"],
+        select,
+        textarea,
+        .field-wrap,
+        .field-input {
+            border-radius: var(--input-radius);
+        }
+
+        .btn,
+        .card,
+        .item-card,
+        .link,
+        .toast,
+        .toast-close {
+            transition:
+                transform var(--motion-fast) var(--motion-ease),
+                box-shadow var(--motion-fast) var(--motion-standard),
+                background var(--motion-fast) var(--motion-standard),
+                border-color var(--motion-fast) var(--motion-standard),
+                color var(--motion-fast) var(--motion-standard),
+                opacity var(--motion-fast) var(--motion-standard);
+        }
+
+        .btn::before {
+            transition: left var(--motion-shine) var(--motion-standard);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn,
+            .card,
+            .item-card {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 <body data-brand-page="view-profile">
@@ -144,8 +276,8 @@
     <div class="nav">
         <h1>View User (Admin)</h1>
         <div class="nav-actions">
-            <button class="btn ghost" onclick="window.location.href='/admin-users.html'">← Users</button>
-            <button class="btn primary" onclick="window.location.href='/admin-profile.html'">Admin Home</button>
+            <button class="btn ghost" onclick="navigateWithTransition('/admin-users.html')">← Users</button>
+            <button class="btn primary" onclick="navigateWithTransition('/admin-profile.html')">Admin Home</button>
         </div>
     </div>
 
@@ -181,7 +313,7 @@
     <div class="card is-hidden" id="errorCard">
         <div class="section-title error-title">Access Restricted</div>
         <p class="error-text">You must be an admin to view this page.</p>
-        <button class="btn primary" onclick="window.location.href='/login.html'">Go to login</button>
+        <button class="btn primary" onclick="navigateWithTransition('/login.html')">Go to login</button>
     </div>
 </div>
 
@@ -256,7 +388,21 @@ function renderProfile(user) {
     nameEl.textContent = user.full_name || user.username || '—';
     usernameEl.textContent = '@' + (user.username || '');
     emailEl.textContent = user.email || '';
-    bioEl.textContent = user.bio || 'No bio provided.';
+    const bioText = user.bio || '';
+    if (bioText.trim() && window.TextFormatting) {
+        bioEl.innerHTML = window.TextFormatting.toHtml(bioText, {
+            classNames: {
+                paragraph: 'profile-bio-paragraph',
+                heading: 'profile-bio-heading',
+                blockquote: 'profile-bio-quote',
+                list: 'profile-bio-list',
+                listItem: 'profile-bio-list-item',
+                codeBlock: 'profile-bio-code'
+            }
+        });
+    } else {
+        bioEl.textContent = 'No bio provided.';
+    }
     joinedEl.textContent = 'Joined: ' + (user.created_at ? formatDate(user.created_at) : '—');
     postCountEl.textContent = 'Posts: ' + (user.posts ? user.posts.length : 0);
     commentCountEl.textContent = 'Comments: ' + (user.comments ? user.comments.length : 0);
@@ -280,7 +426,7 @@ function renderPosts(posts=[]) {
                 <span class="item-pill category">${escapeHtml((p.category || (Array.isArray(p.tags) ? p.tags.find(tag => categories.includes(tag)) : '') || 'Stories'))}</span>
                 <span class="item-pill">Story</span>
             </div>
-            <div class="item-body">${escapeHtml((p.body||'').slice(0, 160))}${p.body && p.body.length>160 ? '...' : ''}</div>
+            <div class="item-body">${escapeHtml(window.TextFormatting ? window.TextFormatting.excerpt(p.body || '', 160) : ((p.body || '').slice(0, 160) + ((p.body || '').length > 160 ? '...' : '')))}</div>
             <div class="item-link-wrap"><a class="link" href="/post.html?id=${p.id}">View post →</a></div>
         </div>
     `).join('');
@@ -302,7 +448,7 @@ function renderComments(comments=[]) {
                 <span class="item-pill">Comment</span>
                 ${c.updated_at && c.updated_at !== c.created_at ? '<span class="item-pill">Edited</span>' : ''}
             </div>
-            <div class="item-body">${escapeHtml((c.body||'').slice(0, 200))}${c.body && c.body.length>200 ? '...' : ''}</div>
+            <div class="item-body">${escapeHtml(window.TextFormatting ? window.TextFormatting.excerpt(c.body || '', 200) : ((c.body || '').slice(0, 200) + ((c.body || '').length > 200 ? '...' : '')))}</div>
             <div class="item-link-wrap"><a class="link" href="/post.html?id=${c.post_id}">Open post →</a></div>
         </div>
     `).join('');

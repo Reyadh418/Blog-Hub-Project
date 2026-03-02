@@ -7,60 +7,13 @@
         <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
         <script src="/brand-expression.js"></script>
-        <script src="/page-transitions.js"></script>
+        <script src="/page-transitions.js?v=20260302"></script>
+        <script src="/text-formatting.js?v=20260302"></script>
         <style>
             :root {
                 --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
                 --color-primary-900: #0f172a;
                 --color-primary-800: #1d2e4a;
-
-            @media (max-width: 768px) {
-                .navbar-content {
-                    flex-direction: column;
-                    align-items: stretch;
-                    gap: 12px;
-                }
-
-                .navbar-actions {
-                    width: 100%;
-                    justify-content: flex-start;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                }
-
-                .navbar-brand,
-                .navbar-actions a,
-                .navbar-actions button,
-                .action-btn,
-                .avatar-toggle,
-                .avatar-primary,
-                .avatar-secondary,
-                .form-actions button,
-                .edit-actions button {
-                    min-height: 44px;
-                }
-
-                .action-btn,
-                .avatar-primary,
-                .avatar-secondary,
-                .form-actions button,
-                .edit-actions button {
-                    justify-content: center;
-                }
-
-                .profile-actions,
-                .form-actions,
-                .edit-actions {
-                    width: 100%;
-                    gap: 10px;
-                }
-
-                .profile-actions .action-btn,
-                .form-actions button,
-                .edit-actions button {
-                    flex: 1;
-                }
-            }
                 --color-accent-500: #c48a5a;
                 --color-accent-600: #a86c44;
                 --color-surface: #fcf9f4;
@@ -406,6 +359,39 @@
                 margin-right: auto;
             }
 
+            .profile-bio .profile-bio-paragraph,
+            .profile-bio .profile-bio-list,
+            .profile-bio .profile-bio-quote,
+            .profile-bio .profile-bio-code,
+            .profile-bio .profile-bio-heading {
+                margin-top: 0;
+                margin-bottom: 10px;
+            }
+
+            .profile-bio .profile-bio-list {
+                padding-left: 1.25rem;
+            }
+
+            .profile-bio .profile-bio-heading {
+                font-size: 1.03rem;
+                color: #2e3a4e;
+                font-weight: 700;
+            }
+
+            .profile-bio .profile-bio-quote {
+                border-left: 3px solid rgba(196, 138, 90, 0.5);
+                padding-left: 10px;
+                color: #4b5563;
+            }
+
+            .profile-bio .profile-bio-code {
+                padding: 10px 12px;
+                border-radius: 8px;
+                border: 1px solid #e5d9c8;
+                background: #f7f2ea;
+                overflow-x: auto;
+            }
+
             .profile-actions {
                 display: flex;
                 gap: 18px;
@@ -688,6 +674,52 @@
             }
 
             @media (max-width: 768px) {
+                .navbar-content {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 12px;
+                }
+
+                .navbar-actions {
+                    width: 100%;
+                    justify-content: flex-start;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+
+                .navbar-brand,
+                .navbar-actions a,
+                .navbar-actions button,
+                .action-btn,
+                .avatar-toggle,
+                .avatar-primary,
+                .avatar-secondary,
+                .form-actions button,
+                .edit-actions button {
+                    min-height: 44px;
+                }
+
+                .action-btn,
+                .avatar-primary,
+                .avatar-secondary,
+                .form-actions button,
+                .edit-actions button {
+                    justify-content: center;
+                }
+
+                .profile-actions,
+                .form-actions,
+                .edit-actions {
+                    width: 100%;
+                    gap: 10px;
+                }
+
+                .profile-actions .action-btn,
+                .form-actions button,
+                .edit-actions button {
+                    flex: 1;
+                }
+
                 .profile-header,
                 .edit-form,
                 .posts-section {
@@ -736,6 +768,129 @@
             @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
             @media (max-width: 600px) { .toast-container { right: 10px; left: 10px; max-width: none; } }
+
+            .profile-header,
+            .stats-grid .stat-card,
+            .comments-section {
+                background: linear-gradient(160deg, color-mix(in srgb, var(--color-surface) 96%, white) 0%, var(--color-surface) 100%);
+            }
+
+            input[type="text"],
+            textarea {
+                border-radius: 12px;
+                border-color: color-mix(in srgb, var(--color-border-soft) 72%, white);
+                background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,243,236,0.92) 100%);
+            }
+
+            .action-btn,
+            .form-actions button,
+            .edit-actions button,
+            .navbar-actions button {
+                position: relative;
+                overflow: hidden;
+                border-radius: 11px;
+                transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background 220ms ease;
+            }
+
+            .action-btn::before,
+            .form-actions button::before,
+            .edit-actions button::before,
+            .navbar-actions button::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -120%;
+                width: 60%;
+                height: 100%;
+                background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.42) 50%, transparent 100%);
+                transition: left 420ms ease;
+            }
+
+            .action-btn:hover::before,
+            .form-actions button:hover::before,
+            .edit-actions button:hover::before,
+            .navbar-actions button:hover::before {
+                left: 115%;
+            }
+
+            :root {
+                --motion-fast: 220ms;
+                --motion-shine: 420ms;
+                --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+                --motion-standard: ease;
+                --control-radius: 11px;
+                --input-radius: 12px;
+                --control-letter: 0.45px;
+            }
+
+            button,
+            .submit-btn,
+            .verify-btn,
+            .resend-btn,
+            .skip-btn,
+            .continue-btn,
+            .toggle-btn,
+            .form-actions button,
+            .edit-actions button,
+            .navbar-actions button,
+            .toolbar button,
+            .btn,
+            .action-btn,
+            .avatar-primary,
+            .avatar-secondary {
+                border-radius: var(--control-radius) !important;
+                letter-spacing: var(--control-letter);
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="search"],
+            select,
+            textarea,
+            .field-wrap,
+            .field-input {
+                border-radius: var(--input-radius);
+            }
+
+            .action-btn,
+            .form-actions button,
+            .edit-actions button,
+            .navbar-actions button,
+            input[type="text"],
+            textarea,
+            .avatar-option,
+            .avatar-primary,
+            .avatar-secondary,
+            .toast,
+            .toast-close {
+                transition:
+                    transform var(--motion-fast) var(--motion-ease),
+                    box-shadow var(--motion-fast) var(--motion-standard),
+                    background var(--motion-fast) var(--motion-standard),
+                    border-color var(--motion-fast) var(--motion-standard),
+                    color var(--motion-fast) var(--motion-standard),
+                    opacity var(--motion-fast) var(--motion-standard);
+            }
+
+            .action-btn::before,
+            .form-actions button::before,
+            .edit-actions button::before,
+            .navbar-actions button::before {
+                transition: left var(--motion-shine) var(--motion-standard);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .action-btn,
+                .form-actions button,
+                .edit-actions button,
+                .navbar-actions button,
+                input[type="text"],
+                textarea {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
         </style>
     </head>
     <body data-brand-page="profile">
@@ -980,11 +1135,28 @@
 
             function displayProfile(user) {
                 const myUserId = currentUser.id || currentUser.userId;
+                const bioEl = document.getElementById('profileBio');
+                const bioText = user.bio || '';
                 
                 document.getElementById('profileName').textContent = user.full_name || user.username;
                 document.getElementById('profileUsername').textContent = '@' + user.username;
                 document.getElementById('profileEmail').textContent = `Email: ${user.email}`;
-                document.getElementById('profileBio').textContent = user.bio || 'No bio added yet.';
+                if (bioEl) {
+                    if (bioText.trim() && window.TextFormatting) {
+                        bioEl.innerHTML = window.TextFormatting.toHtml(bioText, {
+                            classNames: {
+                                paragraph: 'profile-bio-paragraph',
+                                heading: 'profile-bio-heading',
+                                blockquote: 'profile-bio-quote',
+                                list: 'profile-bio-list',
+                                listItem: 'profile-bio-list-item',
+                                codeBlock: 'profile-bio-code'
+                            }
+                        });
+                    } else {
+                        bioEl.textContent = 'No bio added yet.';
+                    }
+                }
 
                 selectedAvatar = user.avatar || 'aurora';
                 setAvatarCircle(profileAvatar, selectedAvatar, user.username ? user.username[0] : 'U');
@@ -1009,7 +1181,7 @@
                             return `
                             <div class="post-card" onclick="window.location.href='/post.html?id=${post.id}'">
                                 <h3 class="post-title">${escapeHtml(post.title)}</h3>
-                                <p class="post-excerpt">${escapeHtml(post.body.substring(0, 150))}${post.body.length > 150 ? '...' : ''}</p>
+                                <p class="post-excerpt">${escapeHtml(window.TextFormatting ? window.TextFormatting.excerpt(post.body || '', 150) : ((post.body || '').substring(0, 150) + ((post.body || '').length > 150 ? '...' : '')))}</p>
                                 <div class="post-meta">
                                     <span class="post-category-pill" data-category="${escapeHtml(categoryLabel)}" data-accent="${escapeHtml(categoryAccent)}">${escapeHtml(categoryLabel)}</span>
                                     <span>📅 ${new Date(post.created_at).toLocaleDateString()}</span>
@@ -1057,7 +1229,7 @@
                             <span class="avatar-chip" data-avatar="${avatarKey(selectedAvatar)}">${(currentUser?.username||'U')[0]?.toUpperCase?.()||'U'}</span>
                             <span>${escapeHtml(c.post_title || 'Post')}</span>
                         </div>
-                        <div class="post-excerpt comment-excerpt">${escapeHtml(c.body.substring(0, 180))}${c.body.length>180?'...':''}</div>
+                        <div class="post-excerpt comment-excerpt">${escapeHtml(window.TextFormatting ? window.TextFormatting.excerpt(c.body || '', 180) : ((c.body || '').substring(0, 180) + ((c.body || '').length > 180 ? '...' : '')))}</div>
                         <div class="post-meta comment-meta">
                             <span class="comment-date">${new Date(c.created_at).toLocaleString()}</span>
                             ${c.updated_at !== c.created_at ? '<span class="comment-edited">(edited)</span>' : ''}

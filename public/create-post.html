@@ -7,7 +7,8 @@
             <link rel="stylesheet" href="/ui-primitives.css" />
             <script src="/csrf.js"></script>
         <script src="/brand-expression.js"></script>
-        <script src="/page-transitions.js"></script>
+        <script src="/page-transitions.js?v=20260302"></script>
+            <script src="/text-formatting.js?v=20260302"></script>
         <style>
             :root {
                 --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
@@ -227,6 +228,38 @@
                 text-align: right;
             }
 
+            .format-toolbar {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+
+            .format-btn {
+                width: auto;
+                padding: 8px 12px;
+                font-size: 0.82rem;
+                font-weight: 700;
+                border-radius: 9px;
+                border: 1px solid color-mix(in srgb, var(--color-border-soft) 70%, white);
+                background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 237, 227, 0.88) 100%);
+                color: var(--color-primary-900);
+                cursor: pointer;
+                box-shadow: none;
+                letter-spacing: 0.25px;
+            }
+
+            .format-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
+            }
+
+            .format-help {
+                margin-top: 8px;
+                font-size: 0.82rem;
+                color: var(--color-text-muted);
+            }
+
             .form-header {
                 margin-bottom: 38px;
             }
@@ -356,6 +389,111 @@
                     max-width: none;
                 }
             }
+
+            form {
+                background: linear-gradient(160deg, color-mix(in srgb, var(--color-surface) 96%, white) 0%, var(--color-surface) 100%);
+                animation: cardEntrance 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            }
+
+            input[type="text"],
+            select,
+            textarea {
+                border-radius: 12px;
+                border-color: color-mix(in srgb, var(--color-border-soft) 72%, white);
+                background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,243,236,0.92) 100%);
+            }
+
+            button {
+                position: relative;
+                overflow: hidden;
+                border-radius: 11px;
+                transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background 220ms ease;
+            }
+
+            button::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -120%;
+                width: 60%;
+                height: 100%;
+                background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.44) 50%, transparent 100%);
+                transition: left 420ms ease;
+            }
+
+            button:hover::before { left: 115%; }
+
+            @keyframes cardEntrance {
+                from { opacity: 0; transform: translateY(12px) scale(0.985); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+
+            :root {
+                --motion-fast: 220ms;
+                --motion-shine: 420ms;
+                --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+                --motion-standard: ease;
+                --control-radius: 11px;
+                --input-radius: 12px;
+                --control-letter: 0.45px;
+            }
+
+            button,
+            .submit-btn,
+            .verify-btn,
+            .resend-btn,
+            .skip-btn,
+            .continue-btn,
+            .toggle-btn,
+            .form-actions button,
+            .edit-actions button,
+            .navbar-actions button,
+            .toolbar button,
+            .btn,
+            .action-btn {
+                border-radius: var(--control-radius) !important;
+                letter-spacing: var(--control-letter);
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="search"],
+            select,
+            textarea,
+            .field-wrap,
+            .field-input {
+                border-radius: var(--input-radius);
+            }
+
+            input[type="text"],
+            select,
+            textarea,
+            button,
+            .toast,
+            .toast-close {
+                transition:
+                    transform var(--motion-fast) var(--motion-ease),
+                    box-shadow var(--motion-fast) var(--motion-standard),
+                    background var(--motion-fast) var(--motion-standard),
+                    border-color var(--motion-fast) var(--motion-standard),
+                    color var(--motion-fast) var(--motion-standard);
+            }
+
+            button::before {
+                transition: left var(--motion-shine) var(--motion-standard);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                form,
+                input[type="text"],
+                select,
+                textarea,
+                button {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
         </style>
     </head>
     <body data-brand-page="create-post">
@@ -393,6 +531,15 @@
 
             <div class="form-group">
                 <label for="body">Post Content <span class="field-note">(Max 10,000 characters)</span></label>
+                <div class="format-toolbar" id="postFormatToolbar" aria-label="Formatting controls">
+                    <button type="button" class="format-btn" data-format="bold"><strong>B</strong></button>
+                    <button type="button" class="format-btn" data-format="italic"><em>I</em></button>
+                    <button type="button" class="format-btn" data-format="h2">H2</button>
+                    <button type="button" class="format-btn" data-format="quote">Quote</button>
+                    <button type="button" class="format-btn" data-format="list">List</button>
+                    <button type="button" class="format-btn" data-format="link">Link</button>
+                    <button type="button" class="format-btn" data-format="code">Code</button>
+                </div>
                 <textarea 
                     id="body" 
                     name="body" 
@@ -402,6 +549,7 @@
                     aria-label="Post content (max 10,000 characters)"
                     aria-required="true"
                 ></textarea>
+                <div class="format-help">Supports: headings, bold, italic, quotes, lists, links, and inline code.</div>
                 <div class="character-count">
                     <span id="bodyCount">0</span> / 10000 characters
                 </div>
@@ -439,8 +587,13 @@
             const tagsInput = document.getElementById('tags');
             const messageDiv = document.getElementById('message');
             const bodyCountSpan = document.getElementById('bodyCount');
+            const postFormatToolbar = document.getElementById('postFormatToolbar');
             const SUBMIT_INTENT_KEY = 'bloghub.submitIntent';
             const SUBMIT_DRAFT_KEY = 'bloghub.submitDraft';
+
+            if (window.TextFormatting && postFormatToolbar) {
+                window.TextFormatting.bindToolbar(postFormatToolbar, bodyInput);
+            }
 
             function persistDraftState() {
                 try {

@@ -942,7 +942,7 @@
         </div>
     </div>
 
-    <script src="/page-transitions.js"></script>
+    <script src="/page-transitions.js?v=20260302"></script>
     <script>
         let CURRENT_ADMIN = null;
         let searchTimeout = null;
@@ -966,7 +966,7 @@
             try {
                 const resp = await fetch('/api/admin/profile');
                 if (!resp.ok) {
-                    navigateWithTransition('/login.html?mode=admin&return=/admin-management.html');
+                    navigateWithTransition('/login.html?returnTo=/admin-management.html');
                     return false;
                 }
                 const data = await resp.json();
@@ -985,7 +985,7 @@
                 return true;
             } catch (err) {
                 console.error('Auth check failed', err);
-                navigateWithTransition('/login.html?mode=admin&return=/admin-management.html');
+                navigateWithTransition('/login.html?returnTo=/admin-management.html');
                 return false;
             }
         }
@@ -1562,14 +1562,6 @@
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
             }
             return Math.abs(hash) % 9;
-        }
-
-        function navigateWithTransition(url) {
-            if (typeof window.navigateWithTransition === 'function') {
-                window.navigateWithTransition(url);
-            } else {
-                window.location.href = url;
-            }
         }
     </script>
 </body>

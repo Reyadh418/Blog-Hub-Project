@@ -69,8 +69,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve frontend files from /public
-app.use(express.static(path.join(__dirname, "public")));
+// Serve frontend files from /public with safe cache policy
+app.use(express.static(path.join(__dirname, "public"), {
+  etag: true,
+  lastModified: true,
+  maxAge: "1h",
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith("page-transitions.js")) {
+      res.setHeader("Cache-Control", "no-cache");
+      return;
+    }
+    if (filePath.endsWith(".html")) {
+      res.setHeader("Cache-Control", "no-cache");
+      return;
+    }
+    if (filePath.endsWith(".css") || filePath.endsWith(".js")) {
+      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=300");
+      return;
+    }
+    res.setHeader("Cache-Control", "public, max-age=600");
+  },
+}));
 
 // Apply generic write limiter to all mutating requests
 app.use((req, res, next) => {
@@ -815,64 +834,6 @@ app.post("/api/auth/login", authLimiter, async (req, res, next) => {
         isSuperAdmin: Number(user.is_super_admin) === 1,
         isPromotedAdmin: Number(user.is_promoted_admin) === 1,
         emailVerified
-      });
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Admin Login (uses same unified logic, but requires admin status)
-app.post("/api/admin/login", authLimiter, async (req, res, next) => {
-  try {
-    const username = (req.body.username || "").toString().trim().toLowerCase();
-    const password = (req.body.password || "").toString();
-
-    if (!username || !password) return res.status(400).json({ error: "username and password required" });
-
-    // Ensure at least one admin exists
-    await ensureAdminUser();
-    
-    // Find user by username and verify they are an admin
-    const user = await dbGet(
-      "SELECT id, username, password_hash, is_admin, is_super_admin, is_promoted_admin FROM users WHERE username = ?",
-      [username]
-    );
-
-    if (!user) {
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
-    }
-
-    // Admin login requires admin status
-    if (Number(user.is_admin) !== 1) {
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
-    }
-
-    const valid = await verifyPassword(password, user.password_hash, user.id);
-    if (!valid) {
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
-    }
-
-    // Set unified session variables
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    req.session.isAdmin = true;
-    req.session.isSuperAdmin = Number(user.is_super_admin) === 1;
-    req.session.isPromotedAdmin = Number(user.is_promoted_admin) === 1;
-    req.session.userRole = "admin";
-    req.session.emailVerified = true; // Admins are auto-verified
-
-    // Save session before responding to preserve login
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ error: "Failed to create session" });
-      res.json({ 
-        ok: true, 
-        userId: user.id, 
-        username: user.username, 
-        isAdmin: true,
-        isSuperAdmin: Number(user.is_super_admin) === 1,
-        isPromotedAdmin: Number(user.is_promoted_admin) === 1,
-        emailVerified: true
       });
     });
   } catch (err) {

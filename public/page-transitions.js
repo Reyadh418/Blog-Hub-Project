@@ -6,6 +6,14 @@
 (function () {
     'use strict';
 
+    function prefersReducedMotion() {
+        try {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        } catch (_) {
+            return false;
+        }
+    }
+
     // Inject transition overlay and styles if not present
     function injectTransitionElements() {
         // Check if overlay already exists
@@ -20,7 +28,7 @@
                 inset: 0;
                 z-index: 99999;
                 pointer-events: none;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+                background: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
                 opacity: 0;
                 transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             }
@@ -42,8 +50,9 @@
             .page-transition-overlay .transition-spinner {
                 width: 40px;
                 height: 40px;
-                border: 3px solid rgba(255, 255, 255, 0.2);
-                border-top-color: #d4a574;
+                border: 3px solid rgba(212, 165, 116, 0.25);
+                border-top-color: #d0a273;
+                border-right-color: #d0a273;
                 border-radius: 50%;
                 animation: transitionSpin 0.8s linear infinite;
                 margin: 0 auto 16px;
@@ -54,6 +63,7 @@
                 font-weight: 500;
                 letter-spacing: 1px;
                 opacity: 0.9;
+                color: #f9f5ed;
             }
 
             @keyframes transitionSpin {
@@ -71,6 +81,20 @@
                 }
                 to {
                     opacity: 1;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .page-transition-overlay {
+                    transition: none !important;
+                }
+
+                .page-transition-overlay .transition-spinner {
+                    animation: none !important;
+                }
+
+                body.page-transition-enter {
+                    animation: none !important;
                 }
             }
         `;
@@ -94,15 +118,32 @@
 
     // Navigate with transition
     function navigateWithTransition(url) {
+        if (prefersReducedMotion()) {
+            window.location.href = url;
+            return;
+        }
+
         const overlay = document.getElementById('pageTransitionOverlay');
         if (!overlay) {
             window.location.href = url;
             return;
         }
+
+        // Show overlay and allow one paint so users can see feedback
         overlay.classList.add('active');
-        setTimeout(() => {
+        let hasNavigated = false;
+        const go = () => {
+            if (hasNavigated) return;
+            hasNavigated = true;
             window.location.href = url;
-        }, 280);
+        };
+
+        requestAnimationFrame(() => {
+            setTimeout(go, 120);
+        });
+
+        // Safety fallback if timers are throttled in background tabs
+        setTimeout(go, 400);
     }
 
     // Intercept internal link clicks
@@ -129,19 +170,40 @@
         navigateWithTransition(href);
     }
 
-    // Handle browser back/forward
+    // Handle browser back/forward and page loading
     function handlePageShow(e) {
         const overlay = document.getElementById('pageTransitionOverlay');
-        if (e.persisted && overlay) {
+        if (overlay) {
+            // Remove active state on any page show (back/forward/new page)
             overlay.classList.remove('active');
+        }
+    }
+
+    // Clean up overlay as soon as page starts loading
+    function handleBeforeUnload(e) {
+        const overlay = document.getElementById('pageTransitionOverlay');
+        if (overlay) {
+            // Remove pointer-events to prevent blocking
+            overlay.style.pointerEvents = 'none';
         }
     }
 
     // Initialize
     function init() {
         injectTransitionElements();
+
+        if (prefersReducedMotion()) {
+            const overlay = document.getElementById('pageTransitionOverlay');
+            if (overlay) {
+                overlay.classList.add('reduced-motion');
+                const spinner = overlay.querySelector('.transition-spinner');
+                if (spinner) spinner.style.display = 'none';
+            }
+        }
+
         document.addEventListener('click', handleLinkClick);
         window.addEventListener('pageshow', handlePageShow);
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
         // Expose globally for programmatic navigation
         window.navigateWithTransition = navigateWithTransition;

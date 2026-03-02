@@ -7,7 +7,7 @@
         <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
         <script src="/brand-expression.js"></script>
-        <script src="/page-transitions.js"></script>
+        <script src="/page-transitions.js?v=20260302"></script>
         <style>
             :root {
                 --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
@@ -320,6 +320,123 @@
                     width: 42px;
                     height: 52px;
                     font-size: 1.3rem;
+                }
+            }
+
+            .verify-card {
+                animation: cardEntrance 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            }
+
+            @keyframes cardEntrance {
+                from { opacity: 0; transform: translateY(12px) scale(0.985); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+
+            .code-digit {
+                background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,243,236,0.96) 100%);
+                border-color: color-mix(in srgb, var(--color-border-soft) 78%, white);
+            }
+
+            .verify-btn,
+            .resend-btn,
+            .skip-btn,
+            .continue-btn {
+                position: relative;
+                overflow: hidden;
+                border-radius: 11px;
+                transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, background 220ms ease;
+            }
+
+            .verify-btn::before,
+            .continue-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -120%;
+                width: 60%;
+                height: 100%;
+                background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.44) 50%, transparent 100%);
+                transition: left 420ms ease;
+            }
+
+            .verify-btn:hover::before,
+            .continue-btn:hover::before {
+                left: 115%;
+            }
+
+            .verify-btn:hover:not(:disabled),
+            .resend-btn:hover:not(:disabled),
+            .skip-btn:hover:not(:disabled),
+            .continue-btn:hover {
+                transform: translateY(-2px);
+            }
+
+            :root {
+                --motion-fast: 220ms;
+                --motion-shine: 420ms;
+                --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+                --motion-standard: ease;
+                --control-radius: 11px;
+                --input-radius: 12px;
+                --control-letter: 0.45px;
+            }
+
+            button,
+            .submit-btn,
+            .verify-btn,
+            .resend-btn,
+            .skip-btn,
+            .continue-btn,
+            .toggle-btn,
+            .form-actions button,
+            .edit-actions button,
+            .navbar-actions button,
+            .toolbar button,
+            .btn,
+            .action-btn {
+                border-radius: var(--control-radius) !important;
+                letter-spacing: var(--control-letter);
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="search"],
+            select,
+            textarea,
+            .field-wrap,
+            .field-input,
+            .code-digit {
+                border-radius: var(--input-radius);
+            }
+
+            .code-digit,
+            .verify-btn,
+            .resend-btn,
+            .skip-btn,
+            .continue-btn {
+                transition:
+                    transform var(--motion-fast) var(--motion-ease),
+                    box-shadow var(--motion-fast) var(--motion-standard),
+                    background var(--motion-fast) var(--motion-standard),
+                    border-color var(--motion-fast) var(--motion-standard),
+                    color var(--motion-fast) var(--motion-standard);
+            }
+
+            .verify-btn::before,
+            .continue-btn::before {
+                transition: left var(--motion-shine) var(--motion-standard);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .verify-card,
+                .code-digit,
+                .verify-btn,
+                .resend-btn,
+                .skip-btn,
+                .continue-btn {
+                    animation: none !important;
+                    transition: none !important;
                 }
             }
         </style>

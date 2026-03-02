@@ -7,7 +7,9 @@
         <link rel="stylesheet" href="/ui-primitives.css" />
         <script src="/csrf.js"></script>
         <script src="/brand-expression.js"></script>
-        <script src="/page-transitions.js"></script>
+        <script src="/page-transitions.js?v=20260302"></script>
+        <script src="/text-formatting.js?v=20260302"></script>
+        <script src="/post-trust.js?v=20260302"></script>
         <style>
             :root {
                 --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
@@ -420,6 +422,43 @@
 
             .post-paragraph {
                 margin: 0;
+            }
+
+            .post-body .post-heading {
+                margin: 2px 0;
+                color: color-mix(in srgb, var(--pillar-accent, #d4a574) 55%, #142036);
+                line-height: 1.35;
+                font-weight: 760;
+                font-family: var(--font-family-title-serif);
+            }
+
+            .post-body .post-list {
+                margin: 0;
+                padding-left: 1.35rem;
+                display: grid;
+                gap: 0.42rem;
+            }
+
+            .post-body .post-list-item {
+                margin: 0;
+            }
+
+            .post-body .post-code {
+                margin: 4px 0;
+                padding: 12px 14px;
+                border-radius: 10px;
+                border: 1px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 28%, white);
+                background: color-mix(in srgb, var(--pillar-accent, #d4a574) 7%, #0f172a);
+                color: #f8fafc;
+                font-size: 0.94rem;
+                overflow-x: auto;
+            }
+
+            .post-body code {
+                background: rgba(15, 23, 42, 0.08);
+                border-radius: 6px;
+                padding: 1px 6px;
+                font-size: 0.92em;
             }
 
             .post-blockquote {
@@ -1169,6 +1208,77 @@
                 color: #7c3aed;
             }
 
+            .author-chip {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+            }
+
+            .author-role-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 3px 8px;
+                border-radius: 999px;
+                font-size: 0.68rem;
+                letter-spacing: 0.35px;
+                text-transform: uppercase;
+                font-weight: 800;
+                border: 1px solid transparent;
+            }
+
+            .author-role-badge.admin {
+                color: #fff;
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            }
+
+            .author-role-badge.verified {
+                color: #0f766e;
+                background: rgba(20, 184, 166, 0.12);
+                border-color: rgba(15, 118, 110, 0.26);
+            }
+
+            .author-role-badge.community {
+                color: #9a6438;
+                background: rgba(196, 138, 90, 0.12);
+                border-color: rgba(196, 138, 90, 0.3);
+            }
+
+            .author-role-badge.unverified {
+                color: #b91c1c;
+                background: rgba(239, 68, 68, 0.1);
+                border-color: rgba(239, 68, 68, 0.28);
+            }
+
+            .author-chip.admin-post {
+                color: var(--color-text-primary);
+                font-weight: 700;
+            }
+
+            .author-chip.admin-user {
+                color: #1e3a5f;
+            }
+
+            .author-chip.user {
+                color: var(--color-accent-500);
+            }
+
+            .author-chip.trust-admin {
+                color: #1e3a5f;
+            }
+
+            .author-chip.trust-verified {
+                color: #0f766e;
+            }
+
+            .author-chip.trust-community {
+                color: #9a6438;
+            }
+
+            .author-chip.trust-unverified {
+                color: #b91c1c;
+            }
+
             .author-chip-label {
                 color: inherit;
             }
@@ -1183,6 +1293,14 @@
                 gap: 8px;
                 color: #1e3a5f;
                 font-weight: 700;
+            }
+
+            .avatar-chip.admin-user-avatar {
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            }
+
+            .avatar-chip.admin-post-avatar {
+                background: var(--gradient-bg-main);
             }
 
             .avatar-chip.avatar-chip-admin {
@@ -1918,6 +2036,41 @@
                 margin: 0;
             }
 
+            .reading-body .reading-heading {
+                margin: 2px 0;
+                line-height: 1.36;
+                font-weight: 760;
+            }
+
+            .reading-body .reading-list {
+                margin: 0;
+                padding-left: 1.3rem;
+                display: grid;
+                gap: 0.38rem;
+            }
+
+            .reading-body .reading-list-item {
+                margin: 0;
+            }
+
+            .reading-body .reading-code {
+                margin: 4px 0;
+                padding: 12px 14px;
+                border-radius: 8px;
+                border: 1px solid var(--reading-border, #e0dbd4);
+                background: color-mix(in srgb, var(--reading-border, #e0dbd4) 34%, #fff);
+                color: #2c3e50;
+                font-size: 0.92rem;
+                overflow-x: auto;
+            }
+
+            .reading-body code {
+                background: color-mix(in srgb, var(--reading-border, #e0dbd4) 56%, white);
+                border-radius: 6px;
+                padding: 1px 6px;
+                font-size: 0.92em;
+            }
+
             .reading-blockquote {
                 margin: 0;
                 padding: 14px 18px;
@@ -2103,6 +2256,7 @@
         </style>
     </head>
     <body data-brand-page="post">
+        <a class="skip-link" href="#post-main">Skip to story content</a>
         <div class="toast-container" id="toastContainer"></div>
 
         <!-- Reading Mode Button -->
@@ -2112,7 +2266,7 @@
         </button>
 
         <!-- Reading Mode Overlay -->
-        <div class="reading-overlay" id="readingOverlay" data-theme="sepia">
+        <div class="reading-overlay" id="readingOverlay" data-theme="sepia" role="dialog" aria-modal="true" aria-label="Reading mode">
             <div class="reading-progress" id="readingProgress"></div>
             <div class="reading-controls">
                 <button class="reading-control-btn" id="fontDecrease" title="Decrease font size">A-</button>
@@ -2154,7 +2308,7 @@
             <p data-brand-copy="post.loading">Loading post...</p>
         </div>
 
-        <div id="post-wrapper" class="is-hidden">
+        <main id="post-main" class="is-hidden" role="main">
             <div class="post-header">
                 <a href="/" class="nav-back" data-brand-copy="post.back">← Back to Stories</a>
                 <button id="notifications-btn" class="notif-btn post-notif-btn is-hidden">🔔 Notifications <span id="notifBadge" class="notif-badge is-hidden">0</span></button>
@@ -2282,7 +2436,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
 
         <div id="error-wrapper" class="is-hidden">
             <div class="error-container">
@@ -2295,7 +2449,7 @@
 
         <script>
             const LOADING = document.getElementById('loading');
-            const POST_WRAPPER = document.getElementById('post-wrapper');
+            const POST_WRAPPER = document.getElementById('post-main');
             const ERROR_WRAPPER = document.getElementById('error-wrapper');
             const ERROR_MESSAGE = document.getElementById('errorMessage');
             const NOTIF_BTN = document.getElementById('notifications-btn');
@@ -2333,10 +2487,19 @@
             let notifications = [];
             let notifPoll = null;
             let notifPanelOpen = false;
+            let lastFocusedBeforeReading = null;
 
             function showElement(element) {
                 if (!element) return;
                 element.classList.remove('is-hidden');
+            }
+
+            function applyMediaPerformanceHints(root = document) {
+                if (!root || typeof root.querySelectorAll !== 'function') return;
+                root.querySelectorAll('img').forEach((image) => {
+                    if (!image.hasAttribute('loading')) image.setAttribute('loading', 'lazy');
+                    if (!image.hasAttribute('decoding')) image.setAttribute('decoding', 'async');
+                });
             }
 
             function hideElement(element) {
@@ -2446,47 +2609,29 @@
 
             function renderStoryBody(raw = '', options = {}) {
                 const readingMode = options.readingMode === true;
-                const source = normalizeNewlines(raw);
-                if (!source.trim()) return '';
-
-                const blocks = source
-                    .split(/\n{2,}/)
-                    .map((block) => block.trim())
-                    .filter(Boolean);
-
-                const html = [];
-                let pullQuotePlaced = false;
-
-                const renderInline = (value) => formatMentions(value).replace(/\n/g, '<br>');
-
-                for (const block of blocks) {
-                    const lines = block.split('\n');
-                    const allQuoteLines = lines.length > 0 && lines.every((line) => /^\s*>/.test(line));
-
-                    if (allQuoteLines) {
-                        const quoteText = lines
-                            .map((line) => line.replace(/^\s*>\s?/, ''))
-                            .join('\n')
-                            .trim();
-                        if (quoteText) {
-                            const quoteClass = readingMode ? 'reading-blockquote' : 'post-blockquote';
-                            html.push(`<blockquote class="${quoteClass}"><p>${renderInline(quoteText)}</p></blockquote>`);
-                            continue;
-                        }
-                    }
-
-                    if (!pullQuotePlaced && isPullQuoteParagraph(block)) {
-                        const pullClass = readingMode ? 'reading-pullquote' : 'post-pullquote';
-                        html.push(`<aside class="${pullClass}" aria-label="Pull quote">${renderInline(stripOuterQuotes(block))}</aside>`);
-                        pullQuotePlaced = true;
-                        continue;
-                    }
-
-                    const paragraphClass = readingMode ? 'reading-paragraph' : 'post-paragraph';
-                    html.push(`<p class="${paragraphClass}">${renderInline(block)}</p>`);
+                if (!window.TextFormatting) {
+                    return formatMentions(normalizeNewlines(raw)).replace(/\n/g, '<br>');
                 }
 
-                return html.join('');
+                return window.TextFormatting.toHtml(raw, {
+                    classNames: readingMode
+                        ? {
+                              paragraph: 'reading-paragraph',
+                              heading: 'reading-heading',
+                              blockquote: 'reading-blockquote',
+                              list: 'reading-list',
+                              listItem: 'reading-list-item',
+                              codeBlock: 'reading-code'
+                          }
+                        : {
+                              paragraph: 'post-paragraph',
+                              heading: 'post-heading',
+                              blockquote: 'post-blockquote',
+                              list: 'post-list',
+                              listItem: 'post-list-item',
+                              codeBlock: 'post-code'
+                          }
+                });
             }
 
             // Mention suggestions state
@@ -2824,17 +2969,32 @@
                 const readTime = estimateReadTime(wordCount);
                 const formattedDate = formatDate(post.created_at);
                 const authorDisplay = post.author_name || 'Unknown';
-                const isAdminPost = post.is_admin_post === 1 || post.author_id === null;
-                const authorIsAdmin = post.author_is_admin === 1;
+                const authorState = window.PostTrust
+                    ? window.PostTrust.getPostAuthorState(post)
+                    : {
+                        isAdminPost: post.is_admin_post === 1 || post.author_id === null,
+                        authorIsAdmin: post.author_is_admin === 1 || post.author_is_admin === true,
+                        authorEmailVerified: post.author_email_verified === 1 || post.author_email_verified === true,
+                        authorVerifiedByAdmin: post.author_is_verified_by_admin === 1 || post.author_is_verified_by_admin === true,
+                    };
+                const isAdminPost = authorState.isAdminPost;
+                const authorIsAdmin = authorState.authorIsAdmin;
                 const authorInitial = authorDisplay.charAt(0).toUpperCase();
                 const authorAvatarToken = avatarKey(post.author_avatar || '');
                 const canViewProfiles = viewer && viewer.isAdmin;
                 const shouldLinkAuthor = canViewProfiles && !isAdminPost && post.author_id;
                 const authorLabel = escapeHtml(authorDisplay);
-                const adminBadge = authorIsAdmin ? '<span class="admin-badge">Admin</span>' : '';
-                const authorChip = `<span class="avatar-chip${authorIsAdmin ? ' avatar-chip-admin-purple' : ''}" ${authorIsAdmin ? '' : `data-avatar="${authorAvatarToken}"`}>${escapeHtml(authorInitial)}</span><span class="author-chip-label${authorIsAdmin ? ' is-admin' : ''}">${authorLabel}${adminBadge}</span>`;
+                const trustBadge = window.PostTrust
+                    ? window.PostTrust.resolveTrustBadge(post)
+                    : (() => {
+                        if (isAdminPost || authorIsAdmin) return { text: 'Admin', className: 'admin' };
+                        if (!authorState.authorEmailVerified) return { text: 'Unverified', className: 'unverified' };
+                        if (authorState.authorVerifiedByAdmin) return { text: 'Verified', className: 'verified' };
+                        return { text: 'Community', className: 'community' };
+                    })();
+                const authorChip = `<span class="author-chip ${isAdminPost ? 'admin-post' : (authorIsAdmin ? 'admin-user' : 'user')} trust-${trustBadge.className}"><span class="avatar-chip ${authorIsAdmin ? 'admin-user-avatar' : ''}" ${authorIsAdmin ? '' : `data-avatar="${authorAvatarToken}"`}>${escapeHtml(authorInitial)}</span><span class="author-chip-label">${authorLabel}</span><span class="author-role-badge ${trustBadge.className}">${trustBadge.text}</span></span>`;
                 const authorMarkup = shouldLinkAuthor
-                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" class="author-link${authorIsAdmin ? ' is-admin' : ''}">${authorChip}</a>`
+                    ? `<a href="/view-profile.html?id=${encodeURIComponent(post.author_id)}" class="author-link">${authorChip}</a>`
                     : authorChip;
 
                 // Update title
@@ -2871,7 +3031,7 @@
                     readingOverlayEl.setAttribute('data-pillar', categoryAccent);
                 }
                 document.getElementById('authorName').innerHTML = isAdminPost
-                    ? `<span class="author-admin-chip"><span class="avatar-chip avatar-chip-admin">👑</span><span>Admin</span></span>`
+                    ? `<span class="author-chip admin-post"><span class="avatar-chip admin-post-avatar">👑</span>Admin<span class="author-role-badge admin">Admin</span></span>`
                     : authorMarkup;
 
                 const credAuthorType = document.getElementById('credAuthorType');
@@ -2897,6 +3057,7 @@
                 // Update body with mention highlighting
                 const postBody = document.getElementById('postBody');
                 postBody.innerHTML = renderStoryBody(post.body || '');
+                applyMediaPerformanceHints(postBody);
 
                 // Update stats
                 document.getElementById('statWordCount').textContent = wordCount;
@@ -3029,7 +3190,7 @@
                 let canFlag = false;
 
                 if (user.isAdmin) {
-                    canEdit = authorId === null; // Admin can only edit own posts
+                    canEdit = authorId === user.userId; // Admin can edit own posts
                     canDelete = true; // Admin can delete any
                     canFlag = true; // Admin can flag any
                 } else if (user.userId) {
@@ -3300,6 +3461,7 @@
                     </div>
                 `;
                 }).join('');
+                applyMediaPerformanceHints(commentsList);
             }
 
             async function submitComment(e) {
@@ -3448,6 +3610,7 @@
 
             // Initialize page
             async function initializePage() {
+                applyMediaPerformanceHints(document);
                 const postId = getPostId();
 
                 if (!postId) {
@@ -3576,18 +3739,23 @@
                 loadReadingSettings();
                 applyReadingSettings();
 
+                lastFocusedBeforeReading = document.activeElement;
                 READING_OVERLAY.classList.add('active');
                 document.body.classList.add('reading-mode-open');
 
                 // Reset scroll and progress
                 READING_CONTAINER.scrollTop = 0;
                 updateReadingProgress();
+                document.getElementById('readingClose')?.focus();
             }
 
             // Close reading mode
             function closeReadingMode() {
                 READING_OVERLAY.classList.remove('active');
                 document.body.classList.remove('reading-mode-open');
+                if (lastFocusedBeforeReading && typeof lastFocusedBeforeReading.focus === 'function') {
+                    lastFocusedBeforeReading.focus();
+                }
             }
 
             // Update progress bar
