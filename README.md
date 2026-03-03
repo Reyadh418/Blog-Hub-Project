@@ -38,7 +38,8 @@ Lightweight Express + PostgreSQL blog playground with session auth, admin modera
 ## Quick start
 ```
 npm install
-DATABASE_URL="postgresql://..." npm start
+cp .env.example .env
+npm start
 ```
 The server listens on http://localhost:3000. Provide a valid `DATABASE_URL` and set a strong `SESSION_SECRET` in production.
 
@@ -55,8 +56,9 @@ Environment variables:
 - `NODE_ENV` (`production` enables secure cookies + HSTS)
 - `TRUST_PROXY=1` when behind a reverse proxy to honor secure cookies
 - `BCRYPT_ROUNDS` (8-14; default 12)
+- `REQUIRE_EMAIL_VERIFICATION` (`0` default, set `1` to require verified email for selected write actions)
 - `DATABASE_URL` (PostgreSQL connection string)
-- `ADMIN_USERNAME` (default `@admin` for first-time bootstrap)
+- `ADMIN_USERNAME` (default `admin` for first-time bootstrap)
 - `ADMIN_PASSWORD` (strongly recommended; used only when no admin exists yet)
 - `ADMIN_EMAIL` (default `admin@example.local`)
 - `ADMIN_RESET_ON_BOOT=1` to reset an existing super admin from `ADMIN_*` once

@@ -132,6 +132,8 @@ const BCRYPT_ROUNDS = (() => {
   return val;
 })();
 
+const REQUIRE_EMAIL_VERIFICATION = (process.env.REQUIRE_EMAIL_VERIFICATION || "0").toString() === "1";
+
 async function hashPassword(password) {
   return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
@@ -347,12 +349,29 @@ function requireUserOnly(req, res, next) {
   return next();
 }
 
-// Require email verification for write operations
-function requireVerified(req, res, next) {
+// Require verified email for selected write operations (admins exempt)
+async function requireVerified(req, res, next) {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ error: "Authentication required" });
   }
-  return next();
+
+  if (!REQUIRE_EMAIL_VERIFICATION) return next();
+  if (req.session.isAdmin) return next();
+  if (req.session.emailVerified === true) return next();
+
+  try {
+    const user = await dbGet("SELECT email_verified FROM users WHERE id = ?", [req.session.userId]);
+    const emailVerified = user && Number(user.email_verified) === 1;
+    req.session.emailVerified = emailVerified;
+
+    if (!emailVerified) {
+      return res.status(403).json({ error: "Email verification required", code: "EMAIL_NOT_VERIFIED" });
+    }
+
+    return next();
+  } catch (err) {
+    return next(err);
+  }
 }
 
 // Generate a random 6-digit verification code
