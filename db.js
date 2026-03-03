@@ -86,13 +86,17 @@ const initPromise = (async () => {
         id SERIAL PRIMARY KEY,
         post_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
+        parent_comment_id INTEGER,
         body TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE
       )
     `);
+
+    await pool.query(`ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reactions (
@@ -158,6 +162,8 @@ const initPromise = (async () => {
       'CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)',
       'CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id)',
       'CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_comments_parent_comment_id ON comments(parent_comment_id)',
+      'CREATE INDEX IF NOT EXISTS idx_comments_post_parent_created_at ON comments(post_id, parent_comment_id, created_at ASC)',
       'CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)',
       'CREATE INDEX IF NOT EXISTS idx_reactions_user_id ON reactions(user_id)',
       'CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)',

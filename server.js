@@ -1801,6 +1801,8 @@ app.post("/api/posts", async (req, res, next) => {
 });
 
 // --------- COMMENTS ENDPOINTS ---------
+const MAX_COMMENT_REPLY_DEPTH = 8;
+
 // Get all comments for a post
 app.get('/api/posts/:postId/comments', async (req, res, next) => {
   try {
@@ -1808,11 +1810,11 @@ app.get('/api/posts/:postId/comments', async (req, res, next) => {
     if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
 
     const comments = await dbAll(`
-      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username, COALESCE(u.avatar, '') as avatar, COALESCE(u.is_admin, 0) as is_admin
+      SELECT c.id, c.post_id, c.user_id, c.parent_comment_id, c.body, c.created_at, c.updated_at, u.username, COALESCE(u.avatar, '') as avatar, COALESCE(u.is_admin, 0) as is_admin
       FROM comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.post_id = ?
-      ORDER BY c.created_at DESC
+      ORDER BY c.created_at ASC, c.id ASC
     `, [postId]);
 
     res.json(comments);
@@ -1830,17 +1832,64 @@ app.post('/api/posts/:postId/comments', requireAuth, requireVerified, async (req
     const body = (req.body.body || "").toString().trim();
     if (!body) return res.status(400).json({ error: "Comment body is required" });
 
+    const rawParentCommentId = req.body.parentCommentId;
+    const parentCommentId = rawParentCommentId == null || rawParentCommentId === ''
+      ? null
+      : Number(rawParentCommentId);
+    if (parentCommentId != null && (!Number.isInteger(parentCommentId) || parentCommentId <= 0)) {
+      return res.status(400).json({ error: "Invalid parent comment id" });
+    }
+
     // Check post exists
     const post = await dbGet("SELECT id, author_id FROM posts WHERE id = ?", [postId]);
     if (!post) return res.status(404).json({ error: "Post not found" });
 
+    if (parentCommentId != null) {
+      const parentComment = await dbGet(
+        "SELECT id, post_id, user_id FROM comments WHERE id = ?",
+        [parentCommentId]
+      );
+      if (!parentComment) return res.status(404).json({ error: "Parent comment not found" });
+      if (Number(parentComment.post_id) !== postId) {
+        return res.status(400).json({ error: "Parent comment does not belong to this post" });
+      }
+
+      const depthRow = await dbGet(`
+        WITH RECURSIVE ancestry AS (
+          SELECT id, parent_comment_id, 1 AS depth
+          FROM comments
+          WHERE id = ?
+          UNION ALL
+          SELECT c.id, c.parent_comment_id, ancestry.depth + 1
+          FROM comments c
+          JOIN ancestry ON ancestry.parent_comment_id = c.id
+        )
+        SELECT MAX(depth) AS max_depth FROM ancestry
+      `, [parentCommentId]);
+
+      const parentDepth = Number(depthRow?.max_depth || 1);
+      if (parentDepth >= MAX_COMMENT_REPLY_DEPTH) {
+        return res.status(400).json({ error: `Maximum reply depth reached (${MAX_COMMENT_REPLY_DEPTH})` });
+      }
+
+      if (parentComment.user_id && parentComment.user_id !== req.session.userId) {
+        const actorName = req.session.username || 'Someone';
+        await createNotification({
+          userId: parentComment.user_id,
+          postId,
+          type: 'comment',
+          message: `${actorName} replied to your comment.`
+        });
+      }
+    }
+
     const result = await dbRun(
-      "INSERT INTO comments (post_id, user_id, body) VALUES (?, ?, ?) RETURNING id",
-      [postId, req.session.userId, body]
+      "INSERT INTO comments (post_id, user_id, parent_comment_id, body) VALUES (?, ?, ?, ?) RETURNING id",
+      [postId, req.session.userId, parentCommentId, body]
     );
 
     const comment = await dbGet(`
-      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      SELECT c.id, c.post_id, c.user_id, c.parent_comment_id, c.body, c.created_at, c.updated_at, u.username
       , COALESCE(u.avatar, '') as avatar, COALESCE(u.is_admin, 0) as is_admin
       FROM comments c
       JOIN users u ON c.user_id = u.id
@@ -1891,7 +1940,7 @@ app.put('/api/comments/:commentId', async (req, res, next) => {
     );
 
     const updated = await dbGet(`
-      SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, c.updated_at, u.username
+      SELECT c.id, c.post_id, c.user_id, c.parent_comment_id, c.body, c.created_at, c.updated_at, u.username
       FROM comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.id = ?

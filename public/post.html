@@ -210,14 +210,14 @@
                 align-items: center;
                 padding: 2px 8px;
                 border-radius: 999px;
-                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
                 color: #fff;
                 font-size: 0.65rem;
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 margin-left: 6px;
-                box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+                box-shadow: 0 2px 6px rgba(30, 58, 95, 0.32);
             }
 
             .loading {
@@ -1036,6 +1036,81 @@
                 gap: 16px;
             }
 
+            .inline-reply-form {
+                margin-top: 12px;
+                padding-top: 10px;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .inline-reply-wrap {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+                border: 1px solid #d9dee7;
+                border-radius: 12px;
+                padding: 8px;
+            }
+
+            .inline-reply-input {
+                flex: 1;
+                border: 2px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 42%, white) !important;
+                border-radius: 10px !important;
+                outline: none;
+                background: #ffffff;
+                font-size: 0.94rem;
+                color: #2c3e50;
+                min-height: 32px;
+                padding: 8px 12px;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            }
+
+            .inline-reply-input:focus {
+                border-color: color-mix(in srgb, var(--pillar-accent, #d4a574) 75%, #1e3a5f) !important;
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--pillar-accent, #d4a574) 24%, transparent);
+            }
+
+            .inline-reply-send {
+                width: 40px;
+                height: 40px;
+                min-width: 40px;
+                min-height: 40px;
+                aspect-ratio: 1 / 1;
+                border-radius: 50%;
+                border: none;
+                cursor: pointer;
+                color: #fff;
+                font-size: 1.02rem;
+                font-weight: 800;
+                line-height: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, var(--pillar-accent, #d4a574) 0%, color-mix(in srgb, var(--pillar-accent, #d4a574) 62%, #1e3a5f) 100%);
+                box-shadow: 0 5px 14px color-mix(in srgb, var(--pillar-accent, #d4a574) 46%, transparent);
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+
+            .inline-reply-send:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 7px 16px color-mix(in srgb, var(--pillar-accent, #d4a574) 56%, transparent);
+            }
+
+            .inline-reply-send:active {
+                transform: translateY(0) scale(0.96);
+            }
+
+            .inline-reply-send:focus-visible {
+                outline: 2px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 80%, #1e3a5f);
+                outline-offset: 2px;
+            }
+
+            .inline-reply-send:disabled {
+                opacity: 0.65;
+                cursor: not-allowed;
+                transform: none;
+            }
+
             .no-comments {
                 text-align: center;
                 padding: 50px 30px;
@@ -1062,6 +1137,21 @@
                 border-left: 4px solid var(--pillar-accent, #d4a574);
                 animation: fadeIn 0.3s ease-out;
             }
+
+            .comment-children {
+                margin-top: 12px;
+                margin-left: 26px;
+                padding-left: 14px;
+                border-left: 2px solid color-mix(in srgb, var(--pillar-accent, #d4a574) 35%, white);
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .comment-level-1 { border-left-color: color-mix(in srgb, var(--pillar-accent, #d4a574) 42%, white); }
+            .comment-level-2 { border-left-color: color-mix(in srgb, var(--pillar-accent, #d4a574) 50%, white); }
+            .comment-level-3 { border-left-color: color-mix(in srgb, var(--pillar-accent, #d4a574) 58%, white); }
+            .comment-level-deep { border-left-color: color-mix(in srgb, var(--pillar-accent, #d4a574) 65%, #1e3a5f); }
 
             .comment-meta {
                 display: flex;
@@ -1093,6 +1183,14 @@
                     135deg,
                     color-mix(in srgb, var(--pillar-accent, #d4a574) 88%, white) 0%,
                     color-mix(in srgb, var(--pillar-accent, #d4a574) 68%, #1e3a5f) 100%
+                );
+            }
+
+            .comment-action-btn.reply {
+                background: linear-gradient(
+                    135deg,
+                    color-mix(in srgb, #4a90e2 80%, white) 0%,
+                    color-mix(in srgb, #4a90e2 65%, #1e3a5f) 100%
                 );
             }
 
@@ -1353,7 +1451,7 @@
             }
 
             .author-chip-label.is-admin {
-                color: #7c3aed;
+                color: #1e3a5f;
             }
 
             .author-admin-chip {
@@ -1377,7 +1475,7 @@
             }
 
             .avatar-chip.avatar-chip-admin-purple {
-                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
             }
 
             .comment-identity {
@@ -1400,7 +1498,7 @@
 
             .comment-author-link.is-admin,
             .comment-author-text.is-admin {
-                color: #7c3aed;
+                color: #1e3a5f;
             }
 
             .comment-author-text {
@@ -1817,6 +1915,10 @@
                 transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
             }
 
+            .story-actions-menu .is-hidden {
+                display: none !important;
+            }
+
             .story-actions-menu .btn-home:hover,
             .story-actions-menu .btn-bookmark:hover {
                 transform: translateY(-1px);
@@ -1940,6 +2042,15 @@
                 .comments-policy-note {
                     margin-left: 0;
                     text-align: left;
+                }
+
+                .comment-children {
+                    margin-left: 14px;
+                    padding-left: 10px;
+                }
+
+                .inline-reply-wrap {
+                    gap: 6px;
                 }
 
                 button {
@@ -2616,6 +2727,10 @@
             let currentUser = null;
             let CURRENT_POST = null;
             let currentUserReaction = null;
+            const MAX_COMMENT_REPLY_DEPTH = 8;
+            let latestComments = [];
+            let commentsById = new Map();
+            let activeInlineReplyCommentId = null;
             let notifications = [];
             let notifPoll = null;
             let notifPanelOpen = false;
@@ -3551,11 +3666,122 @@
                     const response = await fetch(`/api/posts/${postId}/comments`);
                     if (response.ok) {
                         const comments = await response.json();
+                        latestComments = Array.isArray(comments) ? comments : [];
                         renderComments(comments);
                     }
                 } catch (err) {
                     console.error('Error loading comments:', err);
                 }
+            }
+
+            function buildCommentTree(comments) {
+                const sorted = [...comments].sort((a, b) => {
+                    const aTime = new Date(a.created_at).getTime();
+                    const bTime = new Date(b.created_at).getTime();
+                    if (aTime !== bTime) return aTime - bTime;
+                    return (a.id || 0) - (b.id || 0);
+                });
+
+                const map = new Map();
+                sorted.forEach((comment) => {
+                    map.set(comment.id, { ...comment, children: [], depth: 0 });
+                });
+
+                const roots = [];
+                sorted.forEach((comment) => {
+                    const node = map.get(comment.id);
+                    if (!node) return;
+                    const parentId = comment.parent_comment_id;
+                    if (parentId && map.has(parentId)) {
+                        map.get(parentId).children.push(node);
+                    } else {
+                        roots.push(node);
+                    }
+                });
+
+                const assignDepth = (node, depth) => {
+                    node.depth = depth;
+                    node.children.forEach((child) => assignDepth(child, depth + 1));
+                };
+                roots.forEach((root) => assignDepth(root, 0));
+
+                commentsById = map;
+                return roots;
+            }
+
+            function commentLevelClass(depth) {
+                if (depth <= 0) return '';
+                if (depth === 1) return ' comment-level-1';
+                if (depth === 2) return ' comment-level-2';
+                if (depth === 3) return ' comment-level-3';
+                return ' comment-level-deep';
+            }
+
+            function renderCommentNode(comment, isAdminViewer) {
+                const canEdit = currentUser && currentUser.userId === comment.user_id;
+                const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
+                const canReply = currentUser && (currentUser.userId || currentUser.isAdmin) && comment.depth < (MAX_COMMENT_REPLY_DEPTH - 1);
+                const isAdminComment = comment.is_admin === 1 || comment.is_admin === true;
+                const nameDisplay = comment.username || 'Unknown';
+                const safeName = escapeHtml(nameDisplay);
+                const nameMarkup = isAdminViewer
+                    ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" class="comment-author-link${isAdminComment ? ' is-admin' : ''}">${safeName}</a>`
+                    : `<span class="comment-author-text${isAdminComment ? ' is-admin' : ''}">${safeName}</span>`;
+                const adminBadgeMarkup = isAdminComment ? `<span class="admin-badge">Admin</span>` : '';
+                const avatarMarkup = isAdminComment
+                    ? `<span class="avatar-chip avatar-chip-admin-purple">${escapeHtml((comment.username || 'A').charAt(0).toUpperCase())}</span>`
+                    : `<span class="avatar-chip" data-avatar="${avatarKey(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
+
+                const actionsMarkup = (canEdit || canDelete || canReply)
+                    ? `
+                        <div class="comment-actions">
+                            ${ canReply ? `<button class="comment-action-btn reply" onclick="startReply(${comment.id})">↩ Reply</button>` : '' }
+                            ${ canEdit ? `<button class="comment-action-btn edit" onclick="openEdit(${comment.id})">✎ Edit</button>` : '' }
+                            ${ canDelete ? `<button class="comment-action-btn delete" onclick="deleteComment(${comment.id}, ${comment.post_id}, ${comment.children.length})">✕ Delete</button>` : '' }
+                        </div>
+                    `
+                    : '';
+
+                const childrenMarkup = comment.children.length
+                    ? `<div class="comment-children${commentLevelClass(comment.depth + 1)}">${comment.children.map((child) => renderCommentNode(child, isAdminViewer)).join('')}</div>`
+                    : '';
+
+                const inlineReplyMarkup = canReply
+                    ? `
+                        <div id="inline-reply-${comment.id}" class="inline-reply-form is-hidden">
+                            <div class="inline-reply-wrap">
+                                <input id="inline-reply-input-${comment.id}" class="inline-reply-input" type="text" maxlength="900" placeholder="Write a reply..." onkeydown="if(event.key==='Enter'){event.preventDefault();submitInlineReply(${comment.id}, ${comment.post_id || 'null'});}" />
+                                <button id="inline-reply-send-${comment.id}" class="inline-reply-send" type="button" title="Post reply" onclick="submitInlineReply(${comment.id}, ${comment.post_id || 'null'})">➜</button>
+                            </div>
+                        </div>
+                    `
+                    : '';
+
+                return `
+                    <div class="comment-card comment-item" data-comment-id="${comment.id}" data-comment-depth="${comment.depth}">
+                        <div class="comment-meta">
+                            <div class="comment-identity">
+                                ${avatarMarkup}
+                                <div>
+                                    <strong class="comment-author-name">${nameMarkup}</strong>${adminBadgeMarkup}
+                                    <span class="rel-time" data-timestamp="${comment.created_at}">${formatRelative(comment.created_at)}</span>
+                                    ${comment.updated_at !== comment.created_at ? `<span class="comment-edited">(edited)</span>` : ''}
+                                </div>
+                            </div>
+                            ${actionsMarkup}
+                        </div>
+                        <div id="comment-body-${comment.id}" class="comment-body">${formatMentions(comment.body).replace(/\n/g, '<br>')}</div>
+                        <div id="comment-edit-${comment.id}" class="comment-edit">
+                            <textarea id="edit-text-${comment.id}" aria-label="Edit comment">${escapeHtml(comment.body)}</textarea>
+                            <div class="comment-edit-actions">
+                                <button class="save-btn" onclick="saveEdit(${comment.id}, ${comment.post_id || 'null'})">Save</button>
+                                <button class="cancel-btn" onclick="cancelEdit(${comment.id})">Cancel</button>
+                            </div>
+                        </div>
+                        ${inlineReplyMarkup}
+                        ${childrenMarkup}
+                    </div>
+                `;
             }
 
             function renderComments(comments) {
@@ -3573,49 +3799,105 @@
                 }
 
                 hideElement(noComments);
-                commentsList.innerHTML = comments.map((comment, index) => {
-                    const canEdit = currentUser && currentUser.userId === comment.user_id;
-                    const canDelete = currentUser && (currentUser.userId === comment.user_id || currentUser.isAdmin);
-                    const isAdminComment = comment.is_admin === 1 || comment.is_admin === true;
-                    const nameDisplay = comment.username || 'Unknown';
-                    const safeName = escapeHtml(nameDisplay);
-                    const nameMarkup = isAdminViewer
-                        ? `<a href="/view-profile.html?id=${encodeURIComponent(comment.user_id)}" class="comment-author-link${isAdminComment ? ' is-admin' : ''}">${safeName}</a>`
-                        : `<span class="comment-author-text${isAdminComment ? ' is-admin' : ''}">${safeName}</span>`;
-                    const adminBadgeMarkup = isAdminComment ? `<span class="admin-badge">Admin</span>` : '';
-                    const avatarMarkup = isAdminComment
-                        ? `<span class="avatar-chip avatar-chip-admin-purple">${escapeHtml((comment.username || 'A').charAt(0).toUpperCase())}</span>`
-                        : `<span class="avatar-chip" data-avatar="${avatarKey(comment.avatar || '')}">${escapeHtml((comment.username || 'U').charAt(0).toUpperCase())}</span>`;
-                    return `
-                    <div class="comment-card comment-item">
-                        <div class="comment-meta">
-                            <div class="comment-identity">
-                                ${avatarMarkup}
-                                <div>
-                                    <strong class="comment-author-name">${nameMarkup}</strong>${adminBadgeMarkup}
-                                    <span class="rel-time" data-timestamp="${comment.created_at}">${formatRelative(comment.created_at)}</span>
-                                    ${comment.updated_at !== comment.created_at ? `<span class="comment-edited">(edited)</span>` : ''}
-                                </div>
-                            </div>
-                            ${ (canEdit || canDelete) ? `
-                                <div class="comment-actions">
-                                    ${ canEdit ? `<button class="comment-action-btn edit" onclick="openEdit(${comment.id})">✎ Edit</button>` : '' }
-                                    ${ canDelete ? `<button class="comment-action-btn delete" onclick="deleteComment(${comment.id}, ${comment.post_id})">✕ Delete</button>` : '' }
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div id="comment-body-${comment.id}" class="comment-body">${formatMentions(comment.body).replace(/\n/g, '<br>')}</div>
-                        <div id="comment-edit-${comment.id}" class="comment-edit">
-                            <textarea id="edit-text-${comment.id}" aria-label="Edit comment">${escapeHtml(comment.body)}</textarea>
-                            <div class="comment-edit-actions">
-                                <button class="save-btn" onclick="saveEdit(${comment.id}, ${comment.post_id || 'null'})">Save</button>
-                                <button class="cancel-btn" onclick="cancelEdit(${comment.id})">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                }).join('');
+                const tree = buildCommentTree(comments);
+                commentsList.innerHTML = tree.map((comment) => renderCommentNode(comment, isAdminViewer)).join('');
+                activeInlineReplyCommentId = null;
                 applyMediaPerformanceHints(commentsList);
+            }
+
+            function closeAllInlineReplyForms() {
+                document.querySelectorAll('.inline-reply-form').forEach((form) => {
+                    form.classList.add('is-hidden');
+                });
+                document.querySelectorAll('.inline-reply-input').forEach((input) => {
+                    input.value = '';
+                });
+                activeInlineReplyCommentId = null;
+            }
+
+            function cancelInlineReply(commentId) {
+                const form = document.getElementById(`inline-reply-${commentId}`);
+                const input = document.getElementById(`inline-reply-input-${commentId}`);
+                if (form) form.classList.add('is-hidden');
+                if (input) input.value = '';
+                if (activeInlineReplyCommentId === Number(commentId)) {
+                    activeInlineReplyCommentId = null;
+                }
+            }
+
+            function startReply(commentId) {
+                if (!currentUser || (!currentUser.userId && !currentUser.isAdmin)) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const target = commentsById.get(Number(commentId));
+                if (!target) return;
+
+                if ((target.depth || 0) >= (MAX_COMMENT_REPLY_DEPTH - 1)) {
+                    showToast(`Maximum reply depth reached (${MAX_COMMENT_REPLY_DEPTH})`, 'warning');
+                    return;
+                }
+
+                if (activeInlineReplyCommentId === Number(commentId)) {
+                    cancelInlineReply(commentId);
+                    return;
+                }
+
+                closeAllInlineReplyForms();
+                const form = document.getElementById(`inline-reply-${commentId}`);
+                const input = document.getElementById(`inline-reply-input-${commentId}`);
+                if (!form || !input) return;
+
+                form.classList.remove('is-hidden');
+                activeInlineReplyCommentId = Number(commentId);
+                form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                input.focus();
+            }
+
+            async function submitInlineReply(commentId, postId) {
+                if (!currentUser || (!currentUser.userId && !currentUser.isAdmin)) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const input = document.getElementById(`inline-reply-input-${commentId}`);
+                const sendBtn = document.getElementById(`inline-reply-send-${commentId}`);
+                if (!input || !sendBtn) return;
+
+                const body = (input.value || '').trim();
+                if (!body) {
+                    showToast('Reply cannot be empty', 'error');
+                    input.focus();
+                    return;
+                }
+
+                sendBtn.disabled = true;
+                const originalIcon = sendBtn.textContent;
+                sendBtn.textContent = '…';
+
+                try {
+                    const effectivePostId = postId || getPostId();
+                    const response = await fetch(`/api/posts/${effectivePostId}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ body, parentCommentId: Number(commentId) })
+                    });
+
+                    if (response.ok) {
+                        showToast('✓ Reply posted successfully!', 'success', 1600);
+                        await loadComments(effectivePostId);
+                    } else {
+                        const err = await response.json().catch(() => ({}));
+                        showToast(err.error || 'Failed to post reply', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error posting reply:', err);
+                    showToast('Error posting reply', 'error');
+                } finally {
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = originalIcon;
+                }
             }
 
             async function submitComment(e) {
@@ -3651,7 +3933,7 @@
                         showToast('✓ Comment posted successfully!', 'success', 2000);
                         
                         setTimeout(() => {
-                            submitBtn.textContent = originalText;
+                            submitBtn.textContent = '✓ Post Comment';
                             submitBtn.disabled = false;
                         }, 500);
                         
@@ -3738,8 +4020,11 @@
                 }
             }
 
-            async function deleteComment(commentId, postId) {
-                const confirmed = await confirmAction('Delete this comment? This action cannot be undone.', 'Delete comment', 'Delete comment?');
+            async function deleteComment(commentId, postId, childCount = 0) {
+                const confirmationText = childCount > 0
+                    ? `Delete this comment and ${childCount} repl${childCount === 1 ? 'y' : 'ies'}? This action cannot be undone.`
+                    : 'Delete this comment? This action cannot be undone.';
+                const confirmed = await confirmAction(confirmationText, 'Delete comment', 'Delete comment?');
                 if (!confirmed) return;
 
                 const effectivePostId = postId || getPostId();
