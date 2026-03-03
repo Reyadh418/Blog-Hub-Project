@@ -19,5 +19,8 @@ Desktop.ini
 *.swp
 *.swo
 
+# Screenshots
+Screenshots/
+
 # Logs
 npm-debug.log*
