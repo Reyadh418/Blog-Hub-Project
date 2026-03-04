@@ -2728,6 +2728,7 @@
             let CURRENT_POST = null;
             let currentUserReaction = null;
             const MAX_COMMENT_REPLY_DEPTH = 8;
+            const MAX_COMMENT_WORDS = 500;
             let latestComments = [];
             let commentsById = new Map();
             let activeInlineReplyCommentId = null;
@@ -3750,7 +3751,7 @@
                     ? `
                         <div id="inline-reply-${comment.id}" class="inline-reply-form is-hidden">
                             <div class="inline-reply-wrap">
-                                <input id="inline-reply-input-${comment.id}" class="inline-reply-input" type="text" maxlength="900" placeholder="Write a reply..." onkeydown="if(event.key==='Enter'){event.preventDefault();submitInlineReply(${comment.id}, ${comment.post_id || 'null'});}" />
+                                <input id="inline-reply-input-${comment.id}" class="inline-reply-input" type="text" placeholder="Write a reply..." onkeydown="if(event.key==='Enter'){event.preventDefault();submitInlineReply(${comment.id}, ${comment.post_id || 'null'});}" />
                                 <button id="inline-reply-send-${comment.id}" class="inline-reply-send" type="button" title="Post reply" onclick="submitInlineReply(${comment.id}, ${comment.post_id || 'null'})">➜</button>
                             </div>
                         </div>
@@ -3871,6 +3872,12 @@
                     input.focus();
                     return;
                 }
+                const replyWordCount = countWords(body);
+                if (replyWordCount > MAX_COMMENT_WORDS) {
+                    showToast(`Reply must be ${MAX_COMMENT_WORDS} words or less`, 'error');
+                    input.focus();
+                    return;
+                }
 
                 sendBtn.disabled = true;
                 const originalIcon = sendBtn.textContent;
@@ -3910,6 +3917,11 @@
                 const body = document.getElementById('commentBody').value.trim();
                 if (!body) {
                     showToast('Comment cannot be empty', 'error');
+                    return;
+                }
+                const commentWordCount = countWords(body);
+                if (commentWordCount > MAX_COMMENT_WORDS) {
+                    showToast(`Comment must be ${MAX_COMMENT_WORDS} words or less`, 'error');
                     return;
                 }
 
@@ -3989,6 +4001,11 @@
                 const newBody = textarea.value.trim();
                 if (!newBody) {
                     showToast('Comment cannot be empty', 'error');
+                    return;
+                }
+                const editedWordCount = countWords(newBody);
+                if (editedWordCount > MAX_COMMENT_WORDS) {
+                    showToast(`Comment must be ${MAX_COMMENT_WORDS} words or less`, 'error');
                     return;
                 }
 

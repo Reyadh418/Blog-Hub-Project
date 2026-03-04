@@ -703,10 +703,10 @@
                         </div>
                         <textarea 
                             id="bio" 
-                            placeholder="Tell us about yourself... (maximum 111 words)"
+                            placeholder="Tell us about yourself... (maximum 111 characters)"
                         ></textarea>
                         <div class="format-help">Supports: headings, bold, italic, quotes, lists, links, and inline code.</div>
-                        <div class="word-counter" id="wordCounter">0 / 111 words</div>
+                        <div class="word-counter" id="wordCounter">0 / 111 characters</div>
                     </div>
 
                     <div class="password-section" id="passwordSection">
@@ -822,33 +822,29 @@
             const bioInput = document.getElementById('bio');
             const bioFormatToolbar = document.getElementById('bioFormatToolbar');
             const wordCounter = document.getElementById('wordCounter');
-            const MAX_WORDS = 111;
+            const MAX_BIO_CHARS = 111;
 
             if (window.TextFormatting && bioFormatToolbar) {
                 window.TextFormatting.bindToolbar(bioFormatToolbar, bioInput);
             }
 
-            // Word counter for bio
+            // Character counter for bio
             bioInput.addEventListener('input', function() {
-                const text = this.value.trim();
-                const wordCount = text ? text.split(/\s+/).length : 0;
-                const remaining = MAX_WORDS - wordCount;
+                const charCount = this.value.length;
 
-                wordCounter.textContent = `${wordCount} / ${MAX_WORDS} words`;
+                wordCounter.textContent = `${charCount} / ${MAX_BIO_CHARS} characters`;
                 wordCounter.className = 'word-counter';
 
-                if (wordCount > MAX_WORDS) {
+                if (charCount > MAX_BIO_CHARS) {
                     wordCounter.classList.add('error');
-                } else if (wordCount > MAX_WORDS - 10) {
+                } else if (charCount > MAX_BIO_CHARS - 10) {
                     wordCounter.classList.add('warning');
                 }
 
                 // Prevent further input if limit exceeded
-                if (wordCount > MAX_WORDS) {
-                    // Trim to max words
-                    const words = text.split(/\s+/).slice(0, MAX_WORDS);
-                    this.value = words.join(' ');
-                    wordCounter.textContent = `${MAX_WORDS} / ${MAX_WORDS} words`;
+                if (charCount > MAX_BIO_CHARS) {
+                    this.value = this.value.slice(0, MAX_BIO_CHARS);
+                    wordCounter.textContent = `${MAX_BIO_CHARS} / ${MAX_BIO_CHARS} characters`;
                     wordCounter.classList.remove('warning');
                     wordCounter.classList.add('error');
                 }
@@ -863,7 +859,7 @@
                 const accountName = document.getElementById('accountName').value.trim();
                 const email = document.getElementById('email').value.trim().toLowerCase();
                 const bio = document.getElementById('bio').value.trim();
-                const bioWordCount = bio ? bio.split(/\s+/).length : 0;
+                const bioCharCount = bio.length;
 
                 if (!accountName) {
                     showMessage('Please enter your account name', 'error');
@@ -883,8 +879,8 @@
                     return false;
                 }
 
-                if (bioWordCount > MAX_WORDS) {
-                    showMessage(`Bio must be ${MAX_WORDS} words or less`, 'error');
+                if (bioCharCount > MAX_BIO_CHARS) {
+                    showMessage(`Bio must be ${MAX_BIO_CHARS} characters or less`, 'error');
                     document.getElementById('bio').focus();
                     return false;
                 }
@@ -929,8 +925,8 @@
 
                     // Update word counter
                     const bioText = user.bio || '';
-                    const wordCount = bioText.trim() ? bioText.trim().split(/\s+/).length : 0;
-                    wordCounter.textContent = `${wordCount} / ${MAX_WORDS} words`;
+                    const charCount = bioText.length;
+                    wordCounter.textContent = `${charCount} / ${MAX_BIO_CHARS} characters`;
                 } catch (error) {
                     console.error('Load profile error:', error);
                     window.location.href = '/login.html';

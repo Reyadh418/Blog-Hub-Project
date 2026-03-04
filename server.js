@@ -133,6 +133,15 @@ const BCRYPT_ROUNDS = (() => {
 })();
 
 const REQUIRE_EMAIL_VERIFICATION = (process.env.REQUIRE_EMAIL_VERIFICATION || "0").toString() === "1";
+const MAX_POST_WORDS = 5000;
+const MAX_BIO_CHARS = 111;
+const MAX_COMMENT_WORDS = 500;
+
+function countWords(text) {
+  const normalized = (text || "").toString().trim();
+  if (!normalized) return 0;
+  return normalized.split(/\s+/).filter(Boolean).length;
+}
 
 async function hashPassword(password) {
   return bcrypt.hash(password, BCRYPT_ROUNDS);
@@ -1420,6 +1429,10 @@ app.put("/api/auth/profile", requireAuth, async (req, res, next) => {
     const bio = (req.body.bio || "").toString().trim();
     const avatar = safeAvatar((req.body.avatar || "").toString());
 
+    if (bio.length > MAX_BIO_CHARS) {
+      return res.status(400).json({ error: `Bio must be ${MAX_BIO_CHARS} characters or less` });
+    }
+
     // Validate email if provided
     if (email && !email.includes("@")) {
       return res.status(400).json({ error: "Valid email required" });
@@ -1659,6 +1672,10 @@ app.put("/api/posts/:id", async (req, res, next) => {
     const normalizedTags = normalizePostTags(tags, category);
 
     if (!title || !body) return res.status(400).json({ error: "Title and body are required" });
+    const bodyWordCount = countWords(body);
+    if (bodyWordCount > MAX_POST_WORDS) {
+      return res.status(400).json({ error: `Post content must be ${MAX_POST_WORDS} words or less` });
+    }
 
     const result = await dbRun("UPDATE posts SET title = ?, body = ?, tags = ? WHERE id = ?", [title, body, JSON.stringify(normalizedTags), id]);
     if (!result.changes) return res.status(404).json({ error: "Post not found" });
@@ -1788,6 +1805,10 @@ app.post("/api/posts", async (req, res, next) => {
     const normalizedTags = normalizePostTags(tags, category);
 
     if (!title || !body) return res.status(400).json({ error: "Title and body are required" });
+    const bodyWordCount = countWords(body);
+    if (bodyWordCount > MAX_POST_WORDS) {
+      return res.status(400).json({ error: `Post content must be ${MAX_POST_WORDS} words or less` });
+    }
 
     const result = await dbRun("INSERT INTO posts (author_id, title, body, tags) VALUES (?, ?, ?, ?) RETURNING id", 
       [authorId, title, body, JSON.stringify(normalizedTags)]);
@@ -1850,6 +1871,10 @@ app.post('/api/posts/:postId/comments', requireAuth, requireVerified, async (req
 
     const body = (req.body.body || "").toString().trim();
     if (!body) return res.status(400).json({ error: "Comment body is required" });
+    const commentWordCount = countWords(body);
+    if (commentWordCount > MAX_COMMENT_WORDS) {
+      return res.status(400).json({ error: `Comments and replies must be ${MAX_COMMENT_WORDS} words or less` });
+    }
 
     const rawParentCommentId = req.body.parentCommentId;
     const parentCommentId = rawParentCommentId == null || rawParentCommentId === ''
@@ -1944,6 +1969,10 @@ app.put('/api/comments/:commentId', async (req, res, next) => {
 
     const body = (req.body.body || "").toString().trim();
     if (!body) return res.status(400).json({ error: "Comment body is required" });
+    const commentWordCount = countWords(body);
+    if (commentWordCount > MAX_COMMENT_WORDS) {
+      return res.status(400).json({ error: `Comments and replies must be ${MAX_COMMENT_WORDS} words or less` });
+    }
 
     // Check comment exists and user owns it
     const comment = await dbGet("SELECT id, user_id FROM comments WHERE id = ?", [commentId]);

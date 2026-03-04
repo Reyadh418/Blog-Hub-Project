@@ -530,7 +530,7 @@
             </div>
 
             <div class="form-group">
-                <label for="body">Post Content <span class="field-note">(Max 10,000 characters)</span></label>
+                <label for="body">Post Content <span class="field-note">(Max 5,000 words)</span></label>
                 <div class="format-toolbar" id="postFormatToolbar" aria-label="Formatting controls">
                     <button type="button" class="format-btn" data-format="bold"><strong>B</strong></button>
                     <button type="button" class="format-btn" data-format="italic"><em>I</em></button>
@@ -544,14 +544,13 @@
                     id="body" 
                     name="body" 
                     placeholder="Write your story here..."
-                    maxlength="10000"
                     required
-                    aria-label="Post content (max 10,000 characters)"
+                    aria-label="Post content (max 5000 words)"
                     aria-required="true"
                 ></textarea>
                 <div class="format-help">Supports: headings, bold, italic, quotes, lists, links, and inline code.</div>
                 <div class="character-count">
-                    <span id="bodyCount">0</span> / 10000 characters
+                    <span id="bodyCount">0</span> / 5000 words
                 </div>
             </div>
 
@@ -590,6 +589,12 @@
             const postFormatToolbar = document.getElementById('postFormatToolbar');
             const SUBMIT_INTENT_KEY = 'bloghub.submitIntent';
             const SUBMIT_DRAFT_KEY = 'bloghub.submitDraft';
+            const MAX_POST_WORDS = 5000;
+
+            function countWords(text) {
+                const normalized = (text || '').trim();
+                return normalized ? normalized.split(/\s+/).filter(Boolean).length : 0;
+            }
 
             if (window.TextFormatting && postFormatToolbar) {
                 window.TextFormatting.bindToolbar(postFormatToolbar, bodyInput);
@@ -618,7 +623,7 @@
                     if (!bodyInput.value && draft.body) bodyInput.value = String(draft.body);
                     if (categoryInput && draft.category) categoryInput.value = String(draft.category);
                     if (tagsInput && !tagsInput.value && draft.tags) tagsInput.value = String(draft.tags);
-                    bodyCountSpan.textContent = String((bodyInput.value || '').length);
+                    bodyCountSpan.textContent = String(countWords(bodyInput.value || ''));
                 } catch {}
             }
 
@@ -670,7 +675,7 @@
 
             // Update character count
             bodyInput.addEventListener('input', function() {
-                bodyCountSpan.textContent = this.value.length;
+                bodyCountSpan.textContent = countWords(this.value);
                 persistDraftState();
             });
             titleInput.addEventListener('input', persistDraftState);
@@ -746,6 +751,13 @@
 
                 if (body.length < 10) {
                     showMessage('Content must be at least 10 characters', 'error');
+                    bodyInput.focus();
+                    return false;
+                }
+
+                const bodyWordCount = countWords(body);
+                if (bodyWordCount > MAX_POST_WORDS) {
+                    showMessage(`Content must be ${MAX_POST_WORDS} words or less`, 'error');
                     bodyInput.focus();
                     return false;
                 }
@@ -849,7 +861,7 @@
                             } else if (post.tags) {
                                 document.getElementById('tags').value = post.tags.toString();
                             }
-                            bodyCountSpan.textContent = post.body.length;
+                            bodyCountSpan.textContent = countWords(post.body || '');
                             document.getElementById('btnText').textContent = 'Save Changes';
                             document.querySelector('.form-header h1').textContent = 'Edit Post';
                             document.querySelector('.form-subtitle').textContent = 'Make your changes and save';
