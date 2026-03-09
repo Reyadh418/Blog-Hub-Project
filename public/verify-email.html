@@ -446,7 +446,7 @@
             <div class="verify-card" id="verifyCard">
                 <div class="verify-icon">📧</div>
                 <h1>Verify Your Email</h1>
-                <p class="verify-subtitle">We've sent a 6-digit code to</p>
+                <p class="verify-subtitle">Send a 6-digit code to</p>
                 <p class="verify-email-display" id="emailDisplay">loading...</p>
 
                 <div id="messageBox" class="message"></div>
@@ -463,8 +463,10 @@
                 <button class="verify-btn" id="verifyBtn" disabled>Verify Email</button>
 
                 <div class="resend-section">
-                    <p class="resend-text">Didn't receive the code?</p>
-                    <button class="resend-btn" id="resendBtn">Resend Code</button>
+                    <p class="resend-text">Send your verification code first</p>
+                    <button class="resend-btn" id="sendCodeBtn">Send Code</button>
+                    <p class="resend-text is-hidden" id="resendPrompt">Didn't receive the code?</p>
+                    <button class="resend-btn is-hidden" id="resendBtn">Resend Code</button>
                     <p class="resend-text is-hidden" id="resendCooldown">
                         Resend available in <span class="countdown" id="countdown"></span>
                     </p>
@@ -485,7 +487,9 @@
         <script>
             const digits = document.querySelectorAll('.code-digit');
             const verifyBtn = document.getElementById('verifyBtn');
+            const sendCodeBtn = document.getElementById('sendCodeBtn');
             const resendBtn = document.getElementById('resendBtn');
+            const resendPrompt = document.getElementById('resendPrompt');
             const messageBox = document.getElementById('messageBox');
             const emailDisplay = document.getElementById('emailDisplay');
             const verifyCard = document.getElementById('verifyCard');
@@ -513,6 +517,14 @@
             function updateVerifyBtn() {
                 const code = getCode();
                 verifyBtn.disabled = code.length !== 6 || !/^\d{6}$/.test(code);
+            }
+
+            function resetCodeInputs() {
+                digits.forEach(d => {
+                    d.value = '';
+                    d.classList.remove('filled', 'success', 'error');
+                });
+                updateVerifyBtn();
             }
 
             // Focus management for digit inputs
@@ -573,6 +585,8 @@
                     }
 
                     emailDisplay.textContent = data.email || 'your email';
+                    resendPrompt.classList.add('is-hidden');
+                    resendBtn.classList.add('is-hidden');
                     digits[0].focus();
                 } catch (err) {
                     showMessage('Failed to load user info. Please refresh the page.', 'error');
@@ -621,6 +635,8 @@
 
             // Resend button
             function startResendCooldown(seconds) {
+                sendCodeBtn.classList.add('is-hidden');
+                resendPrompt.classList.add('is-hidden');
                 resendBtn.classList.add('is-hidden');
                 resendCooldown.classList.remove('is-hidden');
                 let remaining = seconds;
@@ -631,6 +647,7 @@
                     countdownEl.textContent = `${remaining}s`;
                     if (remaining <= 0) {
                         clearInterval(resendTimer);
+                        resendPrompt.classList.remove('is-hidden');
                         resendBtn.classList.remove('is-hidden');
                         resendBtn.disabled = false;
                         resendCooldown.classList.add('is-hidden');
@@ -638,8 +655,8 @@
                 }, 1000);
             }
 
-            resendBtn.addEventListener('click', async () => {
-                resendBtn.disabled = true;
+            async function requestVerificationCode(triggerButton) {
+                triggerButton.disabled = true;
                 clearMessage();
 
                 try {
@@ -651,23 +668,26 @@
                     const result = await resp.json();
 
                     if (resp.ok) {
-                        showMessage(result.message || 'New code sent! Check your email.', 'success');
-                        // Clear existing input
-                        digits.forEach(d => {
-                            d.value = '';
-                            d.classList.remove('filled', 'success', 'error');
-                        });
+                        showMessage((result.message || 'Verification code sent! Check your email.') + ' If you do not see it, check Spam/Promotions.', 'success');
+                        resetCodeInputs();
                         digits[0].focus();
-                        updateVerifyBtn();
-                        startResendCooldown(60);
+                        startResendCooldown(30);
                     } else {
-                        showMessage(result.error || 'Failed to resend code', 'error');
-                        resendBtn.disabled = false;
+                        showMessage(result.error || 'Failed to send code', 'error');
+                        triggerButton.disabled = false;
                     }
                 } catch (err) {
                     showMessage('Network error. Please try again.', 'error');
-                    resendBtn.disabled = false;
+                    triggerButton.disabled = false;
                 }
+            }
+
+            sendCodeBtn.addEventListener('click', async () => {
+                await requestVerificationCode(sendCodeBtn);
+            });
+
+            resendBtn.addEventListener('click', async () => {
+                await requestVerificationCode(resendBtn);
             });
 
             if (skipVerifyBtn) {
