@@ -4154,6 +4154,17 @@
                 } catch (e) {}
             }
 
+            function getReadingModeAuthorName() {
+                const postAuthor = (CURRENT_POST?.author_name || '').toString().trim();
+                if (postAuthor) return postAuthor;
+
+                const authorLabel = document.querySelector('#authorName .author-chip-label')?.textContent?.trim();
+                if (authorLabel) return authorLabel;
+
+                const isAdminPost = CURRENT_POST && (CURRENT_POST.is_admin_post === 1 || CURRENT_POST.is_admin_post === true || CURRENT_POST.author_id === null);
+                return isAdminPost ? 'Admin' : 'Unknown';
+            }
+
             // Apply settings to overlay
             function applyReadingSettings() {
                 if (!READING_OVERLAY) return;
@@ -4174,7 +4185,7 @@
                 const title = CURRENT_POST?.title || document.getElementById('postTitle')?.textContent || '';
                 const body = (CURRENT_POST?.body || document.getElementById('postBody')?.textContent || '').toString();
                 const date = document.getElementById('postDate')?.textContent || '';
-                const author = document.getElementById('authorName')?.textContent || '';
+                const author = getReadingModeAuthorName();
                 const wordCount = document.getElementById('wordCount')?.textContent || '';
                 const readTime = document.getElementById('readTime')?.textContent || '';
 
@@ -4186,7 +4197,7 @@
                 READING_TITLE.textContent = title;
                 READING_META.innerHTML = `
                     <span>📅 ${date}</span>
-                    <span>✍️ ${author}</span>
+                    <span>✍️ ${escapeHtml(author)}</span>
                     <span>📝 ${wordCount} words</span>
                     <span>⏱️ ${readTime} min read</span>
                 `;
