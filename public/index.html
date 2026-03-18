@@ -2400,6 +2400,14 @@
                 return Number.isFinite(n) ? n : 0;
             }
 
+            function getPostPopularityMetrics(post) {
+                return {
+                    likes: sortValueNumber(post.useful_count ?? post.useful ?? post.likes),
+                    dislikes: sortValueNumber(post.notuseful_count ?? post.notUseful ?? post.dislikes),
+                    comments: sortValueNumber(post.comment_count ?? post.commentCount ?? post.comments_count ?? post.comments),
+                };
+            }
+
             function applySort(posts) {
                 const items = Array.isArray(posts) ? [...posts] : [];
                 if (CURRENT_SORT === 'time_desc') {
@@ -2412,17 +2420,21 @@
                 }
                 if (CURRENT_SORT === 'useful_desc') {
                     return items.sort((a, b) => {
-                        const aVal = sortValueNumber(a.useful_count ?? a.useful);
-                        const bVal = sortValueNumber(b.useful_count ?? b.useful);
-                        if (bVal !== aVal) return bVal - aVal;
+                        const aMetrics = getPostPopularityMetrics(a);
+                        const bMetrics = getPostPopularityMetrics(b);
+                        if (bMetrics.likes !== aMetrics.likes) return bMetrics.likes - aMetrics.likes;
+                        if (aMetrics.dislikes !== bMetrics.dislikes) return aMetrics.dislikes - bMetrics.dislikes;
+                        if (bMetrics.comments !== aMetrics.comments) return bMetrics.comments - aMetrics.comments;
                         return sortValueNumber(b.id) - sortValueNumber(a.id);
                     });
                 }
                 if (CURRENT_SORT === 'notuseful_desc') {
                     return items.sort((a, b) => {
-                        const aVal = sortValueNumber(a.notuseful_count ?? a.notUseful);
-                        const bVal = sortValueNumber(b.notuseful_count ?? b.notUseful);
-                        if (bVal !== aVal) return bVal - aVal;
+                        const aMetrics = getPostPopularityMetrics(a);
+                        const bMetrics = getPostPopularityMetrics(b);
+                        if (bMetrics.dislikes !== aMetrics.dislikes) return bMetrics.dislikes - aMetrics.dislikes;
+                        if (aMetrics.likes !== bMetrics.likes) return aMetrics.likes - bMetrics.likes;
+                        if (aMetrics.comments !== bMetrics.comments) return aMetrics.comments - bMetrics.comments;
                         return sortValueNumber(b.id) - sortValueNumber(a.id);
                     });
                 }
