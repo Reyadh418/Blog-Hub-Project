@@ -605,7 +605,7 @@ app.get("/api/health", (req, res) => {
 // --------- ADMIN UTILITIES ---------
 app.get("/api/admin/users/count", requireAdmin, async (req, res, next) => {
   try {
-    const row = await dbGet("SELECT COUNT(*) as count FROM users WHERE is_admin = 0", []);
+    const row = await dbGet("SELECT COUNT(*) as count FROM users", []);
     res.json({ count: row ? row.count : 0 });
   } catch (err) {
     next(err);
@@ -616,7 +616,7 @@ app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
   try {
     const search = (req.query.search || "").toString().trim().toLowerCase();
     const params = [];
-    let where = "WHERE u.is_admin = 0";
+    let where = "WHERE 1=1";
     if (search) {
       where += " AND lower(u.username) LIKE ?";
       params.push(`%${search}%`);
@@ -624,11 +624,12 @@ app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
     const rows = await dbAll(
       `SELECT u.id, u.username, u.full_name, u.email, u.avatar, u.bio, u.created_at,
               u.email_verified, u.is_author_verified, u.author_verified_by_admin_id, u.author_verified_at,
+              u.is_admin, u.is_super_admin, u.is_promoted_admin,
               verifier.username as author_verified_by_admin_username
        FROM users u
        LEFT JOIN users verifier ON verifier.id = u.author_verified_by_admin_id
        ${where}
-       ORDER BY lower(u.username) ASC`,
+       ORDER BY u.is_admin DESC, lower(u.username) ASC`,
       params
     );
     res.json(rows);
@@ -874,11 +875,15 @@ app.get("/api/admin/profile", requireAdmin, async (req, res, next) => {
   try {
     const admin = await dbGet("SELECT id, username, is_super_admin, is_promoted_admin FROM users WHERE id = ?", [req.session.userId]);
     if (!admin) return res.status(404).json({ error: "Admin user not found" });
+    
+    const adminCount = await dbGet("SELECT COUNT(*) as count FROM users WHERE is_admin = 1", []);
+    
     res.json({
       id: admin.id,
       username: admin.username,
       isSuperAdmin: Number(admin.is_super_admin) === 1,
       isPromotedAdmin: Number(admin.is_promoted_admin) === 1,
+      adminCount: adminCount ? adminCount.count : 0,
     });
   } catch (err) {
     next(err);
