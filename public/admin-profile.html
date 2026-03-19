@@ -907,6 +907,11 @@
                     document.getElementById('totalPosts').textContent = posts.length;
                     document.getElementById('totalUsers').textContent = usersCountData.count;
                     
+                    // Display admin count from profile
+                    if (profile.adminCount !== undefined) {
+                        document.getElementById('adminRole').textContent = profile.adminCount;
+                    }
+                    
                     loadingContainer.classList.add('is-hidden');
                     profileContainer.classList.remove('is-hidden');
                 } catch (error) {

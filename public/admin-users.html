@@ -353,7 +353,16 @@ function renderUsers(users) {
     users.forEach(user => {
         const initial = (user.username || 'U').charAt(0).toUpperCase();
         const isAdmin = user.isAdmin || user.is_admin === 1;
-        const roleLabel = isAdmin ? 'Admin' : 'Member';
+        const isSuperAdmin = user.isSuperAdmin || user.is_super_admin === 1;
+        const isPromotedAdmin = user.isPromotedAdmin || user.is_promoted_admin === 1;
+        let roleLabel = 'Member';
+        if (isSuperAdmin) {
+            roleLabel = 'Super Admin';
+        } else if (isPromotedAdmin) {
+            roleLabel = 'Promoted Admin';
+        } else if (isAdmin) {
+            roleLabel = 'Admin';
+        }
         const joinedText = user.created_at ? `Joined ${formatDate(user.created_at)}` : 'Joined —';
         const card = document.createElement('div');
         card.className = 'user-card';
