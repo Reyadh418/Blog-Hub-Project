@@ -881,9 +881,10 @@
                         return;
                     }
 
+                    let profile = null;
                     const adminProfileResponse = await fetch('/api/admin/profile');
                     if (adminProfileResponse.ok) {
-                        const profile = await adminProfileResponse.json();
+                        profile = await adminProfileResponse.json();
                         cachedAdminUsername = profile.username;
                         document.getElementById('currentAdminUsername').textContent = profile.username;
                         
@@ -908,7 +909,7 @@
                     document.getElementById('totalUsers').textContent = usersCountData.count;
                     
                     // Display admin count from profile
-                    if (profile.adminCount !== undefined) {
+                    if (profile && profile.adminCount !== undefined) {
                         document.getElementById('adminRole').textContent = profile.adminCount;
                     }
                     
