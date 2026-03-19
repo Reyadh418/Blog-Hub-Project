@@ -3004,7 +3004,7 @@
             }
 
             function notificationsAllowed() {
-                return currentUser && currentUser.userId && !currentUser.isSuperAdmin;
+                return currentUser && currentUser.userId;
             }
 
             function stopNotificationPolling() {
@@ -3153,7 +3153,7 @@
 
             function setNotificationAccess(user) {
                 if (!NOTIF_BTN) return;
-                if (user && user.userId && !user.isSuperAdmin) {
+                if (user && user.userId) {
                     showElement(NOTIF_BTN);
                     startNotificationPolling();
                     fetchNotifications(true);
@@ -3372,12 +3372,17 @@
                     const response = await fetch('/api/auth/me');
                     if (response.ok) {
                         const data = await response.json();
-                        return { isAdmin: data.isAdmin === true, userId: data.id || data.userId || null, username: data.username };
+                        return {
+                            isAdmin: data.isAdmin === true,
+                            isSuperAdmin: data.isSuperAdmin === true,
+                            userId: data.id || data.userId || null,
+                            username: data.username
+                        };
                     }
                 } catch (err) {
                     console.error('fetchCurrentUser failed', err);
                 }
-                return { isAdmin: false, userId: null };
+                return { isAdmin: false, isSuperAdmin: false, userId: null };
             }
 
             // Toast system

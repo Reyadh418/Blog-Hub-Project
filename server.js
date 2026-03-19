@@ -531,7 +531,6 @@ async function createNotification({ userId, postId, type, message, allowAdmin = 
     if (!userId || !postId || !type || !message) return null;
     const user = await dbGet("SELECT id, is_admin, is_super_admin FROM users WHERE id = ?", [userId]);
     if (!user) return null;
-    if (Number(user.is_super_admin) === 1) return null; // Super Admins do not receive notifications
     const result = await dbRun(
       "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, ?, ?, ?) RETURNING id",
       [userId, postId, type, message]
@@ -2176,8 +2175,8 @@ app.delete('/api/posts/:postId/reactions', requireAuth, async (req, res, next) =
   }
 });
 
-// --------- NOTIFICATIONS (user only) ---------
-app.get('/api/notifications', requireUserOnly, async (req, res, next) => {
+// --------- NOTIFICATIONS ---------
+app.get('/api/notifications', requireAuth, async (req, res, next) => {
   try {
     const rows = await dbAll(`
       SELECT n.id, n.post_id, n.type, n.message, n.is_read, n.created_at, COALESCE(p.title, '') as post_title
@@ -2193,7 +2192,7 @@ app.get('/api/notifications', requireUserOnly, async (req, res, next) => {
   }
 });
 
-app.patch('/api/notifications/:id/read', requireUserOnly, async (req, res, next) => {
+app.patch('/api/notifications/:id/read', requireAuth, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid notification id" });
@@ -2205,7 +2204,7 @@ app.patch('/api/notifications/:id/read', requireUserOnly, async (req, res, next)
   }
 });
 
-app.delete('/api/notifications/:id', requireUserOnly, async (req, res, next) => {
+app.delete('/api/notifications/:id', requireAuth, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid notification id" });

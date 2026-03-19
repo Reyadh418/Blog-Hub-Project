@@ -3033,7 +3033,7 @@
             }
 
             function notificationsAllowed() {
-                return CURRENT_USER && CURRENT_USER.userId && !CURRENT_USER.isSuperAdmin;
+                return CURRENT_USER && CURRENT_USER.userId;
             }
 
             function stopNotificationPolling() {
@@ -3207,7 +3207,7 @@
             }
 
             function setNotificationAccess(user) {
-                if (user && user.userId && !user.isSuperAdmin) {
+                if (user && user.userId) {
                     hideElement(NOTIF_BTN);
                     showElement(ACCOUNT_NOTIF_BTN);
                     startNotificationPolling();
