@@ -541,6 +541,140 @@
                 border: 1px solid #e4e4e7;
             }
 
+            .verification-requests-section {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 32px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                margin-bottom: 32px;
+                border: 1px solid #e8e8e8;
+            }
+
+            .verification-requests-container {
+                display: grid;
+                gap: 12px;
+                max-height: 600px;
+                overflow-y: auto;
+                padding-right: 4px;
+            }
+
+            .verification-request-card {
+                border: 1px solid #ececec;
+                border-radius: 10px;
+                padding: 16px;
+                background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .verification-request-info {
+                flex: 1;
+                min-width: 250px;
+            }
+
+            .verification-request-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 8px;
+            }
+
+            .verification-request-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 1rem;
+                background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+                color: #fff;
+            }
+
+            .verification-request-user {
+                display: grid;
+                gap: 2px;
+            }
+
+            .verification-request-username {
+                font-weight: 700;
+                color: #1e3a5f;
+                font-size: 0.95rem;
+            }
+
+            .verification-request-email {
+                font-size: 0.8rem;
+                color: #6b7280;
+            }
+
+            .verification-request-submitted {
+                font-size: 0.75rem;
+                color: #9ca3af;
+                margin-bottom: 8px;
+            }
+
+            .verification-request-reason {
+                font-size: 0.85rem;
+                color: #555;
+                font-style: italic;
+                margin: 8px 0;
+                padding: 8px 12px;
+                background: #f3f4f6;
+                border-left: 3px solid #4caf50;
+                border-radius: 4px;
+            }
+
+            .verification-request-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .verification-request-btn {
+                border: none;
+                border-radius: 8px;
+                padding: 10px 16px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .verification-request-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .verification-approve-btn {
+                background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
+            }
+
+            .verification-approve-btn:hover {
+                box-shadow: 0 6px 16px rgba(76, 175, 80, 0.35);
+            }
+
+            .verification-reject-btn {
+                background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(244, 67, 54, 0.25);
+            }
+
+            .verification-reject-btn:hover {
+                box-shadow: 0 6px 16px rgba(244, 67, 54, 0.35);
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                color: #999;
+                font-size: 0.95rem;
+            }
+
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -651,6 +785,14 @@
                         <button id="verifyRefreshBtn" class="verify-refresh-btn" type="button">Refresh</button>
                     </div>
                     <div id="verifyResults" class="verify-results"></div>
+                </div>
+
+                <div class="verification-requests-section">
+                    <h2 class="section-title section-title-compact">📤 Pending Verification Requests</h2>
+                    <p class="form-hint">Review authors who requested verification. Click approve to grant the verified badge, or reject to send feedback.</p>
+                    <div id="verificationRequestsContainer" class="verification-requests-container">
+                        <div class="empty-state">No pending verification requests</div>
+                    </div>
                 </div>
 
                 <div class="stats-section">
@@ -860,6 +1002,113 @@
                 }
             }
 
+            async function loadVerificationRequests() {
+                try {
+                    const response = await fetch('/api/admin/verification-requests?status=pending');
+                    if (!response.ok) {
+                        throw new Error('Failed to load verification requests');
+                    }
+                    const data = await response.json().catch(() => ({ verificationRequests: [] }));
+                    renderVerificationRequests(data.verificationRequests || []);
+                } catch (err) {
+                    console.error('Failed to load verification requests', err);
+                    const container = document.getElementById('verificationRequestsContainer');
+                    if (container) {
+                        container.innerHTML = '<div class="empty-state">Unable to load verification requests</div>';
+                    }
+                }
+            }
+
+            function renderVerificationRequests(requests) {
+                const container = document.getElementById('verificationRequestsContainer');
+                if (!container) return;
+
+                if (!requests || requests.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No pending verification requests</div>';
+                    return;
+                }
+
+                container.innerHTML = requests.map(req => `
+                    <div class="verification-request-card" data-request-id="${req.id}">
+                        <div class="verification-request-info">
+                            <div class="verification-request-header">
+                                <div class="verification-request-avatar">${escapeHtml(req.username[0] || 'U').toUpperCase()}</div>
+                                <div class="verification-request-user">
+                                    <div class="verification-request-username">${escapeHtml(req.username)}</div>
+                                    <div class="verification-request-email">${escapeHtml(req.fullName || '')}</div>
+                                </div>
+                            </div>
+                            <div class="verification-request-submitted">Submitted ${new Date(req.createdAt).toLocaleDateString()}</div>
+                            ${req.reason ? `<div class="verification-request-reason">"${escapeHtml(req.reason)}"</div>` : ''}
+                        </div>
+                        <div class="verification-request-actions">
+                            <button class="verification-request-btn verification-approve-btn" data-action="approve" data-request-id="${req.id}">✓ Approve</button>
+                            <button class="verification-request-btn verification-reject-btn" data-action="reject" data-request-id="${req.id}">✕ Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to buttons
+                container.querySelectorAll('.verification-request-btn').forEach(btn => {
+                    btn.addEventListener('click', handleVerificationRequestAction);
+                });
+            }
+
+            async function handleVerificationRequestAction(event) {
+                const button = event.currentTarget;
+                const action = button.dataset.action;
+                const requestId = button.dataset.requestId;
+
+                if (!action || !requestId) return;
+
+                let decisionMessage = '';
+                if (action === 'reject') {
+                    decisionMessage = prompt('Rejection reason (optional, max 300 characters):', '');
+                    if (decisionMessage === null) return; // User cancelled
+                }
+
+                button.disabled = true;
+                const originalText = button.textContent;
+                button.textContent = action === 'approve' ? '⏳ Approving...' : '⏳ Rejecting...';
+
+                try {
+                    const extraHeaders = await csrfHeader();
+                    const endpoint = action === 'approve' 
+                        ? `/api/admin/verification-requests/${requestId}/approve`
+                        : `/api/admin/verification-requests/${requestId}/reject`;
+
+                    const response = await fetch(endpoint, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...extraHeaders,
+                        },
+                        ...(action === 'reject' && { body: JSON.stringify({ message: decisionMessage }) }),
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        showToast(data.error || `Could not ${action} request`, 'error');
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        return;
+                    }
+
+                    showToast(data.message || `Request ${action}ed successfully!`, 'success', 2000);
+                    
+                    // Reload verification requests
+                    setTimeout(() => {
+                        loadVerificationRequests();
+                    }, 500);
+                } catch (err) {
+                    console.error(`Verification request ${action} failed`, err);
+                    showToast(`Could not ${action} request`, 'error');
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+
             // Load admin dashboard
             async function loadAdminDashboard() {
                 try {
@@ -895,6 +1144,7 @@
                         }
 
                         await loadAuthorVerificationList();
+                        await loadVerificationRequests();
                     }
 
                     // Load stats

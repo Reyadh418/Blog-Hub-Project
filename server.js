@@ -766,6 +766,237 @@ app.patch("/api/admin/authors/:id/verification", requireAdmin, async (req, res, 
   }
 });
 
+// POST /api/users/verification-request - User submits a verification request
+app.post("/api/users/verification-request", requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.session.userId;
+    const reason = (req.body.reason || "").toString().trim().substring(0, 500);
+
+    // Fetch current user to check eligibility
+    const user = await dbGet(
+      "SELECT id, username, email_verified, is_author_verified FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (Number(user.is_author_verified) === 1) {
+      return res.status(400).json({ error: "You are already verified" });
+    }
+    if (Number(user.email_verified) !== 1) {
+      return res.status(400).json({ error: "Email must be verified before requesting verification" });
+    }
+
+    // Check if user already has a pending request
+    const existing = await dbGet(
+      "SELECT id FROM verification_requests WHERE user_id = ? AND status = 'pending'",
+      [userId]
+    );
+
+    if (existing) {
+      return res.status(400).json({ error: "You already have a pending verification request" });
+    }
+
+    // Create verification request
+    const result = await dbRun(
+      "INSERT INTO verification_requests (user_id, reason, status) VALUES (?, ?, 'pending') RETURNING id",
+      [userId, reason]
+    );
+
+    // Notify super-admins of new verification request
+    const superAdmins = await dbAll(
+      "SELECT id FROM users WHERE is_super_admin = 1"
+    );
+
+    for (const admin of superAdmins) {
+      await dbRun(
+        "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'verification_request', ?)",
+        [admin.id, `📤 @${user.username} submitted a verification request`]
+      );
+    }
+
+    res.status(201).json({
+      ok: true,
+      verificationRequest: {
+        id: result.lastID,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/admin/verification-requests - Get all verification requests for super-admin review
+app.get("/api/admin/verification-requests", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const status = req.query.status || "pending";
+    
+    const requests = await dbAll(
+      `SELECT vr.id, vr.user_id, vr.status, vr.reason, vr.created_at, vr.reviewed_at,
+              vr.reviewed_by_admin_id, vr.decision_message,
+              u.username, u.avatar, u.full_name,
+              reviewer.username AS reviewed_by_admin_username
+       FROM verification_requests vr
+       JOIN users u ON u.id = vr.user_id
+       LEFT JOIN users reviewer ON reviewer.id = vr.reviewed_by_admin_id
+       WHERE vr.status = ?
+       ORDER BY vr.created_at DESC`,
+      [status]
+    );
+
+    const formatted = requests.map(vr => ({
+      id: vr.id,
+      userId: vr.user_id,
+      username: vr.username,
+      avatar: vr.avatar || null,
+      fullName: vr.full_name || null,
+      status: vr.status,
+      reason: vr.reason,
+      createdAt: vr.created_at,
+      reviewedAt: vr.reviewed_at || null,
+      reviewedByAdminId: vr.reviewed_by_admin_id || null,
+      reviewedByAdminUsername: vr.reviewed_by_admin_username || null,
+      decisionMessage: vr.decision_message,
+    }));
+
+    res.json({ ok: true, verificationRequests: formatted });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/verification-requests/:id/approve - Approve a verification request
+app.patch("/api/admin/verification-requests/:id/approve", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const requestId = Number(req.params.id);
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: "Invalid verification request id" });
+    }
+
+    const verificationRequest = await dbGet(
+      "SELECT id, user_id, status FROM verification_requests WHERE id = ?",
+      [requestId]
+    );
+
+    if (!verificationRequest) {
+      return res.status(404).json({ error: "Verification request not found" });
+    }
+
+    if (verificationRequest.status !== "pending") {
+      return res.status(400).json({ error: "Can only approve pending requests" });
+    }
+
+    const userId = verificationRequest.user_id;
+    const user = await dbGet("SELECT username FROM users WHERE id = ?", [userId]);
+
+    // Mark user as verified
+    await dbRun(
+      `UPDATE users
+       SET is_author_verified = 1,
+           author_verified_by_admin_id = ?,
+           author_verified_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [req.session.userId, userId]
+    );
+
+    // Update verification request status
+    await dbRun(
+      `UPDATE verification_requests
+       SET status = 'approved',
+           reviewed_by_admin_id = ?,
+           reviewed_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [req.session.userId, requestId]
+    );
+
+    // Notify user of approval
+    await dbRun(
+      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'verification_complete', ?)",
+      [userId, "✅ Your author verification was approved!"]
+    );
+
+    // Log audit
+    await logAdminAudit({
+      actorAdminId: req.session.userId,
+      targetUserId: userId,
+      actionType: "verification_request_approve",
+      details: `Approved verification request for @${user.username}`,
+    });
+
+    res.json({
+      ok: true,
+      message: `@${user.username} is now verified`,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/verification-requests/:id/reject - Reject a verification request
+app.patch("/api/admin/verification-requests/:id/reject", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const requestId = Number(req.params.id);
+    const decisionMessage = (req.body.message || "").toString().trim().substring(0, 300);
+
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: "Invalid verification request id" });
+    }
+
+    const verificationRequest = await dbGet(
+      "SELECT id, user_id, status FROM verification_requests WHERE id = ?",
+      [requestId]
+    );
+
+    if (!verificationRequest) {
+      return res.status(404).json({ error: "Verification request not found" });
+    }
+
+    if (verificationRequest.status !== "pending") {
+      return res.status(400).json({ error: "Can only reject pending requests" });
+    }
+
+    const userId = verificationRequest.user_id;
+    const user = await dbGet("SELECT username FROM users WHERE id = ?", [userId]);
+
+    // Update verification request status
+    await dbRun(
+      `UPDATE verification_requests
+       SET status = 'rejected',
+           reviewed_by_admin_id = ?,
+           reviewed_at = CURRENT_TIMESTAMP,
+           decision_message = ?
+       WHERE id = ?`,
+      [req.session.userId, decisionMessage, requestId]
+    );
+
+    // Notify user of rejection
+    const message = decisionMessage
+      ? `⚠️ Your verification request was rejected: "${decisionMessage}"`
+      : "⚠️ Your verification request was rejected";
+    
+    await dbRun(
+      "INSERT INTO notifications (user_id, post_id, type, message) VALUES (?, NULL, 'verification_rejected', ?)",
+      [userId, message]
+    );
+
+    // Log audit
+    await logAdminAudit({
+      actorAdminId: req.session.userId,
+      targetUserId: userId,
+      actionType: "verification_request_reject",
+      details: `Rejected verification request for @${user.username}${decisionMessage ? `: ${decisionMessage}` : ''}`,
+    });
+
+    res.json({
+      ok: true,
+      message: `Verification request for @${user.username} rejected`,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // User Registration
 app.post("/api/auth/register", authLimiter, async (req, res, next) => {
   try {

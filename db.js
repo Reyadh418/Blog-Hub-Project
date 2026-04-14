@@ -150,6 +150,21 @@ const initPromise = (async () => {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS verification_requests (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        reason TEXT DEFAULT '',
+        reviewed_by_admin_id INTEGER,
+        decision_message TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reviewed_at TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (reviewed_by_admin_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
     // Create indexes
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id)',
@@ -171,6 +186,9 @@ const initPromise = (async () => {
       'CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON notifications(user_id, created_at DESC)',
       'CREATE INDEX IF NOT EXISTS idx_admin_audit_actor_created_at ON admin_audit_logs(actor_admin_id, created_at DESC)',
       'CREATE INDEX IF NOT EXISTS idx_admin_audit_created_at ON admin_audit_logs(created_at DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_verification_requests_user_id ON verification_requests(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_verification_requests_status ON verification_requests(status)',
+      'CREATE INDEX IF NOT EXISTS idx_verification_requests_created_at ON verification_requests(created_at DESC)',
     ];
 
     for (const idx of indexes) {

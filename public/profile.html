@@ -392,6 +392,179 @@
                 overflow-x: auto;
             }
 
+            .verification-card {
+                background: linear-gradient(135deg, #f0f9f0 0%, #e8f5e9 100%);
+                border: 2px solid #4caf50;
+                border-radius: 12px;
+                padding: 16px;
+                margin: 24px 0 40px 0;
+                display: flex;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .verification-card.is-hidden {
+                display: none;
+            }
+
+            .verification-card-content {
+                flex: 1;
+            }
+
+            .verification-title {
+                margin: 0 0 8px 0;
+                color: #2e7d32;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .verification-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.85rem;
+                margin-bottom: 8px;
+            }
+
+            .verification-status.pending {
+                color: #f57c00;
+            }
+
+            .verification-status.approved {
+                color: #2e7d32;
+            }
+
+            .verification-status.rejected {
+                color: #c62828;
+            }
+
+            .verification-message {
+                margin: 0 0 12px 0;
+                color: #555;
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+
+            .verification-btn {
+                background: #4caf50;
+                color: #fff;
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .verification-btn:hover {
+                background: #45a049;
+                transform: translateY(-1px);
+            }
+
+            .verification-modal-backdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(20, 33, 61, 0.55);
+                backdrop-filter: blur(6px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 12000;
+                padding: 20px;
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.22s ease;
+            }
+
+            .verification-modal-backdrop.is-open {
+                visibility: visible;
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            .verification-modal {
+                background: linear-gradient(135deg, #ffffff 0%, #f7f9fb 100%);
+                border-radius: 16px;
+                padding: 24px;
+                max-width: 500px;
+                width: 100%;
+                box-shadow: 0 20px 80px rgba(0,0,0,0.25);
+                border: 1px solid #e8edf2;
+                animation: scaleIn 0.3s ease;
+            }
+
+            .verification-modal-title {
+                margin-bottom: 6px;
+                color: #1e3a5f;
+                font-size: 1.2rem;
+            }
+
+            .verification-modal-subtitle {
+                margin: 0 0 16px 0;
+                color: #52606d;
+                font-size: 0.9rem;
+            }
+
+            .verification-reason-textarea {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #d5dce2;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 0.9rem;
+                resize: vertical;
+                min-height: 100px;
+                color: #2c3e50;
+            }
+
+            .verification-reason-textarea:focus {
+                outline: none;
+                border-color: #4caf50;
+                box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            }
+
+            .char-count {
+                font-size: 0.8rem;
+                color: #888;
+                margin-top: 4px;
+                text-align: right;
+            }
+
+            .verification-modal-actions {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-top: 20px;
+            }
+
+            .verification-modal-actions button {
+                padding: 12px 16px;
+                border: none;
+                border-radius: 10px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+                color: #fff;
+                box-shadow: 0 10px 20px rgba(76, 175, 80, 0.25);
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+            }
+
+            .btn-secondary {
+                background: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #d5dce2;
+            }
+
+            .btn-secondary:hover {
+                transform: translateY(-2px);
+            }
+
             .profile-actions {
                 display: flex;
                 gap: 18px;
@@ -935,9 +1108,35 @@
                     </div>
                 </div>
 
+                <!-- Verification card section -->
+                <div id="verificationCard" class="verification-card is-hidden">
+                    <div class="verification-card-content">
+                        <h3 class="verification-title">Author Verification</h3>
+                        <div id="verificationStatus" class="verification-status"></div>
+                        <p id="verificationMessage" class="verification-message"></p>
+                        <button id="verificationActionBtn" class="action-btn verification-btn"></button>
+                    </div>
+                </div>
+
                 <div class="posts-section">
                     <h2 class="posts-title" id="postsCount">Your Posts (0)</h2>
                     <div id="postsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Verification request modal -->
+            <div class="verification-modal-backdrop" id="verificationModal">
+                <div class="verification-modal">
+                    <h3 class="verification-modal-title">Request Author Verification</h3>
+                    <p class="verification-modal-subtitle">Tell us why you'd like to be verified (optional)</p>
+                    <textarea id="verificationReason" class="verification-reason-textarea" placeholder="Share your writing journey or content focus..." maxlength="500"></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span>/500
+                    </div>
+                    <div class="verification-modal-actions">
+                        <button id="verificationSubmit" class="btn-primary">Submit Request</button>
+                        <button id="verificationCancel" class="btn-secondary">Cancel</button>
+                    </div>
                 </div>
             </div>
 
@@ -1199,7 +1398,63 @@
                     postsContainer.innerHTML = '<div class="empty-posts"><div class="empty-posts-icon">📝</div><p>No posts published yet.</p></div>';
                 }
 
+                // Show verification card only if viewing own profile
+                const verificationCard = document.getElementById('verificationCard');
+                if (!profileUserId || profileUserId == myUserId) {
+                    if (user.is_author_verified === 1) {
+                        verificationCard.classList.remove('is-hidden');
+                        const statusEl = document.getElementById('verificationStatus');
+                        const msgEl = document.getElementById('verificationMessage');
+                        const btnEl = document.getElementById('verificationActionBtn');
+                        statusEl.innerHTML = '✅ Verified';
+                        statusEl.className = 'verification-status approved';
+                        msgEl.textContent = `Your author profile was verified on ${new Date(user.author_verified_at).toLocaleDateString()} by an admin.`;
+                        btnEl.style.display = 'none';
+                    } else if (currentUser.emailVerified === true) {
+                        // Check if user has a pending verification request
+                        hasPendingVerificationRequest().then(hasPending => {
+                            if (hasPending) {
+                                verificationCard.classList.remove('is-hidden');
+                                const statusEl = document.getElementById('verificationStatus');
+                                const msgEl = document.getElementById('verificationMessage');
+                                const btnEl = document.getElementById('verificationActionBtn');
+                                statusEl.innerHTML = '⏳ Pending Review';
+                                statusEl.className = 'verification-status pending';
+                                msgEl.textContent = 'Your verification request is being reviewed by our administrators.';
+                                btnEl.style.display = 'none';
+                            } else {
+                                verificationCard.classList.remove('is-hidden');
+                                const statusEl = document.getElementById('verificationStatus');
+                                const msgEl = document.getElementById('verificationMessage');
+                                const btnEl = document.getElementById('verificationActionBtn');
+                                statusEl.innerHTML = '📤 Not Verified';
+                                statusEl.className = 'verification-status';
+                                msgEl.textContent = 'Help us recognize your voice. Request author verification to gain the verified badge.';
+                                btnEl.textContent = 'Request Verification';
+                                btnEl.style.display = 'inline-block';
+                                btnEl.onclick = openVerificationModal;
+                            }
+                        });
+                    }
+                } else {
+                    hideElement(verificationCard);
+                }
+
                 renderCommentsSection(user.comments || []);
+            }
+
+            async function hasPendingVerificationRequest() {
+                try {
+                    const response = await fetch('/api/admin/verification-requests?status=pending');
+                    if (!response.ok) return false;
+                    const data = await response.json();
+                    const myUserId = currentUser.id || currentUser.userId;
+                    return data.verificationRequests && data.verificationRequests.some(req => req.userId === myUserId);
+                } catch (error) {
+                    console.error('Error checking verification request:', error);
+                    return false;
+                }
+            }
             }
 
             function renderCommentsSection(comments) {
@@ -1298,6 +1553,93 @@
                     } catch (err) {
                         console.error('Avatar update failed', err);
                         showToast('Unable to update avatar', 'error');
+                    }
+                });
+            }
+
+            // Verification modal setup
+            const verificationModalEl = document.getElementById('verificationModal');
+            const verificationReasonEl = document.getElementById('verificationReason');
+            const verificationSubmitBtn = document.getElementById('verificationSubmit');
+            const verificationCancelBtn = document.getElementById('verificationCancel');
+            const charCountEl = document.getElementById('charCount');
+
+            function openVerificationModal() {
+                if (verificationModalEl) {
+                    verificationModalEl.classList.add('is-open');
+                    if (verificationReasonEl) {
+                        verificationReasonEl.focus();
+                    }
+                }
+            }
+
+            function closeVerificationModal() {
+                if (verificationModalEl) {
+                    verificationModalEl.classList.remove('is-open');
+                    if (verificationReasonEl) {
+                        verificationReasonEl.value = '';
+                        charCountEl.textContent = '0';
+                    }
+                }
+            }
+
+            if (verificationReasonEl) {
+                verificationReasonEl.addEventListener('input', (e) => {
+                    const length = e.target.value.length;
+                    if (charCountEl) {
+                        charCountEl.textContent = length;
+                    }
+                });
+            }
+
+            if (verificationSubmitBtn) {
+                verificationSubmitBtn.addEventListener('click', async () => {
+                    const reason = (verificationReasonEl ? verificationReasonEl.value : '').trim();
+                    
+                    verificationSubmitBtn.disabled = true;
+                    verificationSubmitBtn.textContent = 'Submitting...';
+
+                    try {
+                        const response = await fetch('/api/users/verification-request', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reason: reason })
+                        });
+
+                        const data = await response.json().catch(() => ({}));
+
+                        if (!response.ok) {
+                            showToast(data.error || 'Failed to submit request', 'error');
+                            verificationSubmitBtn.disabled = false;
+                            verificationSubmitBtn.textContent = 'Submit Request';
+                            return;
+                        }
+
+                        showToast('Verification request submitted! Admins will review it soon.', 'success', 2000);
+                        closeVerificationModal();
+                        
+                        // Reload profile to update verification status
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } catch (err) {
+                        console.error('Verification request error:', err);
+                        showToast('Unable to submit request', 'error');
+                        verificationSubmitBtn.disabled = false;
+                        verificationSubmitBtn.textContent = 'Submit Request';
+                    }
+                });
+            }
+
+            if (verificationCancelBtn) {
+                verificationCancelBtn.addEventListener('click', closeVerificationModal);
+            }
+
+            // Close modals on backdrop click
+            if (verificationModalEl) {
+                verificationModalEl.addEventListener('click', (e) => {
+                    if (e.target === verificationModalEl) {
+                        closeVerificationModal();
                     }
                 });
             }

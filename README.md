@@ -37,6 +37,7 @@ Dynamic Blogs can be sold or used as a strong base for a content business MVP:
 ## Admin system
 - Single Super Admin model with promoted admins.
 - Admin tools include user listing, author verification controls, admin promotion/demotion, and super-admin transfer.
+- Verification workflow includes user-submitted author verification requests with super-admin approve/reject review actions.
 - Audit trail support for important admin actions.
 - Admin credentials can be updated securely through API endpoints.
 
@@ -105,6 +106,7 @@ Common runtime vars:
 - `TRUST_PROXY=1` (recommended behind Render proxy)
 - `SESSION_NAME` (optional; default `sid`)
 - `BCRYPT_ROUNDS` (default `12`, range `8-14`)
+- `PASSWORD_SALT` (optional; legacy-only, used to validate old SHA-256 passwords during migration to bcrypt)
 - `REQUIRE_EMAIL_VERIFICATION` (`0` or `1`)
 
 Admin bootstrap vars:
@@ -154,6 +156,7 @@ Health check endpoint:
 
 ## Known limitations
 - Rate limiting is in-memory (single-instance behavior).
+- Automated tests are not configured yet (`npm test` is currently a placeholder script).
 - No password-reset flow yet.
 - No file uploads/media storage.
 - No OAuth/SSO.
@@ -170,6 +173,10 @@ Health check endpoint:
 - Static client files: `public/`
 - Database layer + schema init: `db.js`
 - Email helper: `email.js`
+
+## License
+This project is licensed under the GNU Affero General Public License v3.0 (AGPLv3).
+See the `LICENSE` file for full terms.
 
 ## Visuals
 **Home Page**
