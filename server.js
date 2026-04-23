@@ -827,6 +827,39 @@ app.post("/api/users/verification-request", requireAuth, async (req, res, next) 
   }
 });
 
+// GET /api/users/verification-request-status - Get current user's latest verification request status
+app.get("/api/users/verification-request-status", requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.session.userId;
+    const latestRequest = await dbGet(
+      `SELECT id, status, reason, decision_message, created_at, reviewed_at
+       FROM verification_requests
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (!latestRequest) {
+      return res.json({ ok: true, request: null });
+    }
+
+    res.json({
+      ok: true,
+      request: {
+        id: latestRequest.id,
+        status: latestRequest.status,
+        reason: latestRequest.reason || "",
+        decisionMessage: latestRequest.decision_message || "",
+        createdAt: latestRequest.created_at,
+        reviewedAt: latestRequest.reviewed_at || null,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/admin/verification-requests - Get all verification requests for super-admin review
 app.get("/api/admin/verification-requests", requireSuperAdmin, async (req, res, next) => {
   try {

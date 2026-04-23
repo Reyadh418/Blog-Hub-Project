@@ -11,6 +11,7 @@
         <script src="/text-formatting.js?v=20260302"></script>
         <script src="/post-trust.js?v=20260302"></script>
         <script src="/time-formatting.js?v=20260302"></script>
+        <script src="/notification-routing.js?v=20260423"></script>
         <style>
             :root {
                 --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
@@ -3069,9 +3070,12 @@
                     `;
 
                     item.addEventListener('click', async () => {
-                        if (!n.post_id) return;
+                        const destination = window.NotificationRouting
+                            ? window.NotificationRouting.resolveDestination(n, currentUser)
+                            : null;
+                        if (!destination) return;
                         await markNotificationRead(n.id);
-                        window.location.href = `/post.html?id=${n.post_id}`;
+                        window.location.href = destination;
                     });
 
                     const delBtn = item.querySelector('.notif-delete');

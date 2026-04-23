@@ -1401,32 +1401,39 @@
                 // Show verification card only if viewing own profile
                 const verificationCard = document.getElementById('verificationCard');
                 if (!profileUserId || profileUserId == myUserId) {
-                    if (user.is_author_verified === 1) {
+                    if (user.is_author_verified === true) {
                         verificationCard.classList.remove('is-hidden');
                         const statusEl = document.getElementById('verificationStatus');
                         const msgEl = document.getElementById('verificationMessage');
                         const btnEl = document.getElementById('verificationActionBtn');
                         statusEl.innerHTML = '✅ Verified';
                         statusEl.className = 'verification-status approved';
-                        msgEl.textContent = `Your author profile was verified on ${new Date(user.author_verified_at).toLocaleDateString()} by an admin.`;
+                        msgEl.textContent = user.author_verified_at
+                            ? `Your author profile was verified on ${new Date(user.author_verified_at).toLocaleDateString()} by an admin.`
+                            : 'Your author profile is verified.';
                         btnEl.style.display = 'none';
-                    } else if (currentUser.emailVerified === true) {
-                        // Check if user has a pending verification request
-                        hasPendingVerificationRequest().then(hasPending => {
-                            if (hasPending) {
-                                verificationCard.classList.remove('is-hidden');
-                                const statusEl = document.getElementById('verificationStatus');
-                                const msgEl = document.getElementById('verificationMessage');
-                                const btnEl = document.getElementById('verificationActionBtn');
+                    } else if (Boolean(currentUser.emailVerified)) {
+                        getVerificationRequestStatus().then((request) => {
+                            const statusEl = document.getElementById('verificationStatus');
+                            const msgEl = document.getElementById('verificationMessage');
+                            const btnEl = document.getElementById('verificationActionBtn');
+                            verificationCard.classList.remove('is-hidden');
+
+                            if (request && request.status === 'pending') {
                                 statusEl.innerHTML = '⏳ Pending Review';
                                 statusEl.className = 'verification-status pending';
                                 msgEl.textContent = 'Your verification request is being reviewed by our administrators.';
                                 btnEl.style.display = 'none';
+                            } else if (request && request.status === 'rejected') {
+                                statusEl.innerHTML = '⚠️ Rejected';
+                                statusEl.className = 'verification-status rejected';
+                                msgEl.textContent = request.decisionMessage
+                                    ? `Last review feedback: ${request.decisionMessage}`
+                                    : 'Your last verification request was not approved. You can submit a new one.';
+                                btnEl.textContent = 'Request Again';
+                                btnEl.style.display = 'inline-block';
+                                btnEl.onclick = openVerificationModal;
                             } else {
-                                verificationCard.classList.remove('is-hidden');
-                                const statusEl = document.getElementById('verificationStatus');
-                                const msgEl = document.getElementById('verificationMessage');
-                                const btnEl = document.getElementById('verificationActionBtn');
                                 statusEl.innerHTML = '📤 Not Verified';
                                 statusEl.className = 'verification-status';
                                 msgEl.textContent = 'Help us recognize your voice. Request author verification to gain the verified badge.';
@@ -1443,18 +1450,16 @@
                 renderCommentsSection(user.comments || []);
             }
 
-            async function hasPendingVerificationRequest() {
+            async function getVerificationRequestStatus() {
                 try {
-                    const response = await fetch('/api/admin/verification-requests?status=pending');
-                    if (!response.ok) return false;
+                    const response = await fetch('/api/users/verification-request-status');
+                    if (!response.ok) return null;
                     const data = await response.json();
-                    const myUserId = currentUser.id || currentUser.userId;
-                    return data.verificationRequests && data.verificationRequests.some(req => req.userId === myUserId);
+                    return data.request || null;
                 } catch (error) {
                     console.error('Error checking verification request:', error);
-                    return false;
+                    return null;
                 }
-            }
             }
 
             function renderCommentsSection(comments) {

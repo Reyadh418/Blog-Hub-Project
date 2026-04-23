@@ -787,7 +787,7 @@
                     <div id="verifyResults" class="verify-results"></div>
                 </div>
 
-                <div class="verification-requests-section">
+                <div class="verification-requests-section" id="verificationRequestsSection">
                     <h2 class="section-title section-title-compact">📤 Pending Verification Requests</h2>
                     <p class="form-hint">Review authors who requested verification. Click approve to grant the verified badge, or reject to send feedback.</p>
                     <div id="verificationRequestsContainer" class="verification-requests-container">
@@ -1165,6 +1165,15 @@
                     
                     loadingContainer.classList.add('is-hidden');
                     profileContainer.classList.remove('is-hidden');
+
+                    if (window.location.hash) {
+                        const target = document.querySelector(window.location.hash);
+                        if (target) {
+                            setTimeout(() => {
+                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 80);
+                        }
+                    }
                 } catch (error) {
                     console.error('Load dashboard error:', error);
                     window.location.href = '/login.html';
