@@ -167,7 +167,31 @@
         .error-text { color:#721c24; }
 
         @media (max-width: 640px) {
-            .header { grid-template-columns: 1fr; justify-items: center; text-align:center; }
+            .shell { padding: 18px 10px 28px; }
+            .nav { grid-template-columns: 1fr; justify-items: stretch; text-align: center; gap: 14px; }
+            .nav-actions { width: 100%; justify-content: stretch; }
+            .nav-actions button { width: 100%; }
+            .header { grid-template-columns: 1fr; justify-items: center; text-align:center; padding: 22px 18px; }
+            .card { padding: 18px; }
+            .avatar { width: 64px; height: 64px; font-size: 1.2rem; }
+            .name { font-size: 1.4rem; }
+            .meta-row { justify-content: center; }
+            .pill { width: 100%; justify-content: center; }
+            .grid { grid-template-columns: 1fr; }
+            .item-card { padding: 12px; }
+        }
+
+        @media (max-width: 480px) {
+            .shell { padding: 14px 8px 24px; }
+            .nav h1 { font-size: 1.5rem; }
+            .card { padding: 16px 14px; }
+            .header { padding: 18px 14px; }
+            .name { font-size: 1.28rem; }
+            .username,
+            .email,
+            .bio { font-size: 0.92rem; }
+            .btn { width: 100%; }
+            .empty { padding: 24px 14px; }
         }
 
         .card {

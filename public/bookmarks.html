@@ -206,7 +206,22 @@
 
             @media (max-width: 700px) {
                 h1 { font-size: 2rem; }
-                .card { padding: 18px; }
+                .header { padding: 22px 16px; }
+                .toolbar { gap: 12px; }
+                .toolbar .left { width: 100%; flex-direction: column; align-items: stretch; }
+                .toolbar button { width: 100%; }
+                .cards { grid-template-columns: 1fr; }
+                .card { padding: 16px; }
+            }
+
+            @media (max-width: 480px) {
+                h1 { font-size: 1.45rem; }
+                .header-subtitle { font-size: 0.92rem; }
+                .header { padding: 18px 14px; }
+                .card { padding: 14px; }
+                .item-title { font-size: 1rem; }
+                .item-meta { font-size: 0.84rem; }
+                .empty { padding: 24px 14px; }
             }
 
             .toolbar button,

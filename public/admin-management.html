@@ -828,11 +828,16 @@
 
         /* Responsive */
         @media (max-width: 640px) {
-            .container { padding: 24px 16px; }
-            .header h1 { font-size: 1.6rem; }
+            .container { padding: 20px 12px; }
+            .header { flex-direction: column; align-items: stretch; margin-bottom: 28px; }
+            .header h1 { font-size: 1.5rem; }
+            .back-btn { width: 100%; justify-content: center; }
+            .search-section, .admin-list-section, .audit-section { padding: 20px 16px; border-radius: 16px; }
             .admin-card { flex-direction: column; gap: 16px; align-items: flex-start; }
             .admin-actions { width: 100%; justify-content: flex-end; }
             .search-result-item { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .user-info { width: 100%; align-items: flex-start; }
+            .promote-btn { width: 100%; }
             .promote-options { width: 100%; }
             .promote-btn { flex: 1; justify-content: center; }
             .audit-filters {

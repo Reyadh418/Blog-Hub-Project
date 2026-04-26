@@ -1491,12 +1491,13 @@
 
             @media (max-width: 768px) {
                 body {
-                    padding: 28px 12px;
+                    padding: 22px 12px;
                 }
 
                 .hero-title {
-                    font-size: clamp(1.9rem, 9vw, 2.7rem);
-                    max-width: 18ch;
+                    font-size: clamp(1.8rem, 10vw, 2.4rem);
+                    max-width: 16ch;
+                    line-height: 1.08;
                 }
 
                 .hero-emphasis {
@@ -1511,7 +1512,7 @@
                 }
 
                 .header-subtitle {
-                    font-size: 0.98rem;
+                    font-size: 0.95rem;
                 }
 
                 .public-nav {
@@ -1636,6 +1637,50 @@
 
                 .post-actions-menu {
                     min-width: 168px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                body {
+                    padding: 18px 10px;
+                }
+
+                .header {
+                    margin-bottom: 34px;
+                }
+
+                .hero-title {
+                    font-size: clamp(1.65rem, 11vw, 2.1rem);
+                }
+
+                .hero-kicker {
+                    font-size: 0.68rem;
+                    letter-spacing: 0.6px;
+                }
+
+                .public-nav {
+                    gap: 6px;
+                }
+
+                .search-toolbar {
+                    gap: 10px;
+                }
+
+                .section-card,
+                .featured-story-card,
+                .item-card,
+                .responsibility-card,
+                .stat-card,
+                .perk-card {
+                    padding: 18px !important;
+                }
+
+                .post {
+                    padding: 18px;
+                }
+
+                .post h2 {
+                    font-size: 1.15rem;
                 }
             }
 
@@ -1930,6 +1975,11 @@
 
                 .toast {
                     padding: 14px 16px;
+                }
+
+                .notification-panel {
+                    top: 78px;
+                    width: calc(100% - 20px);
                 }
             }
 

@@ -494,6 +494,66 @@
                     transition: none !important;
                 }
             }
+
+            @media (max-width: 600px) {
+                body {
+                    padding: 18px 10px 24px;
+                }
+
+                h1 {
+                    font-size: 2rem;
+                    margin-bottom: 26px;
+                }
+
+                .form-header {
+                    margin-bottom: 18px;
+                }
+
+                form {
+                    padding: 28px 18px;
+                    border-radius: 16px;
+                }
+
+                .verify-gate {
+                    padding: 18px 14px;
+                    border-radius: 14px;
+                }
+
+                .format-toolbar {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 8px;
+                }
+
+                .format-btn {
+                    min-height: 44px;
+                    width: 100%;
+                }
+
+                .format-help,
+                .character-count {
+                    font-size: 0.84rem;
+                }
+
+                textarea {
+                    min-height: 240px;
+                }
+            }
+
+            @media (max-width: 420px) {
+                h1 {
+                    font-size: 1.7rem;
+                }
+
+                .format-toolbar {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .field-note {
+                    display: block;
+                    margin-top: 2px;
+                }
+            }
         </style>
     </head>
     <body data-brand-page="create-post">

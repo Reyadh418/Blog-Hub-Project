@@ -34,6 +34,26 @@
     --pillar-education: #2c4f7d;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+img,
+video,
+iframe,
+svg {
+    max-width: 100%;
+}
+
+img,
+video {
+    height: auto;
+}
+
 .ui-fade-in,
 .toast,
 .message,
@@ -567,6 +587,211 @@ li,
 .reading-overlay .reading-meta {
     max-width: var(--readable-measure-wide);
     margin-inline: auto;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .card,
+    .post-card,
+    .section-card,
+    .featured-story-card,
+    .item-card,
+    .responsibility-card,
+    .stat-card,
+    .perk-card,
+    .admin-card,
+    .confirm-card,
+    .verify-card,
+    .login-card,
+    .register-card,
+    .edit-card {
+        padding: 24px !important;
+    }
+
+    .content-grid,
+    .stats-grid,
+    .credibility-list,
+    .audit-filters,
+    .post-actions,
+    .form-actions,
+    .edit-actions,
+    .navbar-actions,
+    .search-toolbar,
+    .search-group,
+    .sort-dropdown,
+    .controls,
+    .profile-actions,
+    .reaction-row,
+    .comment-actions,
+    .comment-edit-actions {
+        width: 100%;
+    }
+
+    .content-grid,
+    .stats-grid,
+    .credibility-list,
+    .audit-filters {
+        grid-template-columns: 1fr !important;
+    }
+
+    .post-actions,
+    .form-actions,
+    .edit-actions,
+    .navbar-actions,
+    .controls,
+    .reaction-row,
+    .comment-actions,
+    .comment-edit-actions,
+    .profile-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    button,
+    .btn,
+    .action-btn,
+    .nav-link,
+    .pillar-chip,
+    .sort-btn,
+    .sort-option,
+    .confirm-btn,
+    .notif-btn,
+    .notif-chip,
+    .notif-delete,
+    .toggle-btn,
+    .mode-btn,
+    .avatar-toggle,
+    .avatar-primary,
+    .avatar-secondary,
+    .promote-btn,
+    .admin-btn,
+    .bookmark-btn,
+    .reaction-btn,
+    .comment-action-btn,
+    .save-btn,
+    .cancel-btn,
+    .verify-btn,
+    .resend-btn,
+    .continue-btn,
+    .remove-btn,
+    .search-input + button,
+    a.link,
+    .skip-link,
+    .verify-link,
+    .comment-post-link,
+    .error-link,
+    .back-link a,
+    .back-btn,
+    .nav-back {
+        min-height: 44px;
+    }
+
+    button,
+    .btn,
+    .action-btn,
+    .nav-link,
+    .pillar-chip,
+    .sort-btn,
+    .sort-option,
+    .confirm-btn,
+    .notif-btn,
+    .notif-chip,
+    .notif-delete,
+    .toggle-btn,
+    .mode-btn,
+    .avatar-toggle,
+    .avatar-primary,
+    .avatar-secondary,
+    .promote-btn,
+    .admin-btn,
+    .bookmark-btn,
+    .reaction-btn,
+    .comment-action-btn,
+    .save-btn,
+    .cancel-btn,
+    .verify-btn,
+    .resend-btn,
+    .continue-btn,
+    .remove-btn,
+    .search-input + button {
+        justify-content: center;
+    }
+
+    .search-input,
+    input,
+    textarea,
+    select {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .toast-container,
+    .notification-panel {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+
+    .reading-controls {
+        max-width: calc(100% - 20px);
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .card,
+    .post-card,
+    .section-card,
+    .featured-story-card,
+    .item-card,
+    .responsibility-card,
+    .stat-card,
+    .perk-card,
+    .admin-card,
+    .confirm-card,
+    .verify-card,
+    .login-card,
+    .register-card,
+    .edit-card {
+        padding: 20px !important;
+    }
+
+    h1 {
+        line-height: 1.16;
+    }
+
+    .search-toolbar,
+    .search-group,
+    .sort-dropdown,
+    .controls,
+    .profile-actions,
+    .form-actions,
+    .edit-actions,
+    .navbar-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .post-actions,
+    .reaction-row,
+    .comment-actions,
+    .comment-edit-actions {
+        align-items: stretch;
+    }
+
+    .toast-container,
+    .notification-panel {
+        left: 8px;
+        right: 8px;
+    }
 }
 
 @keyframes uiFadeIn {
