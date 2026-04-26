@@ -1,4 +1,32 @@
 :root {
+    --space-0: 0;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 40px;
+
+    --radius-xs: 8px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-pill: 999px;
+
+    --shadow-xs: 0 2px 4px rgba(10, 18, 33, 0.06);
+    --shadow-sm: 0 4px 10px rgba(10, 18, 33, 0.1);
+    --shadow-md: 0 8px 20px rgba(10, 18, 33, 0.14);
+    --shadow-lg: 0 14px 30px rgba(10, 18, 33, 0.18);
+    --shadow-xl: 0 20px 44px rgba(10, 18, 33, 0.22);
+
+    --font-size-h1: clamp(1.8rem, 4vw, 2.5rem);
+    --font-size-h2: clamp(1.35rem, 2.8vw, 1.8rem);
+    --font-size-h3: clamp(1.08rem, 2vw, 1.25rem);
+    --font-size-body: 1rem;
+    --font-size-sm: 0.95rem;
+
     --motion-duration-fast: 140ms;
     --motion-duration-base: 240ms;
     --motion-duration-slow: 360ms;
@@ -117,6 +145,11 @@ a.link,
 .back-link a,
 .back-btn,
 .nav-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1.2;
     transition:
         transform var(--motion-duration-fast) var(--motion-ease-standard),
         box-shadow var(--motion-duration-base) var(--motion-ease-standard),
@@ -286,6 +319,20 @@ button:disabled,
 
 .toast.is-exiting {
     animation: uiToastExit var(--motion-duration-base) var(--motion-ease-standard) both;
+}
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 420px;
+}
+
+.toast {
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    min-height: 48px;
 }
 
 .skip-link {
@@ -468,6 +515,8 @@ button:disabled,
 .post,
 .user-card {
     border: 1px solid var(--scan-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
 }
 
 .card-meta,
@@ -496,7 +545,8 @@ button:disabled,
 .meta-pill {
     display: inline-flex;
     align-items: center;
-    border-radius: 999px;
+    justify-content: center;
+    border-radius: var(--radius-pill);
     border: 1px solid var(--scan-border);
     background: var(--scan-surface-soft);
     color: var(--scan-title);
@@ -536,6 +586,27 @@ h2,
 h3 {
     text-wrap: balance;
     line-height: 1.2;
+}
+
+h1 {
+    font-size: var(--font-size-h1);
+}
+
+h2 {
+    font-size: var(--font-size-h2);
+}
+
+h3 {
+    font-size: var(--font-size-h3);
+}
+
+input,
+textarea,
+select,
+.field-wrap,
+.field-input,
+.search-input {
+    border-radius: var(--radius-sm);
 }
 
 p,
@@ -593,6 +664,10 @@ li,
     body {
         padding-left: 12px;
         padding-right: 12px;
+    }
+
+    .toast-container {
+        top: 12px;
     }
 
     .card,
@@ -745,6 +820,10 @@ li,
     body {
         padding-left: 10px;
         padding-right: 10px;
+    }
+
+    .toast-container {
+        top: 10px;
     }
 
     .card,

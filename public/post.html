@@ -1946,10 +1946,13 @@
                 }
 
                 body > .post-header {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: stretch;
-                    gap: 12px;
+                    display: grid;
+                    grid-template-columns: auto minmax(0, 1fr);
+                    grid-template-areas:
+                        "back back"
+                        "notif search";
+                    align-items: center;
+                    gap: 8px;
                     text-align: left;
                     margin-bottom: 18px;
                 }
@@ -1957,19 +1960,62 @@
                 .nav-back,
                 .post-search-form,
                 .notif-btn {
-                    width: 100%;
                     margin-left: 0;
                 }
 
+                .nav-back {
+                    grid-area: back;
+                    width: 100%;
+                    justify-self: start;
+                }
+
+                .notif-btn {
+                    grid-area: notif;
+                    width: auto;
+                    justify-self: start;
+                    align-self: center;
+                    padding: 6px 8px;
+                    min-height: 32px;
+                    font-size: 0.68rem;
+                    letter-spacing: 0.08px;
+                    white-space: nowrap;
+                }
+
                 .post-search-form {
-                    display: grid;
-                    grid-template-columns: 1fr auto;
-                    gap: 8px;
+                    grid-area: search;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    width: 100%;
+                    min-width: 0;
                 }
 
                 .post-notif-btn {
                     display: inline-flex;
                     justify-content: center;
+                    width: auto;
+                    flex: 0 0 auto;
+                    min-height: 32px;
+                    padding: 6px 8px;
+                    font-size: 0.68rem;
+                    letter-spacing: 0.08px;
+                    white-space: nowrap;
+                }
+
+                .post-search-input {
+                    flex: 1 1 auto;
+                    min-width: 0;
+                    min-height: 32px;
+                    padding: 5px 7px;
+                    font-size: 0.78rem;
+                }
+
+                .post-search-submit {
+                    min-width: 32px;
+                    width: 32px;
+                    min-height: 32px;
+                    padding: 0;
+                    font-size: 0.76rem;
                 }
 
                 .story-topbar {
@@ -2237,38 +2283,79 @@
                 }
 
                 .reading-overlay .reading-container {
-                    padding: 44px 16px 88px;
+                    padding: 44px 16px 84px;
                 }
 
                 .reading-overlay .reading-title {
-                    font-size: 1.7rem;
+                    font-size: 1.6rem;
+                    line-height: 1.18;
+                    margin-bottom: 14px;
+                }
+
+                .reading-overlay .reading-meta {
+                    margin-bottom: 24px;
+                    padding-bottom: 18px;
+                    gap: 8px 10px;
+                    font-size: 0.8rem;
+                }
+
+                .reading-overlay .reading-content {
+                    font-size: 1.05rem;
+                    line-height: 1.78;
+                }
+
+                .reading-overlay .reading-body {
+                    gap: 18px;
+                }
+
+                .reading-overlay .reading-body .reading-heading {
+                    line-height: 1.28;
+                }
+
+                .reading-overlay .reading-pullquote {
+                    font-size: 1.08rem;
+                    padding: 10px 12px;
                 }
 
                 .reading-controls {
-                    top: auto;
-                    bottom: 16px;
-                    right: 50%;
-                    transform: translateX(50%) translateY(20px);
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    max-width: calc(100% - 24px);
+                    top: 12px;
+                    right: 12px;
+                    left: 12px;
+                    bottom: auto;
+                    transform: translateY(0);
+                    flex-wrap: nowrap;
+                    justify-content: flex-start;
+                    overflow-x: auto;
                     padding: 10px 12px;
                     gap: 8px;
+                    scrollbar-width: none;
+                }
+
+                .reading-controls::-webkit-scrollbar {
+                    display: none;
                 }
 
                 .reading-overlay.active .reading-controls {
-                    transform: translateX(50%) translateY(0);
+                    transform: none;
                 }
 
                 .reading-control-btn {
-                    width: 38px;
-                    height: 38px;
-                    border-radius: 10px;
+                    width: 36px;
+                    height: 36px;
+                    min-width: 36px;
+                    border-radius: 9px;
+                    flex: 0 0 auto;
+                }
+
+                .reading-control-divider {
+                    margin: 0 4px;
+                    height: 24px;
+                    flex: 0 0 auto;
                 }
 
                 .reading-close-btn {
-                    width: 42px;
-                    height: 42px;
+                    width: 40px;
+                    height: 40px;
                 }
 
                 button {
@@ -2301,11 +2388,11 @@
 
                 .post-search-input,
                 .post-search-submit {
-                    min-height: 44px;
+                    min-height: 34px;
                 }
 
                 .post-search-input {
-                    font-size: 0.95rem;
+                    font-size: 0.78rem;
                 }
 
                 .post-container {
@@ -2346,31 +2433,56 @@
                 }
 
                 .reading-overlay .reading-container {
-                    padding: 40px 14px 84px;
+                    padding: 42px 14px 80px;
                 }
 
                 .reading-overlay .reading-title {
-                    font-size: 1.5rem;
+                    font-size: 1.38rem;
+                    line-height: 1.16;
                 }
 
                 .reading-overlay .reading-meta {
-                    margin-bottom: 28px;
-                    padding-bottom: 20px;
-                    gap: 10px 12px;
-                    font-size: 0.84rem;
+                    margin-bottom: 22px;
+                    padding-bottom: 16px;
+                    gap: 8px 10px;
+                    font-size: 0.78rem;
+                    flex-direction: column;
+                    align-items: flex-start;
                 }
 
                 .reading-body {
-                    gap: 18px;
+                    gap: 16px;
                 }
 
                 .reading-pullquote {
-                    padding: 10px 14px;
-                    font-size: 1.05rem;
+                    padding: 9px 12px;
+                    font-size: 1rem;
+                    max-width: 100%;
+                    line-height: 1.5;
                 }
 
                 .reading-controls {
-                    max-width: calc(100% - 20px);
+                    top: 10px;
+                    left: 10px;
+                    right: 10px;
+                    padding: 9px 10px;
+                }
+
+                .reading-control-btn {
+                    width: 34px;
+                    height: 34px;
+                    min-width: 34px;
+                    font-size: 0.95rem;
+                }
+
+                .reading-close-btn {
+                    width: 38px;
+                    height: 38px;
+                }
+
+                .reading-overlay .reading-content {
+                    font-size: 1rem;
+                    line-height: 1.72;
                 }
             }
 
@@ -2937,7 +3049,7 @@
                     </div>
                     <div class="post-actions">
                         <button class="btn-copy" onclick="copyPostLink()" id="copyBtn">📋 Copy Link</button>
-                        <button class="btn-home" onclick="location.href='/'">🏠 Back Home</button>
+                        <button class="btn-home" onclick="location.href='/'">🏠 Back to Stories</button>
                     </div>
                 </div>
 
