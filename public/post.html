@@ -1704,6 +1704,37 @@
             .notif-meta { font-size: 0.88rem; color: #6b7280; display: flex; align-items: center; gap: 8px; }
             .notif-pill { padding: 3px 9px; border-radius: 999px; font-weight: 700; font-size: 0.78rem; background: #ecf0f1; color: #1e3a5f; }
 
+            .notif-actions {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .notif-read {
+                border: none;
+                background: #ecfdf3;
+                color: #166534;
+                border-radius: 10px;
+                padding: 8px 10px;
+                cursor: pointer;
+                transition: background 0.16s ease, transform 0.16s ease;
+                font-weight: 800;
+                line-height: 1;
+            }
+
+            .notif-read:hover {
+                background: #d1fae5;
+                transform: translateY(-1px);
+            }
+
+            .notif-read.is-read,
+            .notif-read:disabled {
+                background: #f3f4f6;
+                color: #6b7280;
+                cursor: default;
+                transform: none;
+            }
+
             .notif-delete {
                 border: none;
                 background: #f3f4f6;
@@ -3523,6 +3554,7 @@
                     item.className = `notif-item ${n.is_read ? 'read' : 'unread'}`;
                     const icon = typeIcons[n.type] || '✨';
                     const pill = typePills[n.type] || 'Update';
+                    const isRead = Number(n.is_read) === 1 || n.is_read === true;
                     item.innerHTML = `
                         <div class="notif-icon">${icon}</div>
                         <div class="notif-body">
@@ -3532,7 +3564,10 @@
                                 <span>${timeAgo(n.created_at)}</span>
                             </div>
                         </div>
-                        <button class="notif-delete" aria-label="Delete notification">🗑</button>
+                        <div class="notif-actions">
+                            <button class="notif-read ${isRead ? 'is-read' : ''}" aria-label="Mark notification as read" title="${isRead ? 'Already read' : 'Mark as read'}" ${isRead ? 'disabled' : ''}>✓</button>
+                            <button class="notif-delete" aria-label="Delete notification">🗑</button>
+                        </div>
                     `;
 
                     item.addEventListener('click', async () => {
@@ -3549,6 +3584,17 @@
                         delBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
                             await deleteNotification(n.id);
+                        });
+                    }
+
+                    const readBtn = item.querySelector('.notif-read');
+                    if (readBtn) {
+                        readBtn.addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            const didMark = await markNotificationRead(n.id);
+                            if (didMark) {
+                                renderNotifications();
+                            }
                         });
                     }
 

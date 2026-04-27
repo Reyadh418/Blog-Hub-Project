@@ -397,6 +397,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
+            min-width: 0;
         }
 
         .admin-avatar {
@@ -419,6 +420,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
+            line-height: 1.35;
         }
 
         .badge {
@@ -426,10 +429,11 @@
             align-items: center;
             padding: 3px 10px;
             border-radius: 999px;
-            font-size: 0.7rem;
+            font-size: 0.66rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
         }
 
         .badge.super {
@@ -457,11 +461,16 @@
         .admin-details span {
             font-size: 0.85rem;
             color: #64748b;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
         }
 
         .admin-actions {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
         }
 
         .admin-action-note {
@@ -491,6 +500,8 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             position: relative;
             overflow: hidden;
+            min-height: 38px;
+            white-space: nowrap;
         }
 
         .action-btn::after {
@@ -856,8 +867,36 @@
             .header h1 { font-size: 1.5rem; }
             .back-btn { width: 100%; justify-content: center; }
             .search-section, .admin-list-section, .audit-section { padding: 20px 16px; border-radius: 16px; }
-            .admin-card { flex-direction: column; gap: 16px; align-items: flex-start; }
-            .admin-actions { width: 100%; justify-content: flex-end; }
+            .admin-card { flex-direction: column; gap: 14px; align-items: stretch; padding: 14px 12px; border-radius: 14px; }
+            .admin-info { width: 100%; gap: 10px; align-items: center; }
+            .admin-avatar { width: 42px; height: 42px; font-size: 1rem; }
+            .admin-details { min-width: 0; }
+            .admin-details h4 { gap: 6px; margin-bottom: 3px; font-size: 1rem; }
+            .admin-details span { font-size: 0.8rem; }
+            .badge { font-size: 0.63rem; padding: 3px 8px; }
+            .admin-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 8px;
+            }
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 8px 10px;
+                font-size: 0.76rem;
+                min-height: 36px;
+                letter-spacing: 0.2px;
+            }
+            .admin-action-note {
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 8px 10px;
+                border-radius: 10px;
+                background: #f8f3ea;
+                border: 1px solid rgba(196, 138, 90, 0.24);
+                font-size: 0.78rem;
+            }
             .search-result-item { flex-direction: column; gap: 12px; align-items: flex-start; }
             .user-info { width: 100%; align-items: flex-start; }
             .promote-btn { width: 100%; }
@@ -865,6 +904,16 @@
             .promote-btn { flex: 1; justify-content: center; }
             .audit-filters {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .admin-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .action-btn {
+                min-height: 38px;
             }
         }
     </style>
