@@ -1945,12 +1945,9 @@
                     max-width: 100%;
                 }
 
-                body > .post-header {
-                    display: grid;
-                    grid-template-columns: auto minmax(0, 1fr);
-                    grid-template-areas:
-                        "back back"
-                        "notif search";
+                #post-main > .post-header {
+                    display: flex;
+                    flex-wrap: wrap;
                     align-items: center;
                     gap: 8px;
                     text-align: left;
@@ -1964,15 +1961,13 @@
                 }
 
                 .nav-back {
-                    grid-area: back;
+                    flex: 0 0 100%;
                     width: 100%;
-                    justify-self: start;
                 }
 
                 .notif-btn {
-                    grid-area: notif;
                     width: auto;
-                    justify-self: start;
+                    flex: 0 0 auto;
                     align-self: center;
                     padding: 6px 8px;
                     min-height: 32px;
@@ -1982,11 +1977,11 @@
                 }
 
                 .post-search-form {
-                    grid-area: search;
                     display: flex;
                     align-items: center;
                     gap: 4px;
-                    width: 100%;
+                    width: auto;
+                    flex: 1 1 0;
                     min-width: 0;
                 }
 
@@ -2770,13 +2765,15 @@
                 right: 20px;
                 z-index: 50002;
                 display: flex;
-                gap: 10px;
+                gap: 6px;
                 align-items: center;
-                background: var(--reading-control-bg, rgba(255,255,255,0.95));
+                background:
+                    linear-gradient(145deg, color-mix(in srgb, var(--reading-control-bg, rgba(255,255,255,0.95)) 92%, white) 0%, var(--reading-control-bg, rgba(255,255,255,0.95)) 100%);
                 backdrop-filter: blur(10px);
-                padding: 12px 16px;
-                border-radius: 14px;
-                box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+                padding: 8px 10px;
+                border-radius: 16px;
+                border: 1px solid color-mix(in srgb, var(--reading-border, #ddd) 66%, white);
+                box-shadow: 0 12px 28px rgba(0,0,0,0.14);
                 opacity: 0;
                 transform: translateY(-20px);
                 transition: all 0.3s ease;
@@ -2788,15 +2785,26 @@
                 transition-delay: 0.2s;
             }
 
+            .reading-overlay.active.controls-idle .reading-controls {
+                opacity: 0.36;
+                transform: translateY(4px);
+            }
+
+            .reading-overlay.active.controls-idle .reading-controls:hover,
+            .reading-overlay.active.controls-idle .reading-controls:focus-within {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
             .reading-control-btn {
-                width: 40px;
-                height: 40px;
-                border-radius: 10px;
+                width: 34px;
+                height: 34px;
+                border-radius: 9px;
                 border: none;
                 background: var(--reading-btn-bg, #f0ebe4);
                 color: var(--reading-btn-text, #1e3a5f);
                 cursor: pointer;
-                font-size: 1rem;
+                font-size: 0.9rem;
                 font-weight: 700;
                 display: flex;
                 align-items: center;
@@ -2818,18 +2826,18 @@
 
             .reading-control-divider {
                 width: 1px;
-                height: 28px;
+                height: 18px;
                 background: var(--reading-border, #ddd);
-                margin: 0 6px;
+                margin: 0 2px;
             }
 
             .reading-close-btn {
-                width: 44px;
-                height: 44px;
-                border-radius: 12px;
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
                 background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
                 color: #fff;
-                font-size: 1.2rem;
+                font-size: 1rem;
             }
 
             .reading-close-btn:hover {
@@ -2904,16 +2912,48 @@
 
                 .reading-controls {
                     top: auto;
-                    bottom: 20px;
-                    right: 50%;
-                    transform: translateX(50%) translateY(20px);
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    max-width: calc(100% - 40px);
+                    bottom: 12px;
+                    right: 12px;
+                    left: auto;
+                    transform: translateY(16px);
+                    flex-wrap: nowrap;
+                    justify-content: flex-start;
+                    gap: 5px;
+                    padding: 7px 8px;
+                    max-width: min(calc(100vw - 20px), 360px);
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    scrollbar-width: none;
+                    border-radius: 14px;
+                }
+
+                .reading-controls::-webkit-scrollbar {
+                    display: none;
                 }
 
                 .reading-overlay.active .reading-controls {
-                    transform: translateX(50%) translateY(0);
+                    transform: translateY(0);
+                }
+
+                .reading-control-btn {
+                    width: 31px;
+                    height: 31px;
+                    min-width: 31px;
+                    font-size: 0.84rem;
+                    border-radius: 8px;
+                    flex: 0 0 auto;
+                }
+
+                .reading-control-divider {
+                    height: 16px;
+                    margin: 0 1px;
+                    flex: 0 0 auto;
+                }
+
+                .reading-close-btn {
+                    width: 33px;
+                    height: 33px;
+                    min-width: 33px;
                 }
             }
         </style>
@@ -4565,6 +4605,11 @@
             const READING_TITLE = document.getElementById('readingTitle');
             const READING_META = document.getElementById('readingMeta');
             const READING_BODY = document.getElementById('readingBody');
+            const READING_CONTROLS = READING_OVERLAY?.querySelector('.reading-controls') || null;
+
+            const READING_CONTROLS_IDLE_MS = 1800;
+            let readingControlsIdleTimer = null;
+            let lastReadingControlsWakeAt = 0;
 
             let readingSettings = {
                 fontSize: 1.2,
@@ -4615,6 +4660,39 @@
                 if (activeThemeBtn) activeThemeBtn.classList.add('active');
             }
 
+            function clearReadingControlsIdleTimer() {
+                if (readingControlsIdleTimer) {
+                    clearTimeout(readingControlsIdleTimer);
+                    readingControlsIdleTimer = null;
+                }
+            }
+
+            function scheduleReadingControlsIdle() {
+                if (!READING_OVERLAY || !READING_CONTROLS || !READING_OVERLAY.classList.contains('active')) return;
+                clearReadingControlsIdleTimer();
+                readingControlsIdleTimer = setTimeout(() => {
+                    if (READING_OVERLAY.classList.contains('active')) {
+                        READING_OVERLAY.classList.add('controls-idle');
+                    }
+                }, READING_CONTROLS_IDLE_MS);
+            }
+
+            function wakeReadingControls(force = false) {
+                if (!READING_OVERLAY || !READING_CONTROLS || !READING_OVERLAY.classList.contains('active')) return;
+
+                const now = Date.now();
+                if (!force && (now - lastReadingControlsWakeAt) < 140) return;
+                lastReadingControlsWakeAt = now;
+
+                READING_OVERLAY.classList.remove('controls-idle');
+                scheduleReadingControlsIdle();
+            }
+
+            function resetReadingControlsState() {
+                clearReadingControlsIdleTimer();
+                READING_OVERLAY?.classList.remove('controls-idle');
+            }
+
             // Open reading mode
             function openReadingMode() {
                 const title = CURRENT_POST?.title || document.getElementById('postTitle')?.textContent || '';
@@ -4644,6 +4722,7 @@
                 lastFocusedBeforeReading = document.activeElement;
                 READING_OVERLAY.classList.add('active');
                 document.body.classList.add('reading-mode-open');
+                wakeReadingControls(true);
 
                 // Reset scroll and progress
                 READING_CONTAINER.scrollTop = 0;
@@ -4654,6 +4733,7 @@
             // Close reading mode
             function closeReadingMode() {
                 READING_OVERLAY.classList.remove('active');
+                resetReadingControlsState();
                 document.body.classList.remove('reading-mode-open');
                 if (lastFocusedBeforeReading && typeof lastFocusedBeforeReading.focus === 'function') {
                     lastFocusedBeforeReading.focus();
@@ -4705,7 +4785,17 @@
                 document.getElementById('themeSepia')?.addEventListener('click', () => setReadingTheme('sepia'));
                 document.getElementById('themeDark')?.addEventListener('click', () => setReadingTheme('dark'));
 
-                READING_CONTAINER.addEventListener('scroll', updateReadingProgress);
+                READING_CONTROLS?.addEventListener('pointerdown', () => wakeReadingControls(true));
+                READING_CONTROLS?.addEventListener('focusin', () => wakeReadingControls(true));
+                READING_OVERLAY.addEventListener('pointermove', () => wakeReadingControls());
+                READING_OVERLAY.addEventListener('touchstart', () => wakeReadingControls(true), { passive: true });
+                READING_OVERLAY.addEventListener('wheel', () => wakeReadingControls(), { passive: true });
+                READING_OVERLAY.addEventListener('keydown', () => wakeReadingControls(true));
+
+                READING_CONTAINER.addEventListener('scroll', () => {
+                    updateReadingProgress();
+                    wakeReadingControls();
+                });
 
                 // Close on Escape key
                 document.addEventListener('keydown', (e) => {
