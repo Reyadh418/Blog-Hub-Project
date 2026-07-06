@@ -126,7 +126,14 @@ html, body {
 .verify-card, 
 .login-card, 
 .register-card, 
-.edit-card {
+.edit-card,
+.profile-header,
+.cred-card,
+.verification-card,
+.verification-request-card,
+.comment-form-container,
+form,
+.verify-gate {
     background: rgba(252, 249, 244, 0.76) !important;
     backdrop-filter: blur(16px) saturate(130%) !important;
     -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
@@ -156,7 +163,14 @@ html, body {
 .featured-story-card::after,
 .login-card::after,
 .register-card::after,
-.edit-card::after {
+.edit-card::after,
+.profile-header::after,
+.cred-card::after,
+.verification-card::after,
+.verification-request-card::after,
+.comment-form-container::after,
+form::after,
+.verify-gate::after {
     content: '';
     position: absolute;
     top: 0;
@@ -172,16 +186,37 @@ html, body {
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-/* Card Hover Animations */
+/* Card Hover Animations (Only actual interactive cards/badges) */
 .card:hover, 
 .post:hover,
-.featured-story-card:hover {
+.featured-story-card:hover,
+.item-card:hover,
+.perk-card:hover,
+.stat-card:hover,
+.admin-card:hover,
+.verification-request-card:hover,
+.responsibility-card:hover {
     transform: scale(1.025) translate3d(0, var(--lift-distance), 0) !important;
     border-color: rgba(255, 255, 255, 0.6) !important;
     box-shadow: 
         0 24px 50px rgba(10, 18, 33, 0.22),
         0 0 15px rgba(212, 165, 116, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Stable static panels on hover (no lift or zoom) */
+.post-container:hover,
+.profile-header:hover,
+.cred-card:hover,
+.verification-card:hover,
+.comment-form-container:hover,
+form:hover,
+.verify-gate:hover {
+    transform: translate3d(0, 0, 0) !important;
+    box-shadow: 
+        0 16px 36px rgba(10, 18, 33, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
 }
 
 /* Post page container overrides */
@@ -223,7 +258,39 @@ html, body {
 .comment-card p,
 .comment-card li,
 .comment p,
-.comment li {
+.comment li,
+.login-card p,
+.login-card label,
+.login-card span,
+.register-card p,
+.register-card label,
+.register-card span,
+.register-card div:not(.avatar-chip),
+.edit-card p,
+.edit-card label,
+.edit-card span,
+.profile-header p,
+.profile-header span,
+.profile-header div:not(.admin-badge):not(.avatar-chip):not(.profile-avatar),
+.cred-card p,
+.cred-card label,
+.cred-card span,
+.verification-card p,
+.verification-card span,
+.verification-card label,
+.verification-request-card p,
+.verification-request-card span,
+.comment-form-container label,
+.comment-form-container p,
+form p,
+form label,
+form li,
+form span,
+form div:not(.avatar-chip):not(.field-wrap):not(.field-wrap *),
+.verify-gate p,
+.verify-gate span,
+label,
+legend {
     color: #2c3e50 !important;
 }
 
@@ -438,7 +505,10 @@ select:focus {
 .card h3,
 .section-card h1,
 .section-card h2,
-.section-card h3 {
+.section-card h3,
+.card-title,
+.verification-title,
+.profile-title {
     color: #111827 !important;
     -webkit-text-fill-color: initial !important;
     background: none !important;
