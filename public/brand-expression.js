@@ -303,17 +303,49 @@
     window.applyBrandFoundation = applyBrandFoundation;
     window.applyBrandCopy = applyBrandCopy;
 
+    function injectLiquidGlassStyles() {
+        if (!document.querySelector('link[href*="liquid-glass.css"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '/liquid-glass.css';
+            document.head.appendChild(link);
+        }
+    }
+
+    function injectLiquidGlassBlobs() {
+        if (!document.querySelector('.glass-blobs-container')) {
+            const container = document.createElement('div');
+            container.className = 'glass-blobs-container';
+            container.innerHTML = `
+                <div class="glass-blob glass-blob-1"></div>
+                <div class="glass-blob glass-blob-2"></div>
+                <div class="glass-blob glass-blob-3"></div>
+            `;
+            if (document.body) {
+                document.body.insertBefore(container, document.body.firstChild);
+            }
+        }
+    }
+
+    if (document.head) {
+        injectLiquidGlassStyles();
+    } else {
+        document.addEventListener('DOMContentLoaded', injectLiquidGlassStyles);
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener(
             'DOMContentLoaded',
             () => {
                 applyBrandFoundation();
                 applyBrandCopy();
+                injectLiquidGlassBlobs();
             },
             { once: true }
         );
     } else {
         applyBrandFoundation();
         applyBrandCopy();
+        injectLiquidGlassBlobs();
     }
 })();

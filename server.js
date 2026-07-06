@@ -84,7 +84,7 @@ app.use(express.static(path.join(__dirname, "public"), {
       return;
     }
     if (filePath.endsWith(".css") || filePath.endsWith(".js")) {
-      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=300");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       return;
     }
     res.setHeader("Cache-Control", "public, max-age=600");
