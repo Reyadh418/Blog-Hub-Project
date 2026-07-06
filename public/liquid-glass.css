@@ -58,9 +58,12 @@ html, body {
 .glass-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.22;
-    mix-blend-mode: screen;
+    filter: blur(100px);
+    opacity: 0.15;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
     animation: float-blob 22s infinite alternate ease-in-out;
 }
 
@@ -95,16 +98,16 @@ html, body {
 
 @keyframes float-blob {
     0% {
-        transform: translate(0, 0) scale(1) rotate(0deg);
+        transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
     }
     33% {
-        transform: translate(80px, 60px) scale(1.1) rotate(120deg);
+        transform: translate3d(80px, 60px, 0) scale(1.1) rotate(120deg);
     }
     66% {
-        transform: translate(-40px, 90px) scale(0.95) rotate(240deg);
+        transform: translate3d(-40px, 90px, 0) scale(0.95) rotate(240deg);
     }
     100% {
-        transform: translate(40px, -30px) scale(1.05) rotate(360deg);
+        transform: translate3d(40px, -30px, 0) scale(1.05) rotate(360deg);
     }
 }
 
@@ -124,9 +127,9 @@ html, body {
 .login-card, 
 .register-card, 
 .edit-card {
-    background: rgba(252, 249, 244, 0.72) !important;
-    backdrop-filter: blur(20px) saturate(140%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+    background: rgba(252, 249, 244, 0.76) !important;
+    backdrop-filter: blur(16px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
     border: 1px solid rgba(255, 255, 255, 0.45) !important;
     border-radius: var(--radius-lg) !important;
     box-shadow: 
@@ -135,6 +138,10 @@ html, body {
     color: #1c2738 !important;
     position: relative;
     overflow: hidden;
+    will-change: transform, border-color, box-shadow;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
     transition: 
         transform var(--motion-duration-base) var(--motion-ease-emphasized),
         box-shadow var(--motion-duration-base) var(--motion-ease-emphasized),
@@ -169,7 +176,7 @@ html, body {
 .card:hover, 
 .post:hover,
 .featured-story-card:hover {
-    transform: scale(1.025) translateY(var(--lift-distance)) !important;
+    transform: scale(1.025) translate3d(0, var(--lift-distance), 0) !important;
     border-color: rgba(255, 255, 255, 0.6) !important;
     box-shadow: 
         0 24px 50px rgba(10, 18, 33, 0.22),
@@ -494,7 +501,7 @@ button:hover,
 .confirm-btn:hover, 
 .save-btn:hover, 
 .verify-btn:hover {
-    transform: translateY(var(--lift-distance)) scale(1.02) !important;
+    transform: translate3d(0, var(--lift-distance), 0) scale(1.02) !important;
     box-shadow: 0 10px 20px rgba(10, 18, 33, 0.12) !important;
 }
 
@@ -506,7 +513,7 @@ button:active,
 .pillar-chip:active,
 .confirm-btn:active,
 .save-btn:active {
-    transform: scale(var(--press-scale)) translateY(0) !important;
+    transform: scale(var(--press-scale)) translate3d(0, 0, 0) !important;
     transition: transform 0.08s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
@@ -564,4 +571,27 @@ button:active,
     border-radius: var(--radius-md) !important;
     box-shadow: 0 10px 30px rgba(10, 18, 33, 0.15) !important;
     color: #1c2738 !important;
+}
+
+/* GPU accelerated entrance animations */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 30px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes uiSlideUpSoft {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 8px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
 }
