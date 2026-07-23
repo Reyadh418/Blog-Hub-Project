@@ -8,469 +8,202 @@
         <script src="/csrf.js"></script>
         <script src="/brand-expression.js"></script>
         <script src="/page-transitions.js?v=20260302"></script>
-        <style>
-            :root {
-                --font-family-base: Inter, 'Segoe UI', Trebuchet MS, sans-serif;
-                --color-primary-900: #0f172a;
-                --color-primary-800: #1d2e4a;
-                --color-accent-500: #c48a5a;
-                --color-accent-600: #a86c44;
-                --color-surface: #fcf9f4;
-                --color-surface-soft: #f3ede3;
-                --color-border-soft: #d8cebc;
-                --color-text-primary: #1c2738;
-                --color-text-muted: #616b7b;
-                --gradient-bg-main: linear-gradient(160deg, #0f172a 0%, #1d2e4a 52%, #244063 100%);
-                --gradient-accent-main: linear-gradient(145deg, #d0a273 0%, #b2774a 100%);
-                --gradient-accent-hover: linear-gradient(145deg, #ddb286 0%, #c48a5a 100%);
-                --radius-sm: 10px;
-                --radius-md: 14px;
-                --radius-lg: 20px;
-                --shadow-1: 0 10px 22px rgba(10, 18, 33, 0.14);
-                --shadow-2: 0 24px 64px rgba(10, 18, 33, 0.32);
-                --ease-emphasized: cubic-bezier(0.34, 1.56, 0.64, 1);
-            }
-
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family: var(--font-family-base);
-                background:
-                    radial-gradient(circle at 14% 12%, rgba(196, 138, 90, 0.22), transparent 42%),
-                    radial-gradient(circle at 90% 0%, rgba(244, 227, 202, 0.16), transparent 38%),
-                    var(--gradient-bg-main);
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 24px;
-                color: var(--color-text-primary);
-            }
-
-            .register-shell {
-                width: 100%;
-                max-width: 560px;
-                position: relative;
-                isolation: isolate;
-            }
-
-            .register-shell::before {
-                content: '';
-                position: absolute;
-                inset: -16px;
-                z-index: -1;
-                background: radial-gradient(circle at 28% 18%, rgba(212, 165, 116, 0.28), transparent 58%);
-                filter: blur(18px);
-                opacity: 0.9;
-            }
-
-            .register-card {
-                background: linear-gradient(160deg, color-mix(in srgb, var(--color-surface) 96%, white) 0%, var(--color-surface) 100%);
-                border-radius: var(--radius-lg);
-                box-shadow: var(--shadow-2);
-                border: 1px solid color-mix(in srgb, var(--color-border-soft) 72%, white);
-                padding: 42px 36px 32px;
-                animation: cardEntrance 460ms var(--ease-emphasized) both;
-            }
-
-            @keyframes cardEntrance {
-                from {
-                    opacity: 0;
-                    transform: translateY(14px) scale(0.985);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-
-            .register-header {
-                text-align: center;
-                margin-bottom: 24px;
-            }
-
-            /*.register-kicker {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                font-size: 0.72rem;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                font-weight: 800;
-                color: var(--color-accent-600);
-                background: linear-gradient(120deg, rgba(208, 162, 115, 0.18) 0%, rgba(196, 138, 90, 0.16) 100%);
-                border: 1px solid rgba(208, 162, 115, 0.35);
-                border-radius: 999px;
-                padding: 6px 12px;
-                margin-bottom: 12px;
-            }*/
-
-            h1 {
-                color: var(--color-primary-900);
-                font-size: 1.95rem;
-                line-height: 1.2;
-                margin-bottom: 8px;
-                letter-spacing: 0.4px;
-            }
-
-            .register-subtitle {
-                color: var(--color-text-muted);
-                font-size: 0.95rem;
-                line-height: 1.6;
-                max-width: 50ch;
-                margin: 0 auto;
-            }
-
-            .form-group {
-                margin-bottom: 14px;
-            }
-
-            .field-label {
-                display: block;
-                margin-bottom: 8px;
-                color: var(--color-text-primary);
-                font-size: 0.9rem;
-                font-weight: 600;
-                letter-spacing: 0.3px;
-            }
-
-            .field-wrap {
-                position: relative;
-                border-radius: 12px;
-                background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 243, 236, 0.92) 100%);
-                border: 1px solid color-mix(in srgb, var(--color-border-soft) 72%, white);
-                transition: transform 220ms var(--ease-emphasized), box-shadow 220ms ease, border-color 220ms ease;
-            }
-
-            .field-wrap:focus-within {
-                transform: translateY(-1px);
-                border-color: rgba(196, 138, 90, 0.5);
-                box-shadow: 0 12px 24px rgba(24, 40, 67, 0.14), 0 0 0 3px rgba(196, 138, 90, 0.16);
-            }
-
-            .field-input {
-                width: 100%;
-                border: none;
-                background: transparent;
-                color: var(--color-text-primary);
-                font-size: 0.97rem;
-                font-family: var(--font-family-base);
-                padding: 13px 14px;
-                border-radius: inherit;
-            }
-
-            .field-input::placeholder {
-                color: color-mix(in srgb, var(--color-text-muted) 70%, white);
-            }
-
-            .field-input:focus {
-                outline: none;
-            }
-
-            .input-hint {
-                font-size: 0.8rem;
-                color: var(--color-text-muted);
-                margin-top: 6px;
-                line-height: 1.4;
-            }
-
-            .password-strength {
-                margin-top: 9px;
-                height: 6px;
-                border-radius: 999px;
-                background: color-mix(in srgb, var(--color-border-soft) 70%, white);
+                                <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+            
+            * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+            
+            body[data-brand-page="register"] { 
+                min-height: 100vh; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                padding: 24px; 
+                background-color: #000;
                 overflow: hidden;
+                color: rgba(255, 255, 255, 0.95) !important;
             }
 
-            .password-strength-bar {
-                height: 100%;
-                width: 0%;
-                transition: width 240ms ease, background 240ms ease;
-                border-radius: inherit;
-            }
-
-            .password-strength-bar.weak {
-                width: 25%;
-                background: #dc5a53;
-            }
-
-            .password-strength-bar.fair {
-                width: 50%;
-                background: #e39c49;
-            }
-
-            .password-strength-bar.good {
-                width: 75%;
-                background: #5e8fd7;
-            }
-
-            .password-strength-bar.strong {
-                width: 100%;
-                background: #4eaa63;
-            }
-
-            .submit-btn {
-                width: 100%;
-                margin-top: 10px;
-                position: relative;
-                overflow: hidden;
-                border: none;
-                border-radius: 11px;
-                cursor: pointer;
-                color: var(--color-surface);
-                font-size: 0.98rem;
-                font-weight: 700;
-                letter-spacing: 0.9px;
-                padding: 14px 22px;
-                background: var(--gradient-accent-main);
-                box-shadow: 0 14px 28px rgba(172, 117, 72, 0.35);
-                transition: transform 220ms var(--ease-emphasized), box-shadow 220ms ease, background 220ms ease;
-            }
-
-            .submit-btn::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -120%;
-                width: 60%;
-                height: 100%;
-                background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.46) 50%, transparent 100%);
-                transition: left 420ms ease;
-            }
-
-            .submit-btn:hover {
-                transform: translateY(-2px);
-                background: var(--gradient-accent-hover);
-                box-shadow: 0 18px 32px rgba(172, 117, 72, 0.42);
-            }
-
-            .submit-btn:hover::before {
-                left: 115%;
-            }
-
-            .submit-btn:active {
-                transform: translateY(0);
-            }
-
-            .submit-btn:disabled {
-                cursor: not-allowed;
-                opacity: 0.84;
-                transform: none;
-                box-shadow: 0 10px 18px rgba(172, 117, 72, 0.22);
-            }
-
-            .spinner {
-                display: inline-block;
-                width: 16px;
-                height: 16px;
-                border: 3px solid rgba(255, 255, 255, 0.35);
-                border-top-color: #fff;
-                border-right-color: #fff;
-                border-radius: 50%;
-                animation: spin 0.85s linear infinite;
-                margin-right: 8px;
-                vertical-align: middle;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            .message {
-                margin-top: 16px;
-                display: none;
-                padding: 12px 14px;
-                border-radius: 10px;
-                font-size: 0.92rem;
-                line-height: 1.45;
-                font-weight: 600;
-                animation: msgIn 260ms ease both;
-            }
-
-            .message.error {
-                display: block;
-                color: #7f232c;
-                border: 1px solid #f1c2c8;
-                background: linear-gradient(145deg, #feeff1 0%, #ffe5e8 100%);
-            }
-
-            .message.success {
-                display: block;
-                color: #1e5a33;
-                border: 1px solid #bfe4c9;
-                background: linear-gradient(145deg, #effcf4 0%, #dff4e7 100%);
-            }
-
-            @keyframes msgIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-6px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .auth-links,
-            .back-link {
-                margin-top: 18px;
-                text-align: center;
-                color: var(--color-text-muted);
-                font-size: 0.9rem;
-            }
-
-            .auth-links a,
-            .back-link a {
-                color: var(--color-accent-600);
-                text-decoration: none;
-                font-weight: 700;
-                letter-spacing: 0.3px;
-                transition: color 180ms ease;
-            }
-
-            .auth-links a:hover,
-            .back-link a:hover {
-                color: var(--color-accent-500);
-                text-decoration: underline;
-            }
-
-            .toast-container {
+            /* Liquid Aurora Background */
+            body[data-brand-page="register"] .bg-aurora {
                 position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-                max-width: 400px;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1;
+                background: linear-gradient(125deg, #0f0c29, #302b63, #24243e);
+                overflow: hidden;
+            }
+            body[data-brand-page="register"] .bg-aurora::before, 
+            body[data-brand-page="register"] .bg-aurora::after, 
+            body[data-brand-page="register"] .bg-blob {
+                content: '';
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(80px);
+                animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body[data-brand-page="register"] .bg-aurora::before {
+                width: 50vw; height: 50vh;
+                background: #ff2a85; /* Vibrant pink/magenta */
+                top: -10%; left: -10%;
+                opacity: 0.6;
+            }
+            body[data-brand-page="register"] .bg-aurora::after {
+                width: 60vw; height: 60vh;
+                background: #8a2387; /* Purple */
+                bottom: -20%; right: -10%;
+                animation-delay: -5s;
+                animation-duration: 25s;
+                opacity: 0.6;
+            }
+            body[data-brand-page="register"] .bg-blob {
+                width: 55vw; height: 55vh;
+                background: #e94057; /* Reddish orange */
+                top: 40%; left: 30%;
+                animation-delay: -10s;
+                animation-duration: 22s;
+                opacity: 0.5;
             }
 
-            .toast {
-                background: var(--color-surface);
-                padding: 12px 16px;
-                border-radius: 10px;
-                margin-bottom: 12px;
-                box-shadow: var(--shadow-1);
-                display: flex;
-                gap: 10px;
-                align-items: center;
-                border: 1px solid color-mix(in srgb, var(--color-border-soft) 72%, white);
+            @keyframes float {
+                0% { transform: translate(0, 0) scale(1); }
+                33% { transform: translate(10vw, 15vh) scale(1.1); }
+                66% { transform: translate(-10vw, -10vh) scale(0.9); }
+                100% { transform: translate(5vw, 5vh) scale(1.05); }
             }
 
-            .toast.success {
-                border-left: 4px solid #4caf50;
+            .register-shell { width: 100%; max-width: 500px; position: relative; isolation: isolate; z-index: 10;}
+            
+            /* Premium Apple-Style Glass Card */
+            .register-shell .register-card { 
+                padding: 48px 40px; 
+                border-radius: 32px !important;
+                background: rgba(25, 25, 30, 0.65) !important; 
+                color: #ffffff !important;
+                backdrop-filter: blur(40px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                box-shadow: 
+                    0 24px 64px rgba(0, 0, 0, 0.4),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                    inset 0 -1px 1px rgba(255, 255, 255, 0.05) !important;
+                animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; 
+            }
+            .register-shell .register-card::before, .register-shell .register-card::after { display: none !important; }
+            .register-shell .register-card:hover { transform: none !important; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1), inset 0 -1px 1px rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; }
+            
+            @keyframes cardEntrance {
+                from { opacity: 0; transform: translateY(30px) scale(0.95); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
             }
 
-            .toast.error {
-                border-left: 4px solid #f44336;
+            .register-shell .register-header { text-align: center; margin-bottom: 36px; position: relative; z-index: 2; }
+            .register-shell h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 10px; letter-spacing: -0.5px; color: #ffffff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3) !important; background: none !important; -webkit-text-fill-color: initial !important; }
+            .register-shell .register-card p.register-subtitle { font-size: 0.95rem; font-weight: 400; line-height: 1.5; color: rgba(255,255,255,0.85) !important; max-width: 380px; margin: 0 auto; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+            
+            /* Reset global form styling injected by liquid-glass.css */
+            form#registerForm { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; transform: none !important; margin: 0 !important; overflow: visible !important; }
+            form#registerForm::before, form#registerForm::after { display: none !important; }
+            form#registerForm::before, form#registerForm::after { display: none !important; }
+            form#registerForm *::before, form#registerForm *::after { display: none !important; }
+            form#registerForm:hover { transform: none !important; box-shadow: none !important; border: none !important; background: transparent !important; }
+            
+            /* Override deep text colors injected by liquid-glass.css */
+            .register-shell .register-card p,
+            .register-shell .register-card span,
+            form#registerForm span {
+                color: inherit !important;
             }
-
-            .toast-icon {
-                font-size: 1.1rem;
+            
+            form#registerForm .form-group { margin-bottom: 20px; position: relative; z-index: 2; }
+            form#registerForm .field-label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; color: rgba(255,255,255,0.95) !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+            
+            /* Apple-Style Input Wrappers */
+            form#registerForm .field-wrap { 
+                position: relative; 
+                border-radius: 16px !important; 
+                background: rgba(0, 0, 0, 0.3) !important; 
+                border: 1px solid rgba(255, 255, 255, 0.08) !important; 
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important; 
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                overflow: hidden !important; 
+                transform: translateZ(0); 
+                -webkit-mask-image: -webkit-radial-gradient(white, black);
             }
+            form#registerForm .field-wrap:focus-within { border-color: rgba(255, 255, 255, 0.3) !important; background: rgba(0, 0, 0, 0.4) !important; box-shadow: 0 0 0 4px rgba(255,255,255,0.05), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important; }
+            
+            form#registerForm .field-input { width: 100%; border: none !important; background: transparent !important; font-size: 0.95rem; padding: 16px !important; border-radius: 16px !important; color: #ffffff !important; font-weight: 500; box-shadow: none !important; outline: none !important; }
+            form#registerForm .field-input::placeholder { color: rgba(255,255,255,0.5) !important; font-weight: 400; }
+            form#registerForm .field-input:focus { outline: none !important; box-shadow: none !important; background: transparent !important; border: none !important; }
+            
+            form#registerForm .input-hint { font-size: 0.8rem; margin-top: 8px; line-height: 1.4; color: rgba(255,255,255,0.4) !important; padding-left: 4px; }
+            form#registerForm .password-strength { margin-top: 10px; height: 4px; border-radius: 4px; background: rgba(0,0,0,0.4) !important; overflow: hidden; }
+            form#registerForm .password-strength-bar { height: 100%; width: 0%; transition: width 0.3s ease, background 0.3s ease; border-radius: inherit; }
+            form#registerForm .password-strength-bar.weak { width: 25%; background: #ff4757; }
+            form#registerForm .password-strength-bar.fair { width: 50%; background: #ffa502; }
+            form#registerForm .password-strength-bar.good { width: 75%; background: #1e90ff; }
+            form#registerForm .password-strength-bar.strong { width: 100%; background: #2ed573; }
 
-            .toast-message {
-                font-weight: 600;
-                color: var(--color-text-primary);
+            /* Glass Buttons */
+            form#registerForm .toggle-btn { flex: 0 0 auto; min-width: 74px; margin-left: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 10px !important; background: rgba(255, 255, 255, 0.08) !important; color: rgba(255,255,255,0.95) !important; font-size: 0.8rem; font-weight: 500; padding: 8px 12px; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(10px); box-shadow: none !important; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+            form#registerForm .toggle-btn:hover { background: rgba(255, 255, 255, 0.2) !important; color: #ffffff !important; transform: none !important; }
+            
+            form#registerForm .submit-btn { 
+                width: 100%; 
+                margin-top: 24px; 
+                position: relative;
+                z-index: 2;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important; 
+                border-radius: 16px !important; 
+                cursor: pointer; 
+                color: #ffffff !important; 
+                font-size: 1.05rem; 
+                font-weight: 600; 
+                letter-spacing: 0.5px;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+                padding: 18px; 
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important; 
+                backdrop-filter: blur(20px);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                overflow: hidden !important; 
+                transform: translateZ(0); 
+                -webkit-mask-image: -webkit-radial-gradient(white, black);
             }
-
-            .toast-close {
-                margin-left: 8px;
-                cursor: pointer;
-                color: var(--color-text-muted);
+            form#registerForm .submit-btn:hover { 
+                transform: translateY(-2px) !important; 
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%) !important;
+                border-color: rgba(255, 255, 255, 0.4) !important;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important; 
             }
-
-            :root {
-                --motion-fast: 220ms;
-                --motion-shine: 420ms;
-                --motion-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
-                --motion-standard: ease;
-                --control-radius: 11px;
-                --input-radius: 12px;
-                --control-letter: 0.45px;
-            }
-
-            button,
-            .submit-btn,
-            .toggle-btn,
-            .form-actions button,
-            .edit-actions button,
-            .navbar-actions button,
-            .toolbar button,
-            .btn,
-            .action-btn {
-                border-radius: var(--control-radius) !important;
-                letter-spacing: var(--control-letter);
-            }
-
-            input[type="text"],
-            input[type="email"],
-            input[type="password"],
-            input[type="search"],
-            select,
-            textarea,
-            .field-wrap,
-            .field-input {
-                border-radius: var(--input-radius);
-            }
-
-            .field-wrap,
-            .field-input,
-            .submit-btn,
-            .password-strength-bar {
-                transition:
-                    transform var(--motion-fast) var(--motion-ease),
-                    box-shadow var(--motion-fast) var(--motion-standard),
-                    background var(--motion-fast) var(--motion-standard),
-                    border-color var(--motion-fast) var(--motion-standard),
-                    color var(--motion-fast) var(--motion-standard),
-                    width var(--motion-fast) var(--motion-standard);
-            }
-
-            .submit-btn::before {
-                transition: left var(--motion-shine) var(--motion-standard);
-            }
-
-            @media (prefers-reduced-motion: reduce) {
-                .register-card,
-                .field-wrap,
-                .submit-btn,
-                .message,
-                .spinner {
-                    animation: none !important;
-                    transition: none !important;
-                }
-            }
-
+            form#registerForm .submit-btn:active { transform: translateY(0) scale(0.98) !important; }
+            
+            /* Messages and Links */
+            .register-shell .message { margin-top: 20px; display: none; padding: 14px 16px; border-radius: 14px; font-size: 0.9rem; font-weight: 500; text-align: center; border: 1px solid rgba(255,255,255,0.2) !important; }
+            .register-shell .message.error { display: block; color: #ff8a8a !important; background: rgba(255, 50, 50, 0.1) !important; border-color: rgba(255, 50, 50, 0.2) !important; }
+            .register-shell .message.success { display: block; color: #8aff96 !important; background: rgba(50, 255, 50, 0.1) !important; border-color: rgba(50, 255, 50, 0.2) !important; }
+            
+            .register-shell .auth-links, .register-shell .back-link { margin-top: 24px; text-align: center; font-size: 0.95rem; color: rgba(255,255,255,0.75) !important; position: relative; z-index: 2; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+            .register-shell .auth-links a, .register-shell .back-link a { color: #ffffff !important; text-decoration: none; font-weight: 600; transition: all 0.2s; opacity: 0.9; }
+            .register-shell .auth-links a:hover, .register-shell .back-link a:hover { opacity: 1; text-decoration: underline; text-shadow: 0 0 8px rgba(255,255,255,0.3); }
+            
+            .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 400px; }
+            .toast { padding: 16px 20px; border-radius: 16px !important; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; background: rgba(30,30,35,0.7) !important; color: white !important; border: 1px solid rgba(255,255,255,0.15) !important; backdrop-filter: blur(20px); box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important; animation: toastIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+            @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+            
+            .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+            @keyframes spin { to { transform: rotate(360deg); } }
+            
             @media (max-width: 520px) {
-                .register-card {
-                    padding: 28px 18px 20px;
-                }
-
-                h1 {
-                    font-size: 1.5rem;
-                }
-
-                .register-subtitle {
-                    font-size: 0.92rem;
-                }
-
-                .field-input {
-                    padding: 12px 12px;
-                    font-size: 0.95rem;
-                }
-
-                .input-hint {
-                    font-size: 0.76rem;
-                }
+                .register-shell .register-card { padding: 40px 24px; border-radius: 28px !important; }
+                .register-shell h1 { font-size: 1.8rem; }
             }
         </style>
     </head>
     <body data-brand-page="register">
+        <div class="bg-aurora"><div class="bg-blob"></div></div>
         <div class="toast-container" id="toastContainer"></div>
 
         <div class="register-shell">

@@ -196,7 +196,7 @@ a.link:hover,
 .back-link a:hover,
 .back-btn:hover,
 .nav-back:hover {
-    transform: translateY(var(--lift-distance));
+    transform: translate3d(0, var(--lift-distance), 0);
 }
 
 button:active,
@@ -289,12 +289,12 @@ button:disabled,
         background-color var(--motion-duration-base) var(--motion-ease-standard),
         border-color var(--motion-duration-base) var(--motion-ease-standard),
         color var(--motion-duration-base) var(--motion-ease-standard);
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     will-change: transform;
 }
 
 .ui-pressable:hover {
-    transform: translateY(var(--lift-distance));
+    transform: translate3d(0, var(--lift-distance), 0);
 }
 
 .ui-pressable:active {
@@ -346,13 +346,13 @@ button:disabled,
     color: #ffffff;
     font-weight: 700;
     text-decoration: none;
-    transform: translateY(-140%);
+    transform: translate3d(0, -140%, 0);
     opacity: 0;
 }
 
 .skip-link:focus,
 .skip-link:focus-visible {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
 }
 
@@ -886,24 +886,24 @@ li,
 @keyframes uiSlideUpSoft {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translate3d(0, 8px, 0);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
     }
 }
 
 @keyframes uiToastExit {
     from {
         opacity: 1;
-        transform: translateX(0);
+        transform: translate3d(0, 0, 0);
     }
 
     to {
         opacity: 0;
-        transform: translateX(24px);
+        transform: translate3d(24px, 0, 0);
     }
 }
 
